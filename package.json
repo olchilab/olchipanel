@@ -7,6 +7,9 @@
   },
   "main": "./bin/olchipanel.js",
   "type": "commonjs",
+  "scripts": {
+    "test": "node test/smoke.js"
+  },
   "engines": {
     "node": ">=18"
   },
