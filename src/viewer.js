@@ -305,16 +305,30 @@ function start(opts) {
     if (m !== lastMtime) { lastMtime = m; kick(); }
   }, 5000).unref();
 
-  // Bind: walk candidate ports. EADDRINUSE/EACCES = taken or OS-reserved → next.
+  // Bind: walk candidate ports. A taken port is first health-checked: if a live
+  // olchipanel viewer already answers there, ADOPT it (heal the discovery file,
+  // spawn nothing) instead of binding the next port — port-walking used to
+  // create duplicate viewers whose death left viewer.json pointing at a corpse.
   let attempt = 0;
   function tryListen() {
     server.listen(BASE_PORT + attempt, '127.0.0.1');
   }
   server.on('error', (e) => {
-    if ((e.code === 'EADDRINUSE' || e.code === 'EACCES') && ++attempt < MAX_TRIES) {
-      return tryListen();
+    if (e.code === 'EADDRINUSE' || e.code === 'EACCES') {
+      const takenUrl = `http://127.0.0.1:${BASE_PORT + attempt}`;
+      return ping(takenUrl, (aliveViewer) => {
+        if (aliveViewer) {
+          // someone else serves — by design. Make sure discovery points at them.
+          if (currentViewerUrl() !== takenUrl) {
+            try { fs.writeFileSync(VIEWER_FILE, JSON.stringify({ url: takenUrl, pid: null, adopted_at: new Date().toISOString() }), 'utf8'); } catch (err) {}
+          }
+          if (opts.announce) console.log(`olchipanel viewer (existing) → ${takenUrl}`);
+          if (shouldOpen(opts)) openBrowser(takenUrl);
+          return;
+        }
+        if (++attempt < MAX_TRIES) return tryListen(); // squatter that isn't a viewer → next port
+      });
     }
-    if (e.code === 'EADDRINUSE' || e.code === 'EACCES') return; // someone else serves — by design
     console.error('[olchipanel viewer]', e.message);
   });
   server.on('listening', () => {

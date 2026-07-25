@@ -6,6 +6,7 @@ const readline = require('readline');
 const state = require('./state');
 
 const PROTOCOL_VERSION = '2024-11-05';
+const VERSION = require('../package.json').version; // single source — a hardcoded copy drifted (issue #3)
 
 const INSTRUCTIONS = `OlchiPanel is a live situation board for the HUMAN watching you work.
 It is narrative instrumentation, not logging. Keep it honest and current:
@@ -331,7 +332,7 @@ function serve({ getViewerUrl }) {
         reply(id, {
           protocolVersion: params?.protocolVersion || PROTOCOL_VERSION,
           capabilities: { tools: {} },
-          serverInfo: { name: 'olchipanel', version: '0.1.0' },
+          serverInfo: { name: 'olchipanel', version: VERSION },
           instructions,
         });
       } else if (method === 'notifications/initialized' || (method && method.startsWith('notifications/'))) {

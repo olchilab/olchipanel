@@ -30,6 +30,11 @@ child.stdout.on('data', (d) => {
     console.error('SMOKE FAIL: unexpected initialize result:', line);
     process.exit(1);
   }
+  const expected = require(path.join(__dirname, '..', 'package.json')).version;
+  if (msg.result.serverInfo.version !== expected) {
+    console.error(`SMOKE FAIL: serverInfo.version ${msg.result.serverInfo.version} != package.json ${expected}`);
+    process.exit(1);
+  }
   const sessions = fs.readdirSync(path.join(home, 'sessions')).filter(f => f.endsWith('.json'));
   if (!sessions.length) {
     console.error('SMOKE FAIL: handshake ok but no session file written');
