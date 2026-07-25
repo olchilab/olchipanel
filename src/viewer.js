@@ -185,6 +185,18 @@ function start(opts) {
       // no-store: the page must always reflect the shipped UI, never a stale cache
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
       res.end(fs.readFileSync(path.join(PUBLIC, 'index.html')));
+    } else if (url === '/manifest.webmanifest') {
+      // installable PWA: a standalone window whose titlebar melts into the app
+      res.writeHead(200, { 'Content-Type': 'application/manifest+json; charset=utf-8', 'Cache-Control': 'no-store' });
+      res.end(JSON.stringify({
+        name: 'OlchiPanel', short_name: 'OlchiPanel', start_url: '/',
+        display: 'standalone', display_override: ['window-controls-overlay', 'standalone'],
+        background_color: '#16161a', theme_color: '#16161a',
+        icons: [{ src: '/icon.svg', sizes: 'any', type: 'image/svg+xml' }],
+      }));
+    } else if (url === '/icon.svg') {
+      res.writeHead(200, { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'no-store' });
+      res.end("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='#17324f'/><path d='M12 9.5v13l10.5-6.5z' fill='#b7d95b'/></svg>");
     } else if (url === '/api/state') {
       // read-time truth overlay: a session whose owner pid is gone is not alive,
       // whatever its file says (SIGKILL leaves no chance to write alive:false)

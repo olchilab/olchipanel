@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>OlchiPanel</title>
+<meta name="theme-color" content="#16161a">
+<link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2317324f'/%3E%3Cpath d='M12 9.5v13l10.5-6.5z' fill='%23b7d95b'/%3E%3C/svg%3E">
 <style>
   /* ── OlchiPanel visual identity ──────────────────────────────────────
@@ -38,6 +40,12 @@
   .topbar{height:56px; background:var(--card); color:var(--ink); display:flex; align-items:center;
     justify-content:space-between; padding:0 20px; border-bottom:1px solid var(--line);
     position:fixed; top:0; left:0; right:0; z-index:20;}
+  /* installed PWA with window-controls-overlay: the topbar becomes the titlebar */
+  @media (display-mode: window-controls-overlay) {
+    .topbar{ -webkit-app-region:drag;
+      padding-right:calc(100vw - env(titlebar-area-x, 0px) - env(titlebar-area-width, 100vw)); }
+    .topbar button, .topbar a{ -webkit-app-region:no-drag; }
+  }
   .brand{display:flex; align-items:center; gap:10px; font-weight:680; font-size:16px; letter-spacing:-.01em;}
   .brand-mark{width:9px; height:9px; border-radius:2px; background:var(--brand); flex:none;
     transform:rotate(45deg);}
@@ -655,6 +663,9 @@
   function applyTheme(t){
     document.documentElement.setAttribute('data-theme', t);
     try { localStorage.setItem('olchipanel.theme', t); } catch(e){}
+    // paint the OS titlebar (app window / installed PWA) to match the theme
+    var tc = document.querySelector('meta[name="theme-color"]');
+    if (tc) tc.setAttribute('content', t === 'dark' ? '#16161a' : '#ffffff');
   }
   (function initTheme(){
     var saved = null; try { saved = localStorage.getItem('olchipanel.theme'); } catch(e){}
