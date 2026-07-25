@@ -1,6 +1,6 @@
 {
   "name": "olchipanel",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "A living situation board your AI agent draws for you — goal, journey map, branches, interrupts — live, agent-agnostic, via MCP.",
   "bin": {
     "olchipanel": "bin/olchipanel.js"
