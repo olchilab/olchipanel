@@ -28,6 +28,9 @@ function newSession(agentName) {
     agent: agentName || 'unknown-agent',
     name: process.env.OLCHIPANEL_NAME || '', // fixed per-config name; name_session overrides
     cwd: process.cwd(),
+    // optional stable identity for role-based setups: sessions sharing this key
+    // inherit each other even when launched from different folders (issue #3)
+    workspace: (process.env.OLCHIPANEL_WORKSPACE || '').trim(),
     started: now.toISOString(),
     updated: now.toISOString(),
     alive: true,
@@ -71,13 +74,16 @@ function deleteSession(id) {
   try { fs.unlinkSync(sessionPath(id)); return true; } catch (e) { return false; }
 }
 
-// Most recent touched panel for the same project (cwd), excluding the given
+// A panel's identity: the explicit workspace key when set, the folder otherwise.
+function panelKey(s) { return (s && s.workspace) || (s && s.cwd) || ''; }
+
+// Most recent touched panel with the same identity key, excluding the given
 // session — the handoff source a new session can inherit from.
-function findPrevious(cwd, excludeId) {
+function findPrevious(key, excludeId) {
   const norm = (p) => String(p || '').replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase();
-  const want = norm(cwd);
+  const want = norm(key);
   return readAllSessions().find(s =>
-    s.id !== excludeId && norm(s.cwd) === want && isTouched(s)) || null;
+    s.id !== excludeId && norm(panelKey(s)) === want && isTouched(s)) || null;
 }
 
 // "touched" = the agent actually used the panel (vs a bare handshake probe)
@@ -131,4 +137,4 @@ function clearNow(node) {
 }
 
 module.exports = { ROOT, SESSIONS, ensureDirs, newSession, writeSession, readAllSessions,
-  deleteSession, isTouched, pidAlive, cleanup, findPrevious, findNode, clearNow };
+  deleteSession, isTouched, pidAlive, cleanup, findPrevious, panelKey, findNode, clearNow };

@@ -393,6 +393,9 @@
       noGoal: '(no goal set yet)',
       noMapTitle: 'No journey map yet',
       noMapBody: 'The agent will draw its plan here as it works.',
+      uninitTitle: 'Board not initialized',
+      uninitBody: 'The agent is connected but has not drawn anything. If its rules file has the OlchiPanel line it will start on the next task — or paste this to the agent now:',
+      uninitPrompt: 'Initialize your OlchiPanel board now: resume_project if a previous panel exists, then name_session, set_goal, and backfill the journey so far.',
       started: 'started', updated: 'updated',
       sessLive: '· ● live', sessEnded: '· session ended',
       stackEmptyT: 'Nothing set aside', stackEmpty: 'When you change topic mid-task, the agent parks its work here with a resume point.',
@@ -442,6 +445,9 @@
       noGoal: '(아직 목표가 없음)',
       noMapTitle: '아직 여정 지도가 없음',
       noMapBody: '에이전트가 일하면서 계획을 여기에 그립니다.',
+      uninitTitle: '보드 미초기화',
+      uninitBody: '에이전트가 연결만 되고 아직 아무것도 그리지 않았습니다. 룰파일에 올치패널 한 줄이 있으면 다음 작업부터 그립니다 — 지금 시키려면 아래를 에이전트에게 붙여넣으세요:',
+      uninitPrompt: 'Initialize your OlchiPanel board now: resume_project if a previous panel exists, then name_session, set_goal, and backfill the journey so far.',
       started: '시작', updated: '갱신',
       sessLive: '· ● 라이브', sessEnded: '· 세션 종료됨',
       stackEmptyT: '밀쳐둔 일 없음', stackEmpty: '작업 중 주제를 바꾸면, 에이전트가 하던 일을 재개점과 함께 여기 세워둡니다.',
@@ -906,9 +912,19 @@
     }
     if (D.map && D.map.tree) document.getElementById('vtree').appendChild(buildNode(D.map.tree));
     else {
+      // distinguish "connected but never drew anything" from "working, no map yet"
+      var untouched = !D.goal && !(D.stack||[]).length && !(D.changes||[]).length &&
+        !(D.decisions||[]).length && !(D.deadends||[]).length && !(D.pending||[]).length;
       var em2 = el('div','empty');
-      em2.appendChild(el('b','', T('noMapTitle')));
-      em2.appendChild(document.createTextNode(T('noMapBody')));
+      em2.appendChild(el('b','', T(untouched ? 'uninitTitle' : 'noMapTitle')));
+      em2.appendChild(document.createTextNode(T(untouched ? 'uninitBody' : 'noMapBody')));
+      if (untouched) {
+        var hint = el('pre','', T('uninitPrompt'));
+        var cp2 = el('button','pre-copy', T('copyBtn'));
+        cp2.addEventListener('click', function(){ copyText(T('uninitPrompt'), T('copiedShort')); });
+        hint.appendChild(cp2);
+        em2.appendChild(hint);
+      }
       document.getElementById('vtree').appendChild(em2);
     }
 

@@ -126,6 +126,16 @@ every file edit, command, and commit automatically, even when the model forgets.
 Repeated edits of the same file coalesce; read-only commands are skipped. The MCP core
 stays agent-agnostic — hooks are a per-agent enhancer, not a requirement.
 
+**Codex CLI note**: Codex has no equivalent hook yet, so its bootstrap is the rules line
+in `AGENTS.md`. If a Codex board sits in "not initialized", paste the one-liner the empty
+board shows you — it tells the agent to `resume_project` / `set_goal` / backfill.
+
+## Optional: stable workspace identity
+
+Panels normally belong to a working directory. For role-based setups where one logical
+role runs from several folders, set `OLCHIPANEL_WORKSPACE=<key>` in the agent's MCP `env` —
+sessions sharing a key inherit each other (`resume_project`) regardless of folder.
+
 ## How it works
 
 - One `olchipanel` process per agent (stdio MCP, handrolled JSON-RPC — that's why zero deps).

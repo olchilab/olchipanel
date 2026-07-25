@@ -189,7 +189,7 @@ function makeToolRunner(session, getViewerUrl) {
 
   return {
     resume_project() {
-      const prev = state.findPrevious(session.cwd, session.id);
+      const prev = state.findPrevious(state.panelKey(session), session.id);
       if (!prev) return 'No previous panel exists for this project — starting fresh is correct.';
       // inherit the whole situation
       if (!session.name) session.name = prev.name || '';
@@ -206,7 +206,7 @@ function makeToolRunner(session, getViewerUrl) {
       const norm = (x) => String(x || '').replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase();
       let archived = 0;
       for (const s of state.readAllSessions()) {
-        if (s.id !== session.id && !s.archived && norm(s.cwd) === norm(session.cwd)) {
+        if (s.id !== session.id && !s.archived && norm(state.panelKey(s)) === norm(state.panelKey(session))) {
           s.archived = true;
           try { state.writeSession(s); archived++; } catch (e) {}
         }
@@ -323,7 +323,7 @@ function serve({ getViewerUrl }) {
         // dynamic handoff hint: tell the agent up front that this project has a past
         let instructions = INSTRUCTIONS;
         try {
-          const prev = state.findPrevious(session.cwd, session.id);
+          const prev = state.findPrevious(state.panelKey(session), session.id);
           if (prev) {
             const label = prev.name || (prev.goal || '').slice(0, 60) || prev.id;
             instructions += `\n\n>>> A previous panel EXISTS for this project: "${label}" (last updated ${prev.updated}). Call resume_project FIRST to inherit it as your memory.`;
