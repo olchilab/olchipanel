@@ -19,9 +19,7 @@ jobs:
       release_created: ${{ steps.rp.outputs.release_created }}
     steps:
       - uses: googleapis/release-please-action@v4
-        id: rp
-        with:
-          release-type: node
+        id: rp # config + manifest files at repo root pin the current version
 
   publish:
     needs: release-please
