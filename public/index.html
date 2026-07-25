@@ -6,7 +6,9 @@
 <title>OlchiPanel</title>
 <meta name="theme-color" content="#16161a">
 <link rel="manifest" href="/manifest.webmanifest">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2317324f'/%3E%3Cpath d='M12 9.5v13l10.5-6.5z' fill='%23b7d95b'/%3E%3C/svg%3E">
+<!-- transparent favicon: keeps the app-window titlebar icon-free (Mark);
+     the installable PWA still gets its colored icon from /manifest.webmanifest -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3C/svg%3E">
 <style>
   /* ── OlchiPanel visual identity ──────────────────────────────────────
      The product is a map an agent draws, so the brand colour is the
@@ -410,9 +412,6 @@
       resumeCopy: 'Copy prompt',
       resumeCopied: 'Copied — paste it to your agent in that folder',
       resumePrompt: "Resume this project's previous OlchiPanel — call resume_project to inherit it, then continue the work.",
-      openTerminal: 'Open terminal here',
-      terminalOpened: 'Terminal opened at the project — start your agent and paste (Ctrl+V)',
-      terminalFailed: 'Could not open a terminal — open one manually at the folder above',
       setupDone: function(f){ return 'Added — ' + f; },
       setupAlready: function(f){ return 'Already set up — ' + f; },
       setupFailed: 'Could not write the config: ',
@@ -462,9 +461,6 @@
       resumeCopy: '프롬프트 복사',
       resumeCopied: '복사됨 — 그 폴더에서 에이전트에 붙여넣으세요',
       resumePrompt: '이 프로젝트의 이전 올치패널을 이어받아줘 — resume_project를 호출해 인수인계 받고, 이어서 진행해.',
-      openTerminal: '여기서 터미널 열기',
-      terminalOpened: '프로젝트에서 터미널이 열렸어요 — 에이전트 켜고 붙여넣기(Ctrl+V)',
-      terminalFailed: '터미널을 못 열었어요 — 위 폴더에서 직접 열어주세요',
       setupDone: function(f){ return '추가 완료 — ' + f; },
       setupAlready: function(f){ return '이미 설정돼 있어요 — ' + f; },
       setupFailed: '설정을 못 썼어요: ',
@@ -874,16 +870,6 @@
       var cp = el('button', 'resume-copy', T('resumeCopy'));
       cp.addEventListener('click', function(){ copyText(T('resumePrompt'), T('resumeCopied')); });
       bar.appendChild(cp);
-      // one-click handoff: copies the prompt AND opens a terminal at the project
-      var ot = el('button', 'resume-copy', T('openTerminal'));
-      ot.addEventListener('click', function(){
-        copyText(T('resumePrompt'), '');
-        fetch('/api/open-terminal', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: D.id }) })
-          .then(function(r){ showToast(r.ok ? T('terminalOpened') : T('terminalFailed')); })
-          .catch(function(){ showToast(T('terminalFailed')); });
-      });
-      bar.appendChild(ot);
       rb.appendChild(bar);
     }
 

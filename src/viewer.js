@@ -116,32 +116,9 @@ function setupAgent(agent, dir) {
   throw new Error('unknown_agent');
 }
 
-// One-click terminal handoff: open the OS terminal at a folder. If
-// OLCHIPANEL_AGENT_CMD is set (e.g. "claude" or "codex"), launch the agent
-// there directly — zero-typing resume. Best-effort, never fatal.
-function openTerminalAt(cwd) {
-  const detached = { detached: true, stdio: 'ignore' };
-  const agent = (process.env.OLCHIPANEL_AGENT_CMD || '').trim();
-  try {
-    if (process.platform === 'win32') {
-      const inner = agent
-        ? `Set-Location -LiteralPath '${cwd.replace(/'/g, "''")}'; ${agent}`
-        : `Set-Location -LiteralPath '${cwd.replace(/'/g, "''")}'`;
-      // prefer Windows Terminal, fall back to a plain PowerShell window
-      const p = spawn('wt', ['-d', cwd, 'powershell', '-NoExit', '-Command', inner], detached);
-      p.on('error', () => {
-        try { spawn('cmd', ['/c', 'start', 'powershell', '-NoExit', '-Command', inner], detached).unref(); } catch (e) {}
-      });
-      p.unref();
-    } else if (process.platform === 'darwin') {
-      spawn('open', ['-a', 'Terminal', cwd], detached).unref();
-    } else {
-      const p = spawn('x-terminal-emulator', [`--working-directory=${cwd}`], detached);
-      p.on('error', () => { try { spawn('gnome-terminal', [`--working-directory=${cwd}`], detached).unref(); } catch (e) {} });
-      p.unref();
-    }
-  } catch (e) { /* opening a terminal is a convenience, never an error path */ }
-}
+// (The one-click "open terminal" endpoint was removed in 0.2.0 — the spawned
+// terminal landing outside the panel confused more than it helped. The resume
+// bar keeps the copy-prompt path.)
 
 // Open the panel. Default: an app window (no address bar; shows in the taskbar
 // like its own app) via Edge/Chrome. Falls back to the default browser as a tab.
@@ -210,29 +187,6 @@ function start(opts) {
       const MAX = 30;
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
       res.end(JSON.stringify({ sessions: visible.slice(0, MAX), total: all.length }));
-    } else if (url === '/api/open-terminal' && req.method === 'POST') {
-      // One-click terminal handoff: opens a terminal AT the session's project
-      // folder so the human just pastes the resume prompt. Never accepts a
-      // command from the request — the session id is looked up server-side and
-      // only a fixed launch template runs. Origin-checked (CSRF guard).
-      if (!sameOriginOk(req)) { res.writeHead(403); return res.end('{"ok":false,"error":"forbidden"}'); }
-      let body = '';
-      req.on('data', d => { body += d; if (body.length > 4096) req.destroy(); });
-      req.on('end', () => {
-        try {
-          const { id } = JSON.parse(body || '{}');
-          const s = state.readAllSessions().find(x => x.id === id);
-          if (!s || !s.cwd) { res.writeHead(404, { 'Content-Type': 'application/json' }); return res.end('{"ok":false,"error":"not_found"}'); }
-          const dir = resolveDir(s.cwd);
-          if (!dir) { res.writeHead(404, { 'Content-Type': 'application/json' }); return res.end('{"ok":false,"error":"cwd_missing"}'); }
-          openTerminalAt(dir);
-          res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end('{"ok":true}');
-        } catch (e) {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end('{"ok":false,"error":"bad_request"}');
-        }
-      });
     } else if (url === '/api/setup-agent' && req.method === 'POST') {
       // One-click MCP setup from the help screen. The request names an agent
       // (whitelisted) and a session (for the project folder) — config content
