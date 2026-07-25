@@ -2,7 +2,7 @@
 
 **A living situation board your AI agent draws for you — live.**
 
-![OlchiPanel demo — agent forks two fix strategies and you watch both develop live](assets/demo.gif)
+![OlchiPanel demo — agent forks two fix strategies and you watch both develop live](https://raw.githubusercontent.com/olchilab/olchipanel/main/assets/demo.gif)
 
 Your agent tells you what it's doing in a wall of text you'll never re-read.
 OlchiPanel gives it a canvas instead: a pinned goal, a journey map that **actually branches**
