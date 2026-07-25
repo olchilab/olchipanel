@@ -1,0 +1,16 @@
+{
+  "name": "olchipanel",
+  "version": "0.1.0",
+  "description": "A living situation board your AI agent draws for you — goal, journey map, branches, interrupts — live, agent-agnostic, via MCP.",
+  "bin": { "olchipanel": "./bin/olchipanel.js" },
+  "main": "./bin/olchipanel.js",
+  "type": "commonjs",
+  "engines": { "node": ">=18" },
+  "keywords": ["mcp", "agent", "claude", "cursor", "codex", "visualization", "panel", "situation-board"],
+  "repository": { "type": "git", "url": "git+https://github.com/olchilab/olchipanel.git" },
+  "homepage": "https://github.com/olchilab/olchipanel#readme",
+  "bugs": "https://github.com/olchilab/olchipanel/issues",
+  "author": "olchilab <orpa@olchilab.com>",
+  "license": "MIT",
+  "files": ["bin", "src", "public", "README.md", "LICENSE"]
+}

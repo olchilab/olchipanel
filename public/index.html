@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OlchiPanel</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2317324f'/%3E%3Cpath d='M12 9.5v13l10.5-6.5z' fill='%23b7d95b'/%3E%3C/svg%3E">
+<style>
+  /* ── OlchiPanel visual identity ──────────────────────────────────────
+     The product is a map an agent draws, so the brand colour is the
+     "you are here" pin: indigo marks the present — current step, active
+     tab, focus ring. Every other hue is strictly semantic. Surfaces stay
+     near-neutral so a panel you watch for hours never fights your editor. */
+  :root{
+    --brand:#5b5bd6; --brand-ink:#4b4bc4; --brand-soft:#efeffc; --brand-bd:#c9c9f2;
+    --paper:#f7f7f9; --card:#ffffff; --rail-bg:#f2f2f5; --hover:#e9e9ef;
+    --ink:#1a1d25; --ink-2:#454b59; --muted:#868c9a; --line:#e4e5ec;
+    --done:#3d8f66; --wait:#b07817; --urgent:#cc4a5c; --note:#8a6420;
+    --shadow:0 1px 2px rgba(20,24,40,.04), 0 10px 28px -14px rgba(20,24,40,.18);
+    --radius:9px;
+    --mono:ui-monospace,"SF Mono","Cascadia Mono","Segoe UI Mono","JetBrains Mono",Menlo,Consolas,monospace;
+  }
+  html[data-theme="dark"]{
+    --brand:#8b8bf4; --brand-ink:#a0a0f7; --brand-soft:#20203c; --brand-bd:#3d3d78;
+    --paper:#0e1014; --card:#171a21; --rail-bg:#121419; --hover:#1f232c;
+    --ink:#e5e8ee; --ink-2:#b4bac6; --muted:#848b99; --line:#252935;
+    --done:#5cbb8e; --wait:#cfa155; --urgent:#e26b7d; --note:#c99a52;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 12px 30px -14px rgba(0,0,0,.6);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%; background:var(--paper); color:var(--ink);
+    font-family:ui-sans-serif,-apple-system,"Segoe UI Variable Text","Segoe UI",
+      "Pretendard","Apple SD Gothic Neo","Malgun Gothic",Roboto,sans-serif;
+    font-size:15.5px; line-height:1.55; -webkit-font-smoothing:antialiased;
+    transition:background .15s, color .15s;}
+
+  /* ── top bar ── */
+  .topbar{height:56px; background:var(--card); color:var(--ink); display:flex; align-items:center;
+    justify-content:space-between; padding:0 20px; border-bottom:1px solid var(--line);
+    position:fixed; top:0; left:0; right:0; z-index:20;}
+  .brand{display:flex; align-items:center; gap:10px; font-weight:680; font-size:16px; letter-spacing:-.01em;}
+  .brand-mark{width:9px; height:9px; border-radius:2px; background:var(--brand); flex:none;
+    transform:rotate(45deg);}
+  .brand small{font-weight:400; color:var(--muted); font-size:12px; letter-spacing:0;}
+  .top-right{display:flex; align-items:center; gap:9px; font-size:12.5px; color:var(--muted);}
+  .live-dot{width:7px; height:7px; border-radius:50%; background:var(--urgent); display:inline-block; margin-right:6px;}
+  .live-dot.on{background:var(--done);}
+  .top-btn{border:1px solid var(--line); background:transparent; color:var(--ink-2);
+    border-radius:6px; padding:5px 10px; font-size:12.5px; cursor:pointer; font-family:inherit; font-weight:600;
+    line-height:1.2;}
+  .top-btn:hover{background:var(--hover); color:var(--ink);}
+
+  /* ── line-icon system: inherits currentColor, uniform stroke, no emoji ── */
+  .ic{width:17px; height:17px; flex:none; fill:none; stroke:currentColor; stroke-width:1.7;
+    stroke-linecap:round; stroke-linejoin:round;}
+  .ic-lg{width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:1.8;
+    stroke-linecap:round; stroke-linejoin:round;}
+
+  /* ── sidebar ── */
+  .rail{position:fixed; left:0; top:56px; bottom:0; width:262px; background:var(--rail-bg);
+    border-right:1px solid var(--line); padding:14px 14px; z-index:10;
+    display:flex; flex-direction:column; overflow-y:auto; transition:width .16s ease;}
+  .rail-head{display:flex; align-items:center; justify-content:space-between; margin:2px 2px 12px 4px;}
+  #railTabs{display:flex; flex-direction:column; gap:3px;}
+  .rail-title{font-size:10.5px; color:var(--muted); font-weight:700; letter-spacing:.13em;}
+  .rail-toggle{border:0; background:transparent; color:var(--muted); cursor:pointer;
+    padding:6px; border-radius:7px; display:grid; place-items:center; line-height:0;}
+  .rail-toggle:hover{background:var(--hover); color:var(--ink);}
+  body.rail-closed .rail-head{justify-content:center; margin-left:2px;}
+  .rail-group{font-size:9.5px; font-weight:700; letter-spacing:.11em; color:var(--muted);
+    margin:16px 0 5px 4px; display:flex; align-items:center; gap:7px;}
+  .rail-group:first-child{margin-top:0;}
+  .rail-group::after{content:""; flex:1; height:1px; background:var(--line);}
+  .panel-tab{border:0; background:transparent; border-radius:7px; padding:9px 11px;
+    border-left:2px solid transparent;
+    color:var(--ink-2); font-size:14.5px; font-weight:600; cursor:pointer; font-family:inherit;
+    display:flex; align-items:center; gap:11px; text-align:left; width:100%; position:relative;}
+  .panel-tab:hover{background:var(--hover);}
+  .panel-tab.active{background:var(--card); color:var(--ink); border-left-color:var(--brand);
+    box-shadow:var(--shadow);}
+  .panel-tab.dragover{box-shadow:0 -2px 0 0 var(--brand);}
+  .panel-tab .face{flex:none; display:none; place-items:center; width:34px; height:34px;
+    border-radius:7px; background:var(--hover); color:var(--ink-2); font-weight:700; font-size:14px; position:relative;}
+  .panel-tab.active .face{background:var(--brand); color:#fff;}
+  .face .alive{position:absolute; right:-3px; top:-3px; width:9px; height:9px; border-radius:50%;
+    background:var(--done); border:2px solid var(--rail-bg);}
+  .panel-tab .txt{min-width:0; overflow:hidden; flex:1;}
+  .panel-tab .sub{display:block; font-size:11px; color:var(--muted); font-weight:400; margin-top:2px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing:.01em;}
+  /* ended sessions recede, but the NAME must stay the loudest thing in a row */
+  .panel-tab .txt.dead{opacity:.82;}
+  .panel-tab .face.dead{opacity:.5;}
+  .live-inline{display:inline-block; width:7px; height:7px; border-radius:50%;
+    background:var(--done); margin-left:8px; vertical-align:middle;}
+  .rail-more{font-size:11px; color:var(--muted); text-align:center; padding:14px 6px 6px;}
+  /* dead-session tuck-away: always visible on dead rows (hover-only was undiscoverable) */
+  .tab-wrap{position:relative;}
+  .tab-wrap .panel-tab{padding-right:30px;} /* room so the ✕ never covers text */
+  .tab-x{position:absolute; right:5px; top:50%; transform:translateY(-50%);
+    border:0; background:transparent; color:var(--muted); opacity:.55; cursor:pointer;
+    width:24px; height:24px; border-radius:6px; font-size:13px; line-height:1;
+    display:grid; place-items:center;}
+  .tab-x:hover{background:var(--hover); color:var(--urgent); opacity:1;}
+  body.rail-closed .tab-x{display:none !important;}
+
+  /* help modal */
+  .help-overlay{position:fixed; inset:0; background:rgba(10,12,20,.45); z-index:50;
+    display:none; align-items:flex-start; justify-content:center; padding:6vh 16px;}
+  .help-overlay.on{display:flex;}
+  .help-box{background:var(--card); border:1px solid var(--line); border-radius:12px;
+    box-shadow:var(--shadow); max-width:680px; width:100%; max-height:84vh; overflow-y:auto;
+    padding:26px 28px;}
+  .help-box h2{font-size:19px; font-weight:700; letter-spacing:-.01em; margin-bottom:4px;
+    display:flex; justify-content:space-between; align-items:center;}
+  .help-close{border:1px solid var(--line); background:transparent; color:var(--ink-2);
+    border-radius:6px; width:28px; height:28px; cursor:pointer; font-size:14px;}
+  .help-close:hover{background:var(--hover);}
+  .help-box h3{font-size:13.5px; font-weight:700; color:var(--brand-ink); margin:20px 0 8px;
+    text-transform:uppercase; letter-spacing:.06em;}
+  .help-box p{font-size:14px; color:var(--ink-2); margin-bottom:8px;}
+  .help-box table{width:100%; border-collapse:collapse; font-size:13.5px;}
+  .help-box td{padding:5px 8px 5px 0; vertical-align:top; border-bottom:1px solid var(--line); color:var(--ink-2);}
+  .help-box td:first-child{font-family:var(--mono); font-size:12.5px; white-space:nowrap; color:var(--ink); font-weight:600;}
+  .help-box code{font-family:var(--mono); font-size:12.5px; background:var(--hover); border-radius:5px; padding:1px 6px;}
+  .help-box pre{font-family:var(--mono); font-size:12px; background:var(--hover); border-radius:8px;
+    padding:12px 14px; overflow-x:auto; margin:6px 0 10px; line-height:1.5; position:relative;}
+  .pre-copy{position:absolute; top:7px; right:8px; border:1px solid var(--line); background:var(--card);
+    color:var(--ink-2); border-radius:5px; padding:2px 9px; font-size:11px; font-weight:700;
+    cursor:pointer; font-family:inherit;}
+  .pre-copy:hover{background:var(--brand-soft); color:var(--brand-ink);}
+  /* vendor identity: a hairline tag, never a colour-only signal */
+  .vendor-tag{font-size:9.5px; font-weight:700; letter-spacing:.06em; margin-right:5px; opacity:.72;}
+  .panel-tab.active .vendor-tag{opacity:1;}
+  .v-claude .vendor-tag{color:#c96442;}
+  .v-codex .vendor-tag{color:#1a8f70;}
+  .v-cursor .vendor-tag{color:#7a6ae0;}
+  .v-gemini .vendor-tag{color:#3d7fe0;}
+  .v-other .vendor-tag{color:var(--muted);}
+
+  /* collapsed rail */
+  body.rail-closed .rail{width:66px; padding:18px 10px;}
+  body.rail-closed .panel-tab .face{display:grid;}
+  body.rail-closed .panel-tab .txt, body.rail-closed .rail-title,
+  body.rail-closed .rail-more{display:none;}
+  body.rail-closed .rail-group{font-size:0; margin:10px 0 4px;}
+  body.rail-closed .rail-group::after{background:var(--line);}
+  body.rail-closed .panel-tab{justify-content:center; padding:7px 4px; border-left-color:transparent;}
+  body.rail-closed .panel-tab.active{background:transparent; box-shadow:none;}
+  body.rail-closed .workspace{margin-left:66px;}
+
+  /* ── workspace ── */
+  .workspace{margin-left:262px; padding:82px 32px 40px; max-width:1180px; transition:margin-left .16s ease;}
+  .goalbar{font-size:22px; font-weight:660; line-height:1.35; letter-spacing:-.015em;
+    color:var(--ink); overflow-wrap:anywhere; margin:0 0 9px; padding:0 0 0 15px;
+    border-left:3px solid var(--brand);}
+  .stamp{color:var(--muted); font-size:12.5px; margin:0 0 24px 18px;
+    display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+  .stamp .sess-live{color:var(--done); font-weight:600;}
+
+  /* ended-session resume bar: how to carry this panel on */
+  .resume-bar{display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    background:var(--brand-soft); border:1px solid var(--brand-bd); border-radius:9px;
+    padding:10px 14px; margin:-12px 0 22px; font-size:13.5px; color:var(--ink-2);}
+  .resume-bar b{color:var(--brand-ink);}
+  .resume-bar code{font-family:var(--mono); font-size:12px; background:var(--card);
+    border-radius:5px; padding:1px 7px; overflow-wrap:anywhere;}
+  .resume-copy{border:1px solid var(--brand-bd); background:var(--card); color:var(--brand-ink);
+    border-radius:6px; padding:5px 12px; font-size:12.5px; font-weight:700; cursor:pointer;
+    font-family:inherit; flex:none;}
+  .resume-copy:hover{background:var(--brand-soft);}
+
+  #toast{position:fixed; bottom:24px; left:50%; transform:translate(-50%,12px);
+    background:var(--ink); color:var(--paper); padding:9px 16px; border-radius:8px;
+    font-size:13px; opacity:0; transition:.18s; pointer-events:none; z-index:99;}
+  #toast.show{opacity:1; transform:translate(-50%,0);}
+
+  /* tabs sit on the card's top edge */
+  .tabs{display:flex; gap:4px; flex-wrap:wrap; padding:0 4px; margin-bottom:-1px; position:relative; z-index:1;}
+  .tab{padding:9px 13px 10px; background:none; border:0; border-bottom:2px solid transparent;
+    color:var(--muted); cursor:pointer; font-size:14px; font-weight:600; user-select:none;
+    display:flex; align-items:center; gap:7px; font-family:inherit; border-radius:6px 6px 0 0;}
+  .tab .ic{width:16px; height:16px; opacity:.85;}
+  .tab:hover{color:var(--ink); background:var(--hover);}
+  .tab.on{color:var(--brand-ink); border-bottom-color:var(--brand); background:none;}
+  .tab.on .ic{opacity:1;}
+  .tab:focus-visible, .panel-tab:focus-visible, .top-btn:focus-visible, .rail-toggle:focus-visible{
+    outline:2px solid var(--brand); outline-offset:2px;}
+  .tab .badge{background:var(--hover); color:var(--muted); border-radius:99px; font-size:10.5px;
+    padding:1px 7px; font-weight:700; line-height:1.5; font-variant-numeric:tabular-nums;}
+  .tab.on .badge{background:var(--brand); color:#fff;}
+  .tab .badge:empty{display:none;}
+  .pane{display:none; background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:24px 26px; min-height:340px;}
+  .pane.on{display:block;}
+  .legend{font-size:12px; color:var(--muted); margin-bottom:20px;}
+
+  /* ── journey tree ── */
+  .tree details details{margin-left:11px; border-left:1px solid var(--line); padding-left:16px;}
+  .tree summary{list-style:none; cursor:pointer; display:flex; align-items:center; gap:6px;
+    padding:2px 0; width:fit-content; flex-wrap:wrap;}
+  .tree summary::-webkit-details-marker{display:none;}
+  /* fold caret: a real, clickable target — was a 10px near-invisible glyph */
+  .tree summary::before{content:""; flex:none; width:22px; height:22px; margin-left:-4px;
+    border-radius:6px; background:no-repeat center/13px
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23868c9a' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    transition:transform .13s, background-color .12s;}
+  .tree summary:hover::before{background-color:var(--hover);}
+  .tree details:not([open]) > summary::before{transform:rotate(-90deg);}
+  .tree details.leaf > summary::before{background-image:none; width:14px; height:auto; margin-left:0;}
+  .tree details.leaf > summary:hover::before{background-color:transparent;}
+  .tree .note{font-size:12.5px; color:var(--note); font-style:italic;}
+  /* status reads from glyph + weight; only "now" gets a surface */
+  .pill{padding:4px 10px; border-radius:7px; border:1px solid transparent; background:none;
+    color:var(--ink); font-size:15px; white-space:nowrap; max-width:640px; overflow:hidden; text-overflow:ellipsis;}
+  .pill.done{color:var(--muted);}
+  .pill.done::before{content:"✓ "; color:var(--done);}
+  .pill.now{background:var(--brand-soft); border-color:var(--brand-bd); color:var(--brand-ink); font-weight:680;}
+  .pill.now::before{content:"▶ "; color:var(--brand);}
+  .pill.next{color:var(--ink-2);}
+  .pill.next::before{content:"↩ "; color:var(--wait);}
+  .pill.pause{color:var(--muted);}
+  .pill.pause::before{content:"⏸ "; color:var(--muted);}
+  /* fork = active branch (loud); side-quest = parked, folded, quiet */
+  .pill.branch{font-weight:680;}
+  .pill.branch:not(.done):not(.now):not(.next):not(.pause){color:var(--ink);}
+  .pill.branch::after{content:" ⑂"; color:var(--wait); font-weight:700;}
+  .pill.branch.side{font-weight:600; color:var(--muted); opacity:.9;}
+  .pill.branch.side::after{color:var(--muted); opacity:.7;}
+  .branch-kind{font-size:10px; font-weight:700; letter-spacing:.05em; color:var(--muted);
+    background:var(--hover); border-radius:99px; padding:1px 7px; text-transform:uppercase;}
+
+  /* ── shared item language: stack / decisions / needs / dead-ends ── */
+  .item{border-left:2px solid var(--line); padding:2px 0 3px 15px; margin-bottom:16px;}
+  .item-head{display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;}
+  .item-title{font-size:15px; font-weight:600; line-height:1.4; overflow-wrap:anywhere;}
+  .item-sub{font-size:13.5px; color:var(--ink-2); margin-top:3px; overflow-wrap:anywhere;}
+  .item-time{font-size:11.5px; color:var(--muted); margin-top:3px; font-variant-numeric:tabular-nums;}
+  .item .glyph{flex:none; font-weight:700; font-size:14px; width:18px; text-align:center;}
+  .g-done{color:var(--done);} .g-warn{color:var(--wait);} .g-urgent{color:var(--urgent);}
+  .g-brand{color:var(--brand);} .g-mute{color:var(--muted);}
+  .item-tag{flex:none; font-size:10px; font-weight:700; letter-spacing:.04em; padding:1.5px 8px;
+    border-radius:99px; text-transform:uppercase; line-height:1.5; align-self:center;}
+  .tag-warm{background:var(--brand-soft); color:var(--wait);}
+  .tag-urgent{background:var(--urgent); color:#fff;}
+
+  /* stack: numbered LIFO, top is 'resume first' */
+  .stk-item .idx{flex:none; font-size:15px; color:var(--muted); font-weight:700;}
+  .stk-item.top{border-left-color:var(--wait);}
+  .stk-item.top .idx{color:var(--wait);}
+  /* needs: hot items are your action queue */
+  .need-item.hot{border-left-color:var(--urgent); background:linear-gradient(90deg,var(--brand-soft),transparent 60%);
+    background:color-mix(in srgb, var(--urgent) 6%, transparent); border-radius:0 6px 6px 0;}
+  .tag-warm{background:var(--brand-soft);}
+  .need-item.hot .item-title{font-weight:680;}
+  /* decisions: assumptions are visibly not-confirmed */
+  .dec-item.assumption{border-left-color:var(--wait);
+    background:color-mix(in srgb, var(--wait) 6%, transparent); border-radius:0 6px 6px 0;}
+  /* dead ends: what you tried is struck, the reason follows */
+  .deadend-item .strike{text-decoration:line-through; text-decoration-color:var(--muted); color:var(--ink-2);}
+  .deadend-item .item-sub{color:var(--ink);}
+
+  /* friendlier empty state */
+  .empty-lite{padding:34px 6px; text-align:left; border-left:2px solid var(--line);}
+  .empty-lite-t{font-size:15px; font-weight:640; color:var(--ink-2); margin-bottom:5px;}
+  .empty-lite .cap{font-size:13.5px;}
+
+  ul{list-style:none;}
+  li{margin-bottom:9px; padding-left:16px; position:relative; overflow-wrap:anywhere; font-size:15px;}
+  li::before{content:"·"; position:absolute; left:4px; color:var(--muted); opacity:.55;}
+  li.hot{font-weight:640;}
+  li.hot::before{content:"▶"; color:var(--urgent); font-size:10px; top:5px;}
+  li .mono, .change-row .mono{font-family:var(--mono); font-size:13.5px; font-weight:600; color:var(--ink);
+    background:var(--hover); border-radius:5px; padding:1.5px 7px;}
+
+  /* changes: day groups + per-row time, kept quiet */
+  .day-group{font-size:10.5px; font-weight:700; letter-spacing:.08em; color:var(--muted);
+    text-transform:uppercase; margin:18px 0 8px; display:flex; align-items:center; gap:9px;}
+  .day-group:first-child{margin-top:2px;}
+  .day-group::after{content:""; flex:1; height:1px; background:var(--line);}
+  .change-row{display:flex; align-items:baseline; gap:9px; margin-bottom:8px; overflow-wrap:anywhere; font-size:15px;}
+  .change-time{font-family:var(--mono); font-size:12px; color:var(--muted); flex:none;
+    font-variant-numeric:tabular-nums; padding-top:1px;}
+  .change-sum{color:var(--ink-2);}
+  .term{margin-bottom:14px;}
+  .term b{color:var(--brand-ink);}
+  .term .ex{color:var(--muted); font-size:13.5px; font-style:italic; display:block; margin-top:2px;}
+  .cap{color:var(--muted); font-size:13px;}
+  .empty{padding:52px 20px; text-align:center; color:var(--muted); font-size:14px;}
+  .empty b{display:block; font-size:16px; margin-bottom:7px; color:var(--ink); font-weight:640;}
+
+  /* narrow screens: collapsed is only the INITIAL default (set by JS) —
+     the user's toggle always wins, so no media query forces the rail shut */
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand"><span class="brand-mark" aria-hidden="true"></span>OlchiPanel <small id="tSubtitle"></small></div>
+  <div class="top-right">
+    <span role="status" id="connStatus"><span class="live-dot" id="livedot" aria-hidden="true"></span><span id="livetxt"></span></span>
+    <button class="top-btn" id="helpBtn" aria-label="Help">?</button>
+    <button class="top-btn" id="langBtn" aria-label="Switch language"></button>
+    <button class="top-btn" id="themeBtn" aria-label="Toggle color theme">◐</button>
+  </div>
+</header>
+
+<div class="help-overlay" id="helpOverlay" role="dialog" aria-modal="true" aria-label="Help">
+  <div class="help-box" id="helpBox"></div>
+</div>
+
+<nav class="rail" aria-labelledby="tSessions">
+  <div class="rail-head">
+    <span class="rail-title" id="tSessions"></span>
+    <button class="rail-toggle" id="railToggle" aria-label="Toggle sidebar" aria-expanded="true">
+      <svg class="ic-lg" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M9.5 4v16"/></svg>
+    </button>
+  </div>
+  <div id="railTabs"></div>
+  <div class="rail-more" id="railMore"></div>
+</nav>
+
+<main class="workspace">
+  <h1 class="goalbar" id="goalbar"></h1>
+  <div class="stamp" id="substamp"></div>
+  <div id="resumebar"></div>
+  <div id="toast" role="status"></div>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" data-pane="map" aria-controls="map"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg><span id="tTabMap"></span></button>
+    <button class="tab" role="tab" data-pane="stack" aria-controls="stack"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 3 8l9 5 9-5-9-5z"/><path d="M3 13l9 5 9-5"/></svg><span id="tTabStack"></span> <span class="badge" id="bStack"></span></button>
+    <button class="tab" role="tab" data-pane="changes" aria-controls="changes"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H4a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-8L9 4z"/></svg><span id="tTabChanges"></span> <span class="badge" id="bChanges"></span></button>
+    <button class="tab" role="tab" data-pane="dec" aria-controls="dec"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span id="tTabDec"></span> <span class="badge" id="bDec"></span></button>
+    <button class="tab" role="tab" data-pane="needs" aria-controls="needs"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span id="tTabNeeds"></span> <span class="badge" id="bNeeds"></span></button>
+    <button class="tab" role="tab" data-pane="deadends" aria-controls="deadends"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg><span id="tTabDeadends"></span> <span class="badge" id="bDeadends"></span></button>
+  </div>
+
+  <div class="pane" id="map" role="tabpanel">
+    <div class="legend" id="tLegendMap"></div>
+    <div class="tree" id="vtree"></div>
+  </div>
+  <div class="pane" id="stack" role="tabpanel">
+    <div class="legend" id="tLegendStack"></div>
+    <div id="stacklist"></div>
+  </div>
+  <div class="pane" id="changes" role="tabpanel">
+    <div class="legend" id="tLegendChanges"></div>
+    <div id="changelist"></div>
+  </div>
+  <div class="pane" id="dec" role="tabpanel">
+    <div class="legend" id="tLegendDec"></div>
+    <div id="declist"></div>
+  </div>
+  <div class="pane" id="needs" role="tabpanel">
+    <div class="legend" id="tLegendNeeds"></div>
+    <div id="needslist"></div>
+  </div>
+  <div class="pane" id="deadends" role="tabpanel">
+    <div class="legend" id="tLegendDeadends"></div>
+    <div id="deadendlist"></div>
+  </div>
+</main>
+
+<script>
+(function(){
+  // ---------- i18n (UI chrome only — agent-written content is never translated) ----------
+  var STR = {
+    en: {
+      subtitle: "your agent's live situation board",
+      sessions: 'SESSIONS',
+      tabMap: 'Map', tabStack: 'Stack', tabChanges: 'Changes', tabDec: 'Decisions',
+      tabNeeds: 'Needs you', tabDeadends: 'Dead ends',
+      legendMap: '✓ done · ▶ now · ↩ next · ⑂ fork (active) · dim ⑂ side-quest (parked) · ▾ fold',
+      sideQuest: 'side',
+      legendStack: 'When the human changes topic, interrupted work lands here with its resume point (top = resume first).',
+      legendChanges: 'Everything the agent touched — files, commands, commits — so you never re-read the transcript to find out.',
+      legendDec: 'Decisions the agent made, plus the assumptions it made silently (⚠) — so nothing was decided behind your back.',
+      legendNeeds: 'Questions and approvals the agent is waiting on. This is your inbox from the agent.',
+      legendDeadends: 'Paths tried and failed, with why — so nobody walks them twice.',
+      connecting: 'connecting…', live: 'live', reconnecting: 'reconnecting…',
+      noSessions: 'No sessions yet.',
+      olderOnDisk: function(n){ return '+' + n + ' older sessions on disk'; },
+      connectHint: 'Connect an agent — the panel bakes itself.',
+      emptyTitle: 'Nothing here yet',
+      emptyBody: 'Add olchipanel to any MCP-capable agent and give it work. Its situation appears here live.',
+      noGoal: '(no goal set yet)',
+      noMapTitle: 'No journey map yet',
+      noMapBody: 'The agent will draw its plan here as it works.',
+      started: 'started', updated: 'updated',
+      sessLive: '· ● live', sessEnded: '· session ended',
+      stackEmptyT: 'Nothing set aside', stackEmpty: 'When you change topic mid-task, the agent parks its work here with a resume point.',
+      changesEmpty: 'Nothing touched yet.',
+      decEmptyT: 'No decisions yet', decEmpty: 'Choices the agent makes — and assumptions it makes without asking — show up here.',
+      needsEmptyT: "You're all clear", needsEmpty: 'Nothing is waiting on you. Questions, approvals and blockers land here.',
+      deadendsEmptyT: 'No dead ends', deadendsEmpty: 'Failed attempts land here with the reason, so no path is tried twice.',
+      assumption: 'assumption', resumeFirst: 'resume first', actionNow: 'needs you',
+      archiveRow: 'Archive this panel (it leaves the board; auto-cleanup in 7 days)',
+      resumeHow: 'To carry this panel on: open your agent in',
+      resumeHow2: 'and paste the prompt —',
+      resumeCopy: 'Copy prompt',
+      resumeCopied: 'Copied — paste it to your agent in that folder',
+      resumePrompt: "Resume this project's previous OlchiPanel — call resume_project to inherit it, then continue the work.",
+      openTerminal: 'Open terminal here',
+      terminalOpened: 'Terminal opened at the project — start your agent and paste (Ctrl+V)',
+      terminalFailed: 'Could not open a terminal — open one manually at the folder above',
+      setupDone: function(f){ return 'Added — ' + f; },
+      setupAlready: function(f){ return 'Already set up — ' + f; },
+      setupFailed: 'Could not write the config: ',
+      setupNoProject: 'Select a session first — setup targets its project folder',
+      copyBtn: 'copy', copiedShort: 'Copied',
+      whyFailed: 'why: ',
+      resume: '↩ resume: ', pushed: 'pushed: ',
+      justNow: 'just now',
+      ago: function(n, unit){ return n + unit + ' ago'; },
+      today: 'Today', yesterday: 'Yesterday',
+    },
+    ko: {
+      subtitle: '에이전트가 그리는 라이브 상황판',
+      sessions: '세션',
+      tabMap: '지도', tabStack: '스택', tabChanges: '변경', tabDec: '결정',
+      tabNeeds: '요청', tabDeadends: '막힌 길',
+      legendMap: '✓ 완료 · ▶ 지금 여기 · ↩ 다음 · ⑂ 분기(진행) · 흐린 ⑂ 샛길(보류) · ▾ 접기',
+      sideQuest: '샛길',
+      legendStack: '대화 주제가 바뀌면 하던 일이 재개점과 함께 여기 쌓입니다 (위 = 먼저 재개).',
+      legendChanges: '에이전트가 건드린 모든 것 — 파일·명령·커밋. 트랜스크립트를 다시 뒤질 필요가 없도록.',
+      legendDec: '에이전트가 내린 결정 + 말없이 세운 가정(⚠) — 당신 모르게 정해진 게 없도록.',
+      legendNeeds: '에이전트가 당신에게 기다리는 질문·승인. 에이전트가 보낸 받은편지함입니다.',
+      legendDeadends: '시도했다 실패한 길과 그 이유 — 같은 길을 두 번 걷지 않도록.',
+      connecting: '연결 중…', live: '라이브', reconnecting: '재연결 중…',
+      noSessions: '아직 세션이 없습니다.',
+      olderOnDisk: function(n){ return '이전 세션 +' + n + '개 (디스크)'; },
+      connectHint: '에이전트를 연결하면 — 상황판이 저절로 구워집니다.',
+      emptyTitle: '아직 비어 있어요',
+      emptyBody: 'MCP를 지원하는 아무 에이전트에 olchipanel을 붙이고 일을 시키면, 상황이 여기 라이브로 나타납니다.',
+      noGoal: '(아직 목표가 없음)',
+      noMapTitle: '아직 여정 지도가 없음',
+      noMapBody: '에이전트가 일하면서 계획을 여기에 그립니다.',
+      started: '시작', updated: '갱신',
+      sessLive: '· ● 라이브', sessEnded: '· 세션 종료됨',
+      stackEmptyT: '밀쳐둔 일 없음', stackEmpty: '작업 중 주제를 바꾸면, 에이전트가 하던 일을 재개점과 함께 여기 세워둡니다.',
+      changesEmpty: '아직 건드린 것 없음.',
+      decEmptyT: '아직 결정 없음', decEmpty: '에이전트가 내리는 선택 — 그리고 묻지 않고 세운 가정 — 이 여기 나타납니다.',
+      needsEmptyT: '처리할 게 없어요', needsEmpty: '당신을 기다리는 게 없습니다. 질문·승인·블로커가 여기 도착합니다.',
+      deadendsEmptyT: '막힌 길 없음', deadendsEmpty: '실패한 시도가 이유와 함께 여기 쌓여, 같은 길을 두 번 걷지 않게 합니다.',
+      assumption: '가정', resumeFirst: '먼저 재개', actionNow: '확인 필요',
+      archiveRow: '이 패널 보관 (보드에서 사라지고 7일 뒤 자동 정리)',
+      resumeHow: '이 패널을 이어가려면: 에이전트를 이 폴더에서 열고',
+      resumeHow2: '프롬프트를 붙여넣으세요 —',
+      resumeCopy: '프롬프트 복사',
+      resumeCopied: '복사됨 — 그 폴더에서 에이전트에 붙여넣으세요',
+      resumePrompt: '이 프로젝트의 이전 올치패널을 이어받아줘 — resume_project를 호출해 인수인계 받고, 이어서 진행해.',
+      openTerminal: '여기서 터미널 열기',
+      terminalOpened: '프로젝트에서 터미널이 열렸어요 — 에이전트 켜고 붙여넣기(Ctrl+V)',
+      terminalFailed: '터미널을 못 열었어요 — 위 폴더에서 직접 열어주세요',
+      setupDone: function(f){ return '추가 완료 — ' + f; },
+      setupAlready: function(f){ return '이미 설정돼 있어요 — ' + f; },
+      setupFailed: '설정을 못 썼어요: ',
+      setupNoProject: '먼저 세션을 선택하세요 — 그 프로젝트 폴더에 추가됩니다',
+      copyBtn: '복사', copiedShort: '복사됨',
+      whyFailed: '이유: ',
+      resume: '↩ 재개점: ', pushed: '넣은 때: ',
+      justNow: '방금',
+      ago: function(n, unit){ return n + unit + ' 전'; },
+      today: '오늘', yesterday: '어제',
+    },
+  };
+  var lang = 'en';
+  try { lang = localStorage.getItem('olchipanel.lang') ||
+    ((navigator.language || '').toLowerCase().indexOf('ko') === 0 ? 'ko' : 'en'); } catch(e){}
+  function T(k){ return STR[lang][k]; }
+
+  var sessions = [];
+  var total = 0;
+  var current = null;
+  var openState = {}; // nodeId -> open? (preserved across live refreshes)
+
+  function el(tag, cls, text){
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+  function showToast(msg){
+    var t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(t._t); t._t = setTimeout(function(){ t.classList.remove('show'); }, 2200);
+  }
+  function fallbackCopy(txt){
+    var ta = document.createElement('textarea');
+    ta.value = txt; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch(e){}
+    document.body.removeChild(ta);
+  }
+  function copyText(txt, toastMsg){
+    function done(){ if (toastMsg) showToast(toastMsg); }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(done, function(){ fallbackCopy(txt); done(); });
+    } else { fallbackCopy(txt); done(); }
+  }
+
+  // static chrome strings (re-applied on language switch)
+  function applyChrome(){
+    document.documentElement.lang = lang;
+    document.getElementById('tSubtitle').textContent = T('subtitle');
+    document.getElementById('tSessions').textContent = T('sessions');
+    document.getElementById('tTabMap').textContent = T('tabMap');
+    document.getElementById('tTabStack').textContent = T('tabStack');
+    document.getElementById('tTabChanges').textContent = T('tabChanges');
+    document.getElementById('tTabDec').textContent = T('tabDec');
+    document.getElementById('tTabNeeds').textContent = T('tabNeeds');
+    document.getElementById('tTabDeadends').textContent = T('tabDeadends');
+    document.getElementById('tLegendMap').textContent = T('legendMap');
+    document.getElementById('tLegendStack').textContent = T('legendStack');
+    document.getElementById('tLegendChanges').textContent = T('legendChanges');
+    document.getElementById('tLegendDec').textContent = T('legendDec');
+    document.getElementById('tLegendNeeds').textContent = T('legendNeeds');
+    document.getElementById('tLegendDeadends').textContent = T('legendDeadends');
+    document.getElementById('langBtn').textContent = lang === 'ko' ? 'EN' : '한';
+  }
+  document.getElementById('langBtn').addEventListener('click', function(){
+    lang = lang === 'ko' ? 'en' : 'ko';
+    try { localStorage.setItem('olchipanel.lang', lang); } catch(e){}
+    applyChrome(); render();
+  });
+
+  // ---------- help (self-documenting panel: static authored HTML, no user data) ----------
+  var HELP = {
+    ko: '<h2>올치패널 사용법 <button class="help-close" id="helpClose" aria-label="닫기">✕</button></h2>'
+      + '<p>에이전트가 일하면서 스스로 그리는 라이브 상황판입니다. 사람은 보기만 하면 됩니다.</p>'
+      + '<h3>시작하기 — 에이전트당 명령 한 줄</h3>'
+      + '<p><b>프로젝트 폴더의 터미널</b>에 붙여넣으면 알아서 등록됩니다. 또는 <b>바로 추가</b> 버튼 — 선택된 세션의 프로젝트에 뷰어가 설정을 직접 써 줍니다.</p>'
+      + '<p><b>Claude Code</b> <button class="resume-copy setup-run" data-agent="claude">바로 추가</button></p>'
+      + '<pre>claude mcp add olchipanel -s project -- npx -y olchipanel</pre>'
+      + '<p><b>Codex CLI</b> <button class="resume-copy setup-run" data-agent="codex">바로 추가</button></p>'
+      + '<pre>codex mcp add olchipanel -- npx -y olchipanel</pre>'
+      + '<p><b>Cursor</b> (CLI 없음 — 버튼이 <code>.cursor/mcp.json</code>을 써 주거나, 아래를 직접 붙여넣기) <button class="resume-copy setup-run" data-agent="cursor">바로 추가</button></p>'
+      + '<pre>{ "mcpServers": { "olchipanel": {\n  "command": "npx", "args": ["-y", "olchipanel"] } } }</pre>'
+      + '<p>+ 룰파일에 한 줄 (Claude=<code>CLAUDE.md</code> · Codex=<code>AGENTS.md</code> · Cursor=<code>.cursorrules</code>):</p>'
+      + '<pre>작업하며 OlchiPanel 상황판을 유지하라 — 이전 패널이 있으면 resume_project부터.</pre>'
+      + '<p>이 한 줄이 있어야 에이전트가 시키지 않아도 굽습니다(실측).</p>'
+      + '<h3>탭</h3>'
+      + '<table>'
+      + '<tr><td>지도</td><td>플랜(트리)과 해결 순서. ▶ 지금 여기 · ⑂ 분기(진행) · 흐린 ⑂ 샛길(보류)</td></tr>'
+      + '<tr><td>스택</td><td>주제를 돌렸을 때 밀쳐둔 일 + 재개점 (위=먼저 재개)</td></tr>'
+      + '<tr><td>변경</td><td>건드린 파일·명령·커밋 — 트랜스크립트 재독 대체. 날짜·시간별</td></tr>'
+      + '<tr><td>결정</td><td>내린 결정 ✓ + 말없이 세운 가정 ⚠</td></tr>'
+      + '<tr><td>요청</td><td>에이전트가 당신에게 기다리는 것 — 받은편지함. 빨강=급함</td></tr>'
+      + '<tr><td>막힌 길</td><td>시도했다 실패한 길과 이유 — 같은 길 두 번 안 걷게</td></tr>'
+      + '</table>'
+      + '<h3>세션과 프로젝트 기억</h3>'
+      + '<p>패널은 <b>프로젝트(폴더)</b> 소속입니다. 그 폴더에서 새 에이전트를 켜면 접속 순간 "직전 패널 있음" 안내를 받고, <code>resume_project</code>로 통째로 이어받습니다(옛 패널은 자동 보관). 죽은 세션은 행에 마우스를 올려 <b>✕</b>로 보관할 수 있고, 보관된 패널은 7일 뒤 자동 정리됩니다.</p>'
+      + '<h3>에이전트 명령어(도구) 목록</h3>'
+      + '<table>'
+      + '<tr><td>resume_project</td><td>직전 패널을 기억으로 상속 (있으면 가장 먼저)</td></tr>'
+      + '<tr><td>name_session</td><td>세션 이름 붙이기 ("이 세션은 마스터로 불러")</td></tr>'
+      + '<tr><td>set_goal</td><td>북극성 목표 한 문장</td></tr>'
+      + '<tr><td>add_step</td><td>여정에 단계 추가. branch+weight(fork/side)로 분기 크기</td></tr>'
+      + '<tr><td>set_status</td><td>단계 상태 갱신 (now/next/done/pause)</td></tr>'
+      + '<tr><td>push/pop_interrupt</td><td>하던 일 밀쳐두기 / 재개</td></tr>'
+      + '<tr><td>log_change</td><td>파일·명령·커밋 기록</td></tr>'
+      + '<tr><td>add_decision</td><td>결정 또는 가정(kind=assumption) 기록</td></tr>'
+      + '<tr><td>log_deadend</td><td>실패한 시도 + 이유</td></tr>'
+      + '<tr><td>need_human</td><td>사람에게 필요한 것 목록 (hot=급함)</td></tr>'
+      + '<tr><td>get_panel</td><td>현재 패널 상태·뷰어 주소 읽기</td></tr>'
+      + '</table>'
+      + '<h3>터미널 명령</h3>'
+      + '<table>'
+      + '<tr><td>npx olchipanel open</td><td>패널 창 열기 (떠 있으면 재사용, 죽었으면 새로)</td></tr>'
+      + '<tr><td>npx olchipanel viewer</td><td>뷰어만 실행 + 창 자동 오픈</td></tr>'
+      + '<tr><td>npx olchipanel hook</td><td>(선택) Claude Code 훅 — 변경 탭 자동 기록</td></tr>'
+      + '</table>',
+    en: '<h2>How to use OlchiPanel <button class="help-close" id="helpClose" aria-label="Close">✕</button></h2>'
+      + '<p>A live situation board your agent draws for itself while it works. You just watch.</p>'
+      + '<h3>Setup — one command per agent</h3>'
+      + '<p>Paste into a terminal <b>in your project folder</b> — it registers olchipanel by itself. Or hit <b>Add for me</b>: the viewer writes the config for the selected session\'s project.</p>'
+      + '<p><b>Claude Code</b> <button class="resume-copy setup-run" data-agent="claude">Add for me</button></p>'
+      + '<pre>claude mcp add olchipanel -s project -- npx -y olchipanel</pre>'
+      + '<p><b>Codex CLI</b> <button class="resume-copy setup-run" data-agent="codex">Add for me</button></p>'
+      + '<pre>codex mcp add olchipanel -- npx -y olchipanel</pre>'
+      + '<p><b>Cursor</b> (no CLI — the button writes <code>.cursor/mcp.json</code>, or paste this there) <button class="resume-copy setup-run" data-agent="cursor">Add for me</button></p>'
+      + '<pre>{ "mcpServers": { "olchipanel": {\n  "command": "npx", "args": ["-y", "olchipanel"] } } }</pre>'
+      + '<p>+ one line in your rules file (Claude=<code>CLAUDE.md</code> · Codex=<code>AGENTS.md</code> · Cursor=<code>.cursorrules</code>):</p>'
+      + '<pre>Maintain your OlchiPanel situation board while you work — resume_project first if a previous panel exists.</pre>'
+      + '<p>Measured: without this line, agents ignore the board.</p>'
+      + '<h3>Tabs</h3>'
+      + '<table>'
+      + '<tr><td>Map</td><td>the plan (tree) and solve order. ▶ now · ⑂ fork (active) · dim ⑂ side-quest (parked)</td></tr>'
+      + '<tr><td>Stack</td><td>work set aside on topic change, with resume points (top = first)</td></tr>'
+      + '<tr><td>Changes</td><td>files/commands/commits touched — instead of re-reading the transcript</td></tr>'
+      + '<tr><td>Decisions</td><td>choices made ✓ and silent assumptions ⚠</td></tr>'
+      + '<tr><td>Needs you</td><td>your inbox from the agent. red = urgent</td></tr>'
+      + '<tr><td>Dead ends</td><td>tried & failed, with why — no path walked twice</td></tr>'
+      + '</table>'
+      + '<h3>Sessions & project memory</h3>'
+      + '<p>Panels belong to a <b>project</b> (folder). Start a new agent there and it is told a previous panel exists; <code>resume_project</code> inherits it wholesale (the old one is archived). Hover a dead session row and hit <b>✕</b> to tuck it away; archived panels are cleaned up after 7 days.</p>'
+      + '<h3>Agent tools</h3>'
+      + '<table>'
+      + '<tr><td>resume_project</td><td>inherit the previous panel as memory (call first if one exists)</td></tr>'
+      + '<tr><td>name_session</td><td>name this session ("call this one Master")</td></tr>'
+      + '<tr><td>set_goal</td><td>one-sentence north star</td></tr>'
+      + '<tr><td>add_step</td><td>grow the journey; branch + weight (fork/side) sizes stray ideas</td></tr>'
+      + '<tr><td>set_status</td><td>update a step (now/next/done/pause)</td></tr>'
+      + '<tr><td>push/pop_interrupt</td><td>set work aside / resume it</td></tr>'
+      + '<tr><td>log_change</td><td>record files, commands, commits</td></tr>'
+      + '<tr><td>add_decision</td><td>record a decision or assumption</td></tr>'
+      + '<tr><td>log_deadend</td><td>a failed attempt + why</td></tr>'
+      + '<tr><td>need_human</td><td>what you need from the human (hot = urgent)</td></tr>'
+      + '<tr><td>get_panel</td><td>read back panel state + viewer URL</td></tr>'
+      + '</table>'
+      + '<h3>Terminal commands</h3>'
+      + '<table>'
+      + '<tr><td>npx olchipanel open</td><td>open the panel window (reuses a live viewer, restarts a dead one)</td></tr>'
+      + '<tr><td>npx olchipanel viewer</td><td>viewer only + auto-open window</td></tr>'
+      + '<tr><td>npx olchipanel hook</td><td>(optional) Claude Code hook — deterministic Changes tab</td></tr>'
+      + '</table>',
+  };
+  var helpOverlay = document.getElementById('helpOverlay');
+  var helpBtn = document.getElementById('helpBtn');
+  function openHelp(){
+    var box = document.getElementById('helpBox');
+    box.innerHTML = HELP[lang] || HELP.en; // static authored content
+    // every snippet gets a copy button — paste-ready docs
+    box.querySelectorAll('pre').forEach(function(pre){
+      var btn = el('button', 'pre-copy', T('copyBtn'));
+      btn.setAttribute('aria-label', T('copyBtn'));
+      btn.addEventListener('click', function(){ copyText(pre.textContent, T('copiedShort')); });
+      pre.appendChild(btn);
+    });
+    // one-click setup: the viewer writes the MCP config itself (fixed template,
+    // targets the selected session's project folder)
+    box.querySelectorAll('.setup-run').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var D = sessions.find(function(s){ return s.id === current; });
+        if (!D && btn.dataset.agent !== 'codex') { showToast(T('setupNoProject')); return; }
+        fetch('/api/setup-agent', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ agent: btn.dataset.agent, id: D ? D.id : null }) })
+          .then(function(r){ return r.json(); })
+          .then(function(j){
+            if (j.ok) showToast((j.already ? T('setupAlready') : T('setupDone'))(j.wrote));
+            else showToast(T('setupFailed') + (j.error || ''));
+          })
+          .catch(function(){ showToast(T('setupFailed')); });
+      });
+    });
+    helpOverlay.classList.add('on');
+    var c = document.getElementById('helpClose');
+    c.addEventListener('click', closeHelp);
+    c.focus();
+  }
+  function closeHelp(){ helpOverlay.classList.remove('on'); helpBtn.focus(); }
+  helpBtn.addEventListener('click', openHelp);
+  helpOverlay.addEventListener('click', function(e){ if (e.target === helpOverlay) closeHelp(); });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && helpOverlay.classList.contains('on')) closeHelp(); });
+
+  // ---------- theme ----------
+  function applyTheme(t){
+    document.documentElement.setAttribute('data-theme', t);
+    try { localStorage.setItem('olchipanel.theme', t); } catch(e){}
+  }
+  (function initTheme(){
+    var saved = null; try { saved = localStorage.getItem('olchipanel.theme'); } catch(e){}
+    var prefers = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    applyTheme(saved || prefers);
+  })();
+  document.getElementById('themeBtn').addEventListener('click', function(){
+    applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+  });
+
+  // ---------- time ----------
+  function ago(iso){
+    if (!iso) return '';
+    var s = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
+    if (s < 10) return T('justNow');
+    if (s < 60) return T('ago')(Math.floor(s), lang === 'ko' ? '초' : 's');
+    if (s < 3600) return T('ago')(Math.floor(s / 60), lang === 'ko' ? '분' : 'm');
+    if (s < 86400) return T('ago')(Math.floor(s / 3600), lang === 'ko' ? '시간' : 'h');
+    return T('ago')(Math.floor(s / 86400), lang === 'ko' ? '일' : 'd');
+  }
+
+  // ---------- day / time (viewer's local timezone) ----------
+  function dayLabel(iso){
+    var d = new Date(iso), now = new Date();
+    var day = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    var diff = Math.round((today - day) / 86400000);
+    if (diff === 0) return T('today');
+    if (diff === 1) return T('yesterday');
+    return lang === 'ko' ? (d.getMonth()+1) + '월 ' + d.getDate() + '일'
+                         : d.toLocaleDateString(undefined, { month:'short', day:'numeric' });
+  }
+  function hhmm(iso){
+    var d = new Date(iso);
+    return ('0'+d.getHours()).slice(-2) + ':' + ('0'+d.getMinutes()).slice(-2);
+  }
+
+  // ---------- sidebar ----------
+  function vendorOf(agent){
+    agent = (agent || '').toLowerCase();
+    if (agent.indexOf('claude') >= 0) return 'claude';
+    if (agent.indexOf('codex') >= 0 || agent.indexOf('openai') >= 0) return 'codex';
+    if (agent.indexOf('cursor') >= 0) return 'cursor';
+    if (agent.indexOf('gemini') >= 0) return 'gemini';
+    return 'other';
+  }
+  var VENDOR_LABEL = { claude: 'CLAUDE', codex: 'CODEX', cursor: 'CURSOR', gemini: 'GEMINI', other: 'AGENT' };
+  // icon shows the session's NAME (vendor lives in the border color + tiny tag)
+  function sessionFace(s){
+    var src = (s.name || '').trim() || (s.agent || '?');
+    var ch = src.charAt(0);
+    return /[a-z]/i.test(ch) ? ch.toUpperCase() : ch; // "마스터"→마, "master"→M
+  }
+  function sessionLabel(s){
+    return s.name || s.agent; // human-given name wins; vendor stays in the tiny tag
+  }
+  // ---- manual ordering (drag & drop), persisted ----
+  function savedOrder(){
+    try { return JSON.parse(localStorage.getItem('olchipanel.order') || '[]'); } catch(e){ return []; }
+  }
+  function orderRank(id){
+    var i = savedOrder().indexOf(id);
+    return i < 0 ? Infinity : i;
+  }
+  var dragId = null;
+  function applyDrop(srcId, dstId){
+    // rebuild the full displayed order with src moved before dst, then persist
+    var ids = sessions.map(function(s){ return s.id; });
+    ids.sort(function(a, b){ return displayRank(a) - displayRank(b); });
+    ids.splice(ids.indexOf(srcId), 1);
+    ids.splice(ids.indexOf(dstId), 0, srcId);
+    try { localStorage.setItem('olchipanel.order', JSON.stringify(ids)); } catch(e){}
+    render();
+  }
+  var _rankCache = null;
+  function displayRank(id){
+    if (!_rankCache) {
+      _rankCache = {};
+      var so = savedOrder();
+      var list = sessions.slice().sort(function(a, b){
+        var ra = so.indexOf(a.id), rb = so.indexOf(b.id);
+        if (ra < 0) ra = Infinity; if (rb < 0) rb = Infinity;
+        if (ra !== rb) return ra - rb;
+        return (Date.parse(b.started) || 0) - (Date.parse(a.started) || 0);
+      });
+      list.forEach(function(s, i){ _rankCache[s.id] = i; });
+    }
+    return _rankCache[id] === undefined ? Infinity : _rankCache[id];
+  }
+
+  function buildRail(){
+    _rankCache = null;
+    var root = document.getElementById('railTabs');
+    root.innerHTML = '';
+    // group by vendor; inside each group: manual order first, then newest-first
+    var order = ['claude', 'codex', 'cursor', 'gemini', 'other'];
+    var groups = {};
+    sessions.forEach(function(s){ var v = vendorOf(s.agent); (groups[v] = groups[v] || []).push(s); });
+    var multi = Object.keys(groups).length > 1;
+    order.forEach(function(v){
+      if (!groups[v]) return;
+      if (multi) root.appendChild(el('div', 'rail-group', VENDOR_LABEL[v]));
+      groups[v].sort(function(a, b){ return displayRank(a.id) - displayRank(b.id); });
+      groups[v].forEach(function(s){
+        var b = el('button', 'panel-tab v-' + v + (current === s.id ? ' active' : ''));
+        var face = el('span', 'face' + (s.alive ? '' : ' dead'), sessionFace(s));
+        if (s.alive) face.appendChild(el('span', 'alive'));
+        b.appendChild(face);
+        var txt = el('span', 'txt' + (s.alive ? '' : ' dead'), sessionLabel(s));
+        if (s.alive) { var ld = el('span', 'live-inline'); ld.setAttribute('role', 'img'); ld.setAttribute('aria-label', T('live')); ld.title = T('live'); txt.appendChild(ld); }
+        var sub = el('span', 'sub');
+        sub.appendChild(el('span', 'vendor-tag', VENDOR_LABEL[v]));
+        sub.appendChild(document.createTextNode(' ' + (s.cwd || '').split(/[\\\/]/).slice(-1).join('') + ' · ' + ago(s.started)));
+        txt.appendChild(sub);
+        b.appendChild(txt);
+        b.title = sessionLabel(s) + ' — ' + s.agent + ' · ' + (s.started || '').slice(0, 16).replace('T', ' ');
+        b.addEventListener('click', function(){ current = s.id; try{localStorage.setItem('olchipanel.sel', s.id);}catch(e){} render(); });
+        // drag to reorder
+        b.draggable = true;
+        b.addEventListener('dragstart', function(e){ dragId = s.id; e.dataTransfer.effectAllowed = 'move'; });
+        b.addEventListener('dragover', function(e){ e.preventDefault(); b.classList.add('dragover'); });
+        b.addEventListener('dragleave', function(){ b.classList.remove('dragover'); });
+        b.addEventListener('drop', function(e){
+          e.preventDefault(); b.classList.remove('dragover');
+          if (dragId && dragId !== s.id) applyDrop(dragId, s.id);
+          dragId = null;
+        });
+        var wrap = el('div', 'tab-wrap');
+        wrap.appendChild(b);
+        if (!s.alive) { // dead sessions can be tucked away from the board
+          var x = el('button', 'tab-x', '✕');
+          x.setAttribute('aria-label', T('archiveRow'));
+          x.title = T('archiveRow');
+          x.addEventListener('click', function(ev){
+            ev.stopPropagation();
+            fetch('/api/archive', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id: s.id }) }).then(function(){ refresh(); }).catch(function(){});
+          });
+          wrap.appendChild(x);
+        }
+        root.appendChild(wrap);
+      });
+    });
+    document.getElementById('railMore').textContent =
+      total > sessions.length ? T('olderOnDisk')(total - sessions.length) : '';
+    if (!sessions.length) root.appendChild(el('div', 'cap', T('noSessions')));
+  }
+
+  // ---- rail collapse toggle (collapsed = one-char faces) ----
+  // saved state wins; with no saved state, narrow windows start collapsed
+  try {
+    var railSaved = localStorage.getItem('olchipanel.rail');
+    if (railSaved === 'closed' || (!railSaved && window.innerWidth < 860)) document.body.classList.add('rail-closed');
+  } catch(e){}
+  var railToggleBtn = document.getElementById('railToggle');
+  railToggleBtn.setAttribute('aria-expanded', document.body.classList.contains('rail-closed') ? 'false' : 'true');
+  railToggleBtn.addEventListener('click', function(){
+    var closed = document.body.classList.toggle('rail-closed');
+    railToggleBtn.setAttribute('aria-expanded', closed ? 'false' : 'true');
+    try { localStorage.setItem('olchipanel.rail', closed ? 'closed' : 'open'); } catch(e){}
+  });
+
+  // ---------- render ----------
+  function setBadge(id, n){ document.getElementById(id).textContent = n > 0 ? String(n) : ''; }
+  function render(){
+    buildRail();
+    var D = sessions.find(function(s){ return s.id === current; });
+    ['vtree','stacklist','changelist','declist','needslist','deadendlist'].forEach(function(id){ document.getElementById(id).innerHTML = ''; });
+
+    if (!D) {
+      document.getElementById('goalbar').textContent = T('connectHint');
+      document.getElementById('substamp').textContent = '';
+      document.getElementById('resumebar').innerHTML = '';
+      setBadge('bStack',0); setBadge('bChanges',0); setBadge('bDec',0); setBadge('bNeeds',0); setBadge('bDeadends',0);
+      var em = el('div','empty');
+      em.appendChild(el('b','', T('emptyTitle')));
+      em.appendChild(document.createTextNode(T('emptyBody')));
+      document.getElementById('vtree').appendChild(em);
+      return;
+    }
+    document.getElementById('goalbar').textContent = D.goal || T('noGoal');
+    var st = document.getElementById('substamp');
+    st.innerHTML = '';
+    st.appendChild(el('span','', sessionLabel(D) + (D.name ? ' — ' + D.agent : '')));
+    st.appendChild(el('span','', '· ' + T('started') + ' ' + ago(D.started)));
+    var upd = el('span','', '· ' + T('updated') + ' ' + ago(D.updated));
+    upd.id = 'updated-ago'; upd.dataset.iso = D.updated || '';
+    st.appendChild(upd);
+    st.appendChild(el('span', D.alive ? 'sess-live' : '', D.alive ? T('sessLive') : T('sessEnded')));
+
+    // ended session → show how to carry the panel on (the viewer can't spawn agents;
+    // the honest affordance is a paste-ready prompt)
+    var rb = document.getElementById('resumebar');
+    rb.innerHTML = '';
+    if (!D.alive) {
+      var bar = el('div', 'resume-bar');
+      bar.appendChild(el('span', '', '↻ ' + T('resumeHow')));
+      bar.appendChild(el('code', '', D.cwd || '?'));
+      bar.appendChild(el('span', '', T('resumeHow2')));
+      var cp = el('button', 'resume-copy', T('resumeCopy'));
+      cp.addEventListener('click', function(){ copyText(T('resumePrompt'), T('resumeCopied')); });
+      bar.appendChild(cp);
+      // one-click handoff: copies the prompt AND opens a terminal at the project
+      var ot = el('button', 'resume-copy', T('openTerminal'));
+      ot.addEventListener('click', function(){
+        copyText(T('resumePrompt'), '');
+        fetch('/api/open-terminal', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: D.id }) })
+          .then(function(r){ showToast(r.ok ? T('terminalOpened') : T('terminalFailed')); })
+          .catch(function(){ showToast(T('terminalFailed')); });
+      });
+      bar.appendChild(ot);
+      rb.appendChild(bar);
+    }
+
+    setBadge('bStack', (D.stack || []).length);
+    setBadge('bChanges', (D.changes || []).length);
+    setBadge('bDec', (D.decisions || []).length);
+    setBadge('bNeeds', (D.pending || []).length);
+    setBadge('bDeadends', (D.deadends || []).length);
+
+    // journey tree
+    function buildNode(n){
+      var d = document.createElement('details');
+      var open = openState[n.id];
+      d.open = (open === undefined) ? !n.collapsed : open;
+      d.addEventListener('toggle', function(){ openState[n.id] = d.open; });
+      if (!(n.children && n.children.length)) d.className = 'leaf';
+      var s = document.createElement('summary');
+      var pill = el('span', 'pill ' + (n.status || '') + (n.branch ? ' branch' : '') + (n.weight === 'side' ? ' side' : ''), n.label || '');
+      pill.title = n.label || '';
+      s.appendChild(pill);
+      if (n.branch && n.weight === 'side') s.appendChild(el('span', 'branch-kind', T('sideQuest')));
+      if (n.note) s.appendChild(el('span', 'note', '↳ ' + n.note));
+      d.appendChild(s);
+      (n.children || []).forEach(function(c){ d.appendChild(buildNode(c)); });
+      return d;
+    }
+    if (D.map && D.map.tree) document.getElementById('vtree').appendChild(buildNode(D.map.tree));
+    else {
+      var em2 = el('div','empty');
+      em2.appendChild(el('b','', T('noMapTitle')));
+      em2.appendChild(document.createTextNode(T('noMapBody')));
+      document.getElementById('vtree').appendChild(em2);
+    }
+
+    // stack — LIFO of interrupted work; top card is what to resume first
+    var CIRCLED = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨'];
+    var stk = document.getElementById('stacklist');
+    (D.stack || []).forEach(function(item, i){
+      var card = el('div', 'item stk-item' + (i === 0 ? ' top' : ''));
+      var head = el('div', 'item-head');
+      head.appendChild(el('span', 'idx', CIRCLED[i] || (i + 1)));
+      head.appendChild(el('span', 'item-title', item.text || ''));
+      if (i === 0) head.appendChild(el('span', 'item-tag tag-warm', T('resumeFirst')));
+      card.appendChild(head);
+      if (item.resume) card.appendChild(el('div', 'item-sub', '↩ ' + item.resume));
+      if (item.at) card.appendChild(el('div', 'item-time', reltime(item.at)));
+      stk.appendChild(card);
+    });
+    if (!(D.stack || []).length) stk.appendChild(emptyState('stackEmptyT', 'stackEmpty'));
+
+    // changes — grouped by local day, timestamped. Quiet: a thin day rule + a
+    // small muted time per row. Times/days use the viewer's own timezone.
+    var KIND_ICON = { created: '＋', modified: '✎', deleted: '－', command: '❯', commit: '⎌' };
+    var cl = document.getElementById('changelist');
+    var changes = D.changes || [];
+    if (!changes.length) { cl.appendChild(el('div', 'cap', T('changesEmpty'))); }
+    else {
+      var lastDay = null;
+      changes.forEach(function(c){
+        var dl = c.at ? dayLabel(c.at) : '';
+        if (dl && dl !== lastDay) { cl.appendChild(el('div', 'day-group', dl)); lastDay = dl; }
+        var row = el('div', 'change-row');
+        row.appendChild(el('span', 'change-time', c.at ? hhmm(c.at) : ''));
+        row.appendChild(el('span', 'mono', (KIND_ICON[c.kind] || '·') + ' ' + (c.target || '')));
+        if (c.summary) row.appendChild(el('span', 'change-sum', c.summary));
+        cl.appendChild(row);
+      });
+    }
+
+    // decisions vs silent assumptions — assumptions stand out (you didn't confirm them)
+    var dl2 = document.getElementById('declist');
+    (D.decisions || []).forEach(function(item){
+      var text = typeof item === 'string' ? item : item.text;       // old sessions stored strings
+      var kind = typeof item === 'string' ? 'decision' : item.kind;
+      var isA = kind === 'assumption';
+      var row = el('div', 'item dec-item' + (isA ? ' assumption' : ''));
+      var head = el('div', 'item-head');
+      head.appendChild(el('span', 'glyph ' + (isA ? 'g-warn' : 'g-done'), isA ? '⚠' : '✓'));
+      head.appendChild(el('span', 'item-title', text || ''));
+      if (isA) head.appendChild(el('span', 'item-tag tag-warm', T('assumption')));
+      row.appendChild(head);
+      dl2.appendChild(row);
+    });
+    if (!(D.decisions || []).length) dl2.appendChild(emptyState('decEmptyT', 'decEmpty'));
+
+    // needs you — your inbox from the agent; hot items demand action now
+    var nl = document.getElementById('needslist');
+    (D.pending || []).forEach(function(p){
+      var row = el('div', 'item need-item' + (p.hot ? ' hot' : ''));
+      var head = el('div', 'item-head');
+      head.appendChild(el('span', 'glyph ' + (p.hot ? 'g-urgent' : 'g-brand'), p.hot ? '!' : '?'));
+      head.appendChild(el('span', 'item-title', p.text || ''));
+      if (p.hot) head.appendChild(el('span', 'item-tag tag-urgent', T('actionNow')));
+      row.appendChild(head);
+      nl.appendChild(row);
+    });
+    if (!(D.pending || []).length) nl.appendChild(emptyState('needsEmptyT', 'needsEmpty'));
+
+    // dead ends — tried → why it failed, so nobody walks it twice
+    var de = document.getElementById('deadendlist');
+    (D.deadends || []).forEach(function(d){
+      var row = el('div', 'item deadend-item');
+      var head = el('div', 'item-head');
+      head.appendChild(el('span', 'glyph g-mute', '⊘'));
+      head.appendChild(el('span', 'item-title strike', d.tried || ''));
+      row.appendChild(head);
+      row.appendChild(el('div', 'item-sub', '→ ' + (d.why || '')));
+      if (d.at) row.appendChild(el('div', 'item-time', reltime(d.at)));
+      de.appendChild(row);
+    });
+    if (!(D.deadends || []).length) de.appendChild(emptyState('deadendsEmptyT', 'deadendsEmpty'));
+  }
+
+  // friendlier empty states: a title line + the muted hint
+  function emptyState(titleKey, hintKey){
+    var box = el('div', 'empty-lite');
+    box.appendChild(el('div', 'empty-lite-t', T(titleKey)));
+    box.appendChild(el('div', 'cap', T(hintKey)));
+    return box;
+  }
+  // parse "YYYY-MM-DD HH:MM" or ISO; fall back to the raw string
+  function reltime(s){
+    var iso = /^\d{4}-\d\d-\d\d \d\d:\d\d/.test(s) ? s.replace(' ', 'T') : s;
+    var t = Date.parse(iso);
+    return isNaN(t) ? s : ago(new Date(t).toISOString());
+  }
+
+  // tick relative times without a full re-render
+  setInterval(function(){
+    var u = document.getElementById('updated-ago');
+    if (u && u.dataset.iso) u.textContent = '· ' + T('updated') + ' ' + ago(u.dataset.iso);
+  }, 1000);
+
+  // ---------- tabs ----------
+  function showTab(name){
+    document.querySelectorAll('.tab').forEach(function(t){
+      var on = t.dataset.pane === name;
+      t.classList.toggle('on', on);
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    document.querySelectorAll('.pane').forEach(function(p){ p.classList.toggle('on', p.id === name); });
+    try { localStorage.setItem('olchipanel.tab', name); } catch(e){}
+  }
+  document.querySelectorAll('.tab').forEach(function(t){
+    t.addEventListener('click', function(){ showTab(t.dataset.pane); });
+  });
+
+  // ---------- data flow: fetch + SSE ----------
+  function refresh(){
+    fetch('/api/state').then(function(r){ return r.json(); }).then(function(j){
+      sessions = j.sessions || [];
+      total = j.total || sessions.length;
+      if (!current || !sessions.some(function(s){ return s.id === current; })) {
+        var saved = null; try { saved = localStorage.getItem('olchipanel.sel'); } catch(e){}
+        current = (sessions.some(function(s){ return s.id === saved; }) ? saved : (sessions[0] && sessions[0].id)) || null;
+      }
+      render();
+    }).catch(function(){});
+  }
+
+  function connectSSE(){
+    var es = new EventSource('/events');
+    var dot = document.getElementById('livedot'), txt = document.getElementById('livetxt');
+    es.onopen = function(){ dot.classList.add('on'); txt.textContent = T('live'); };
+    es.onerror = function(){ dot.classList.remove('on'); txt.textContent = T('reconnecting'); };
+    es.onmessage = function(){ refresh(); };
+  }
+
+  applyChrome();
+  document.getElementById('livetxt').textContent = T('connecting');
+  var savedTab = 'map'; try { savedTab = localStorage.getItem('olchipanel.tab') || 'map'; } catch(e){}
+  showTab(document.getElementById(savedTab) ? savedTab : 'map');
+  refresh();
+  connectSSE();
+})();
+</script>
+</body>
+</html>
