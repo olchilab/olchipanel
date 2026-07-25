@@ -1,5 +1,7 @@
 # OlchiPanel
 
+[![ci](https://github.com/olchilab/olchipanel/actions/workflows/ci.yml/badge.svg)](https://github.com/olchilab/olchipanel/actions/workflows/ci.yml)
+
 **A living situation board your AI agent draws for you — live.**
 
 ![OlchiPanel demo — agent forks two fix strategies and you watch both develop live](https://raw.githubusercontent.com/olchilab/olchipanel/main/assets/demo.gif)
