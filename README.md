@@ -20,19 +20,19 @@ One command in your project folder — no install step, `npx` handles it:
 
 **Claude Code**:
 ```sh
-claude mcp add olchipanel -s project -- npx -y olchipanel
+claude mcp add olchipanel -s project -- npx -y olchipanel@latest
 ```
 
 **Codex CLI**:
 ```sh
-codex mcp add olchipanel -- npx -y olchipanel
+codex mcp add olchipanel -- npx -y olchipanel@latest
 ```
 
 **Cursor** (no CLI — paste into `.cursor/mcp.json`; Claude Code's `.mcp.json` takes the same shape):
 ```json
 {
   "mcpServers": {
-    "olchipanel": { "command": "npx", "args": ["-y", "olchipanel"] }
+    "olchipanel": { "command": "npx", "args": ["-y", "olchipanel@latest"] }
   }
 }
 ```
@@ -66,7 +66,7 @@ an agent connects**, add an env flag to the MCP config:
 
 ```json
 { "mcpServers": { "olchipanel": {
-  "command": "npx", "args": ["-y", "olchipanel"],
+  "command": "npx", "args": ["-y", "olchipanel@latest"],
   "env": { "OLCHIPANEL_OPEN": "app" }
 } } }
 ```
@@ -76,14 +76,14 @@ an agent connects**, add an env flag to the MCP config:
 
 ## What the agent gets
 
-Eleven tools, self-explanatory enough that agents use them unprompted:
+Twelve tools, self-explanatory enough that agents use them unprompted:
 
 | tool | what it does |
 |---|---|
 | `resume_project` | inherit the project's previous panel — goal, journey, decisions, dead ends — as memory; the old panel is archived |
 | `name_session` | name this session ("call this one Master") — big in the sidebar |
 | `set_goal` | pin the north-star goal at the top |
-| `add_step` | grow the journey map; `branch: true` + why-note marks a fork |
+| `add_step` | grow the journey map — single step or a whole plan at once (`steps:[...]`); `branch: true` + why-note marks a fork |
 | `set_status` | `now` / `next` / `done` / `pause` — live progress, incl. per-branch |
 | `push_interrupt` / `pop_interrupt` | topic changed mid-task? the old task + resume point is saved, visibly |
 | `log_change` | every file/command/commit touched — read this, not the transcript |
@@ -150,11 +150,31 @@ sessions sharing a key inherit each other (`resume_project`) regardless of folde
 - The viewer's sidebar lists every session, labeled by the agent's own `clientInfo.name` — that's how it stays agent-agnostic with zero config.
 - If the viewer ever dies (red "reconnecting…" dot), recovery is one command: `npx olchipanel viewer`. The board is stateless — a fresh viewer re-reads everything from disk, and open tabs heal themselves via `EventSource` auto-retry.
 
+## Updates
+
+`@latest` in the MCP config means every agent start picks up the newest release —
+measured: a bare `npx -y olchipanel` freezes on the first version npx ever cached.
+The viewer shows a small `⬆` chip when a newer version exists; click it to copy the
+one-line update command.
+
+## Locked-down Windows (no admin rights)
+
+Field notes from a corporate-laptop install:
+
+- No Node and `winget` needs admin → use the official **ZIP distribution** from
+  nodejs.org, unzip into your user folder, add it to your user `PATH`.
+- `npm`/`npx` blocked by PowerShell execution policy → call **`npx.cmd`** (the
+  `.cmd` shims bypass the `.ps1` policy): `codex mcp add olchipanel -- npx.cmd -y olchipanel@latest`.
+- The Store/desktop-app `codex.exe` under `WindowsApps` may refuse to run from a
+  shell → use the CLI path recorded in your Codex config instead.
+
 ## Scope & privacy
 
 OlchiPanel is a **local developer tool**: it runs on your machine, binds only to
-`127.0.0.1` (never exposed to the network), sends nothing anywhere, and has **zero
-runtime dependencies**. Panel state lives in plain JSON under `~/.olchipanel/` —
+`127.0.0.1` (never exposed to the network) and has **zero runtime dependencies**.
+The only network call it ever makes is an optional once-a-day version check against
+the npm registry (a plain GET, nothing attached; disable with `OLCHIPANEL_NO_UPDATE_CHECK=1`).
+Nothing else is sent anywhere. Panel state lives in plain JSON under `~/.olchipanel/` —
 readable by anything on your account, so don't have your agent write secrets into
 the goal/steps/changes (it shouldn't anyway). Nothing is uploaded, tracked, or shared.
 

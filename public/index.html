@@ -416,6 +416,10 @@
       resumeCopy: 'Copy prompt',
       resumeCopied: 'Copied — paste it to your agent in that folder',
       resumePrompt: "Resume this project's previous OlchiPanel — call resume_project to inherit it, then continue the work.",
+      updateChip: function(v){ return '⬆ v' + v; },
+      updateHow: 'New version available. Click to copy the update command — run it once in a terminal.',
+      updateCopied: 'Copied: npx -y olchipanel@latest open — run it in a terminal',
+      starAsk: '★ Useful? A GitHub star helps a lot',
       setupDone: function(f){ return 'Added — ' + f; },
       setupAlready: function(f){ return 'Already set up — ' + f; },
       setupFailed: 'Could not write the config: ',
@@ -465,6 +469,10 @@
       resumeCopy: '프롬프트 복사',
       resumeCopied: '복사됨 — 그 폴더에서 에이전트에 붙여넣으세요',
       resumePrompt: '이 프로젝트의 이전 올치패널을 이어받아줘 — resume_project를 호출해 인수인계 받고, 이어서 진행해.',
+      updateChip: function(v){ return '⬆ v' + v; },
+      updateHow: '새 버전이 있어요. 클릭하면 업데이트 명령이 복사됩니다 — 터미널에 한 번 붙여넣으면 끝.',
+      updateCopied: '복사됨: npx -y olchipanel@latest open — 터미널에 붙여넣어 실행하세요',
+      starAsk: '★ 쓸만하다면 GitHub 별 하나가 큰 힘이 됩니다',
       setupDone: function(f){ return '추가 완료 — ' + f; },
       setupAlready: function(f){ return '이미 설정돼 있어요 — ' + f; },
       setupFailed: '설정을 못 썼어요: ',
@@ -543,11 +551,11 @@
       + '<h3>시작하기 — 에이전트당 명령 한 줄</h3>'
       + '<p><b>프로젝트 폴더의 터미널</b>에 붙여넣으면 알아서 등록됩니다. 또는 <b>바로 추가</b> 버튼 — 선택된 세션의 프로젝트에 뷰어가 설정을 직접 써 줍니다.</p>'
       + '<p><b>Claude Code</b> <button class="resume-copy setup-run" data-agent="claude">바로 추가</button></p>'
-      + '<pre>claude mcp add olchipanel -s project -- npx -y olchipanel</pre>'
+      + '<pre>claude mcp add olchipanel -s project -- npx -y olchipanel@latest</pre>'
       + '<p><b>Codex CLI</b> <button class="resume-copy setup-run" data-agent="codex">바로 추가</button></p>'
-      + '<pre>codex mcp add olchipanel -- npx -y olchipanel</pre>'
+      + '<pre>codex mcp add olchipanel -- npx -y olchipanel@latest</pre>'
       + '<p><b>Cursor</b> (CLI 없음 — 버튼이 <code>.cursor/mcp.json</code>을 써 주거나, 아래를 직접 붙여넣기) <button class="resume-copy setup-run" data-agent="cursor">바로 추가</button></p>'
-      + '<pre>{ "mcpServers": { "olchipanel": {\n  "command": "npx", "args": ["-y", "olchipanel"] } } }</pre>'
+      + '<pre>{ "mcpServers": { "olchipanel": {\n  "command": "npx", "args": ["-y", "olchipanel@latest"] } } }</pre>'
       + '<p>+ 룰파일에 한 줄 (Claude=<code>CLAUDE.md</code> · Codex=<code>AGENTS.md</code> · Cursor=<code>.cursorrules</code>):</p>'
       + '<pre>작업하며 OlchiPanel 상황판을 유지하라 — 이전 패널이 있으면 resume_project부터.</pre>'
       + '<p>이 한 줄이 있어야 에이전트가 시키지 않아도 굽습니다(실측).</p>'
@@ -581,17 +589,18 @@
       + '<tr><td>npx olchipanel open</td><td>패널 창 열기 (떠 있으면 재사용, 죽었으면 새로)</td></tr>'
       + '<tr><td>npx olchipanel viewer</td><td>뷰어만 실행 + 창 자동 오픈</td></tr>'
       + '<tr><td>npx olchipanel hook</td><td>(선택) Claude Code 훅 — 변경 탭 자동 기록</td></tr>'
-      + '</table>',
+      + '</table>'
+      + '<p style="margin-top:18px"><a href="https://github.com/olchilab/olchipanel" target="_blank" rel="noreferrer">★ 쓸만하다면 GitHub 별 하나가 큰 힘이 됩니다</a></p>',
     en: '<h2>How to use OlchiPanel <button class="help-close" id="helpClose" aria-label="Close">✕</button></h2>'
       + '<p>A live situation board your agent draws for itself while it works. You just watch.</p>'
       + '<h3>Setup — one command per agent</h3>'
       + '<p>Paste into a terminal <b>in your project folder</b> — it registers olchipanel by itself. Or hit <b>Add for me</b>: the viewer writes the config for the selected session\'s project.</p>'
       + '<p><b>Claude Code</b> <button class="resume-copy setup-run" data-agent="claude">Add for me</button></p>'
-      + '<pre>claude mcp add olchipanel -s project -- npx -y olchipanel</pre>'
+      + '<pre>claude mcp add olchipanel -s project -- npx -y olchipanel@latest</pre>'
       + '<p><b>Codex CLI</b> <button class="resume-copy setup-run" data-agent="codex">Add for me</button></p>'
-      + '<pre>codex mcp add olchipanel -- npx -y olchipanel</pre>'
+      + '<pre>codex mcp add olchipanel -- npx -y olchipanel@latest</pre>'
       + '<p><b>Cursor</b> (no CLI — the button writes <code>.cursor/mcp.json</code>, or paste this there) <button class="resume-copy setup-run" data-agent="cursor">Add for me</button></p>'
-      + '<pre>{ "mcpServers": { "olchipanel": {\n  "command": "npx", "args": ["-y", "olchipanel"] } } }</pre>'
+      + '<pre>{ "mcpServers": { "olchipanel": {\n  "command": "npx", "args": ["-y", "olchipanel@latest"] } } }</pre>'
       + '<p>+ one line in your rules file (Claude=<code>CLAUDE.md</code> · Codex=<code>AGENTS.md</code> · Cursor=<code>.cursorrules</code>):</p>'
       + '<pre>Maintain your OlchiPanel situation board while you work — resume_project first if a previous panel exists.</pre>'
       + '<p>Measured: without this line, agents ignore the board.</p>'
@@ -625,7 +634,8 @@
       + '<tr><td>npx olchipanel open</td><td>open the panel window (reuses a live viewer, restarts a dead one)</td></tr>'
       + '<tr><td>npx olchipanel viewer</td><td>viewer only + auto-open window</td></tr>'
       + '<tr><td>npx olchipanel hook</td><td>(optional) Claude Code hook — deterministic Changes tab</td></tr>'
-      + '</table>',
+      + '</table>'
+      + '<p style="margin-top:18px"><a href="https://github.com/olchilab/olchipanel" target="_blank" rel="noreferrer">★ Useful? A GitHub star helps a lot</a></p>',
   };
   var helpOverlay = document.getElementById('helpOverlay');
   var helpBtn = document.getElementById('helpBtn');
@@ -1065,6 +1075,19 @@
         var saved = null; try { saved = localStorage.getItem('olchipanel.sel'); } catch(e){}
         current = (sessions.some(function(s){ return s.id === saved; }) ? saved : (sessions[0] && sessions[0].id)) || null;
       }
+      // gentle update chip: appears only when the registry knows a newer version
+      var chip = document.getElementById('updChip');
+      if (j.latest) {
+        if (!chip) {
+          chip = el('button', 'top-btn', '');
+          chip.id = 'updChip';
+          chip.addEventListener('click', function(){ copyText('npx -y olchipanel@latest open', T('updateCopied')); });
+          var tr = document.querySelector('.top-right');
+          if (tr) tr.insertBefore(chip, tr.firstChild);
+        }
+        chip.textContent = T('updateChip')(j.latest);
+        chip.title = T('updateHow');
+      } else if (chip) { chip.remove(); }
       render();
     }).catch(function(){});
   }

@@ -14,7 +14,7 @@ It is narrative instrumentation, not logging. Keep it honest and current:
 - If you connect mid-task with no previous panel, backfill: reconstruct the journey so far from the conversation (steps already done get status "done"), then continue live. A panel that starts at step 5 should still show steps 1-4.
 - Name this session after the conversation's title/topic: if the human names it (e.g. "call this one Master"), use exactly that; otherwise derive a short name from the task. The name must FOLLOW the conversation — when the human renames the topic or the mission visibly shifts, call name_session again so the panel always carries the current name.
 - Call set_goal once you understand the task (one sentence, the north star).
-- Build the journey map with add_step as your plan takes shape; statuses: now (exactly one), next, done, pause.
+- Build the journey map with add_step as your plan takes shape (batch a whole plan in one call via steps:[...]); statuses: now (exactly one), next, done, pause. Moving "now" into a child leaves the parent as a plain container, not done.
 - A stray idea appears mid-task: weigh it before you draw it, or the map fills with noise.
   · Will you actually STOP or SPLIT the current work to explore it now? → add_step(branch=true, weight="fork") with a note on WHY. It shows as an active fork; parallel workers each update their own branch with set_status.
   · Worth keeping but NOT now? → weight="side". It parks as a folded side-quest that never clutters the map.
@@ -65,13 +65,14 @@ const TOOLS = [
         branch: { type: 'boolean', description: 'true if this step is the head of a branch (a stray idea that split the path).' },
         weight: { type: 'string', enum: ['fork', 'side'], description: 'For branches: "fork" = actively exploring now (splitting/pausing current work); "side" = a parked side-quest, auto-folded so it does not clutter the map. Omit for normal steps.' },
         note: { type: 'string', description: 'For branches: why this branch happened, one sentence.' },
+        steps: { type: 'array', description: 'Batch form: an array of step objects (same fields as above, including parent_id). Lays out a whole plan in one call — prefer this when registering several steps at once. When present, the top-level fields are ignored.', items: { type: 'object' } },
       },
-      required: ['id', 'label'],
+      required: [],
     },
   },
   {
     name: 'set_status',
-    description: 'Update the status of an existing journey step. Setting "now" automatically marks the previous "now" as done. Parallel workers each call this on their own branch to show live progress.',
+    description: 'Update the status of an existing journey step. Setting "now" automatically demotes the previous "now": to done normally, or to a plain container when it is an ancestor of the new "now" (a parent is not finished while its child is in progress). Parallel workers each call this on their own branch to show live progress.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -225,32 +226,44 @@ function makeToolRunner(session, getViewerUrl) {
       save();
       return `Goal set: ${session.goal}`;
     },
-    add_step({ id, label, parent_id, status, branch, note, weight }) {
-      const node = { id: String(id), label: String(label) };
-      if (status) node.status = status;
-      if (branch) node.branch = true;
-      if (weight === 'fork' || weight === 'side') node.weight = weight;
-      if (node.weight === 'side') node.collapsed = true; // side-quests park folded
-      if (note) node.note = String(note);
-      if (!session.map.tree) {
-        if (parent_id) throw new Error('Tree is empty — first add_step must be the root (omit parent_id).');
-        session.map.tree = node;
-      } else {
-        if (state.findNode(session.map.tree, node.id)) throw new Error(`Step id "${node.id}" already exists — use set_status to update it.`);
-        const parent = parent_id
-          ? state.findNode(session.map.tree, String(parent_id))
-          : session.map.tree;
-        if (!parent) throw new Error(`parent_id "${parent_id}" not found in the journey tree.`);
-        (parent.children = parent.children || []).push(node);
+    add_step(input) {
+      // batch form: {steps:[{...},{...}]} lays out a whole plan in one call —
+      // first real-user feedback: one call per step made planning feel costly
+      const list = Array.isArray(input && input.steps) && input.steps.length ? input.steps : [input];
+      const results = [];
+      for (const { id, label, parent_id, status, branch, note, weight } of list) {
+        if (id == null || label == null) throw new Error('Each step needs an id and a label.');
+        const node = { id: String(id), label: String(label) };
+        if (status) node.status = status;
+        if (branch) node.branch = true;
+        if (weight === 'fork' || weight === 'side') node.weight = weight;
+        if (node.weight === 'side') node.collapsed = true; // side-quests park folded
+        if (note) node.note = String(note);
+        if (!session.map.tree) {
+          if (parent_id) throw new Error('Tree is empty — first add_step must be the root (omit parent_id).');
+          session.map.tree = node;
+        } else {
+          if (state.findNode(session.map.tree, node.id)) throw new Error(`Step id "${node.id}" already exists — use set_status to update it.`);
+          const parent = parent_id
+            ? state.findNode(session.map.tree, String(parent_id))
+            : session.map.tree;
+          if (!parent) throw new Error(`parent_id "${parent_id}" not found in the journey tree.`);
+          (parent.children = parent.children || []).push(node);
+        }
+        if (status === 'now') {
+          const keep = node;
+          state.clearNow(session.map.tree, state.pathIds(session.map.tree, node.id));
+          keep.status = 'now';
+        }
+        results.push(`Step "${node.label}" added${parent_id ? ` under ${parent_id}` : ' as root'}.`);
       }
-      if (status === 'now') { const keep = node; state.clearNow(session.map.tree); keep.status = 'now'; }
       save();
-      return `Step "${node.label}" added${parent_id ? ` under ${parent_id}` : ' as root'}.`;
+      return results.join(' ');
     },
     set_status({ id, status, label }) {
       const node = state.findNode(session.map.tree, String(id));
       if (!node) throw new Error(`Step id "${id}" not found.`);
-      if (status === 'now') state.clearNow(session.map.tree);
+      if (status === 'now') state.clearNow(session.map.tree, state.pathIds(session.map.tree, String(id)));
       node.status = status;
       if (label) node.label = String(label);
       save();

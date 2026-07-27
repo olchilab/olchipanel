@@ -5,11 +5,36 @@
 // process (and get_panel) can report the real address.
 'use strict';
 const http = require('http');
+const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const { spawn } = require('child_process');
 const state = require('./state');
+
+const VERSION = require('../package.json').version;
+
+// Once-a-day version check against the npm registry — a plain GET, nothing
+// attached. The ONLY network call this tool ever makes; disable with
+// OLCHIPANEL_NO_UPDATE_CHECK=1. Failure is silence, never an error.
+let latestKnown = null;
+function checkUpdate() {
+  if (process.env.OLCHIPANEL_NO_UPDATE_CHECK) return;
+  try {
+    const req = https.get('https://registry.npmjs.org/olchipanel/latest', { timeout: 4000 }, (res) => {
+      let b = '';
+      res.on('data', d => { b += d; if (b.length > 65536) req.destroy(); });
+      res.on('end', () => {
+        try {
+          const v = JSON.parse(b).version;
+          if (v && v !== VERSION) latestKnown = v;
+        } catch (e) { /* silent */ }
+      });
+    });
+    req.on('error', () => {});
+    req.on('timeout', () => req.destroy());
+  } catch (e) { /* silent */ }
+}
 
 const BASE_PORT = Number(process.env.OLCHIPANEL_PORT || 6711);
 const MAX_TRIES = 10;
@@ -77,7 +102,7 @@ function resolveDir(p) {
 // config. Fixed templates only — the request carries an agent key, never
 // content or paths. Existing-but-broken JSON is never clobbered (fail loud).
 function setupAgent(agent, dir) {
-  const entry = { command: 'npx', args: ['-y', 'olchipanel'] };
+  const entry = { command: 'npx', args: ['-y', 'olchipanel@latest'] }; // @latest: bare npx freezes on the first cached version (measured)
   function patchJson(file) {
     let j = {};
     if (fs.existsSync(file)) {
@@ -110,7 +135,7 @@ function setupAgent(agent, dir) {
         /^\s*(mcp_servers\.)?olchipanel\s*=/m.test(txt)) return { wrote: file, already: true };
     fs.mkdirSync(path.dirname(file), { recursive: true });
     fs.appendFileSync(file, (txt && !txt.endsWith('\n') ? '\n' : '') +
-      '\n[mcp_servers.olchipanel]\ncommand = "npx"\nargs = ["-y", "olchipanel"]\n', 'utf8');
+      '\n[mcp_servers.olchipanel]\ncommand = "npx"\nargs = ["-y", "olchipanel@latest"]\n', 'utf8');
     return { wrote: file, already: false };
   }
   throw new Error('unknown_agent');
@@ -154,6 +179,8 @@ function openBrowser(url) {
 function start(opts) {
   opts = opts || {};
   const clients = new Set();
+  checkUpdate();
+  setInterval(checkUpdate, 24 * 60 * 60 * 1000).unref();
 
   const server = http.createServer((req, res) => {
     if (!hostOk(req)) { res.writeHead(403); return res.end('forbidden'); }
@@ -186,7 +213,7 @@ function start(opts) {
       const visible = all.filter(s => !s.archived);
       const MAX = 30;
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
-      res.end(JSON.stringify({ sessions: visible.slice(0, MAX), total: all.length }));
+      res.end(JSON.stringify({ sessions: visible.slice(0, MAX), total: all.length, version: VERSION, latest: latestKnown }));
     } else if (url === '/api/setup-agent' && req.method === 'POST') {
       // One-click MCP setup from the help screen. The request names an agent
       // (whitelisted) and a session (for the project folder) — config content

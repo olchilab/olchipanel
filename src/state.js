@@ -130,11 +130,28 @@ function findNode(node, id) {
   return null;
 }
 
-function clearNow(node) {
+// Demote every "now" before a new one is set. keepIds (optional): ids on the
+// path to the NEW now — an ancestor that was "now" becomes a plain container
+// (no status), NOT "done". First real-user feedback: moving "now" into a child
+// used to stamp the parent ✓done while its child was still in progress.
+function clearNow(node, keepIds) {
   if (!node) return;
-  if (node.status === 'now') node.status = 'done';
-  for (const c of node.children || []) clearNow(c);
+  if (node.status === 'now') node.status = (keepIds && keepIds.has(node.id)) ? '' : 'done';
+  for (const c of node.children || []) clearNow(c, keepIds);
+}
+
+// ids of every node from the root down to (and including) targetId
+function pathIds(node, targetId, acc) {
+  if (!node) return null;
+  acc = acc || [];
+  acc.push(node.id);
+  if (node.id === targetId) return new Set(acc);
+  for (const c of node.children || []) {
+    const hit = pathIds(c, targetId, acc.slice());
+    if (hit) return hit;
+  }
+  return null;
 }
 
 module.exports = { ROOT, SESSIONS, ensureDirs, newSession, writeSession, readAllSessions,
-  deleteSession, isTouched, pidAlive, cleanup, findPrevious, panelKey, findNode, clearNow };
+  deleteSession, isTouched, pidAlive, cleanup, findPrevious, panelKey, findNode, clearNow, pathIds };
