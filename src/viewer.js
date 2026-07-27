@@ -179,8 +179,6 @@ function openBrowser(url) {
 function start(opts) {
   opts = opts || {};
   const clients = new Set();
-  checkUpdate();
-  setInterval(checkUpdate, 24 * 60 * 60 * 1000).unref();
 
   const server = http.createServer((req, res) => {
     if (!hostOk(req)) { res.writeHead(403); return res.end('forbidden'); }
@@ -273,20 +271,25 @@ function start(opts) {
     }
   }
 
-  // Watch the sessions dir; debounce bursts. Slow poll backs up fs.watch
-  // where it is unreliable (network drives etc.).
+  // Background devices (dir watch, 5s poll, daily update check) are armed ONLY
+  // in the one process that actually wins the bind and serves the board — every
+  // other connected agent's MCP process stays fully idle in the background.
+  // (User-burden rule: with N agents attached, exactly 1 process does any work.)
   state.ensureDirs();
   let t = null;
   const kick = () => { clearTimeout(t); t = setTimeout(broadcast, 120); };
-  // unref: watching must not keep a process alive that never won the bind —
-  // an adopting `open` would otherwise linger forever as a zombie
-  try { fs.watch(state.SESSIONS, kick).unref(); } catch (e) { /* poll covers it */ }
-  let lastMtime = 0;
-  setInterval(() => {
-    let m;
-    try { m = fs.statSync(state.SESSIONS).mtimeMs; } catch (e) { return; }
-    if (m !== lastMtime) { lastMtime = m; kick(); }
-  }, 5000).unref();
+  function armBackgroundDevices() {
+    // unref everywhere: none of this may keep a dying process alive
+    try { fs.watch(state.SESSIONS, kick).unref(); } catch (e) { /* poll covers it */ }
+    let lastMtime = 0;
+    setInterval(() => {
+      let m;
+      try { m = fs.statSync(state.SESSIONS).mtimeMs; } catch (e) { return; }
+      if (m !== lastMtime) { lastMtime = m; kick(); }
+    }, 5000).unref();
+    checkUpdate();
+    setInterval(checkUpdate, 24 * 60 * 60 * 1000).unref();
+  }
 
   // Bind: walk candidate ports. A taken port is first health-checked: if a live
   // olchipanel viewer already answers there, ADOPT it (heal the discovery file,
@@ -319,6 +322,7 @@ function start(opts) {
     try {
       fs.writeFileSync(VIEWER_FILE, JSON.stringify({ url, pid: process.pid, at: new Date().toISOString() }), 'utf8');
     } catch (e) {}
+    armBackgroundDevices(); // the bind winner is the ONLY process doing background work
     if (opts.announce) console.log(`olchipanel viewer → ${url}`);
     // only the process that WON the bind reaches here — so "already open" never
     // double-opens: a second instance fails to bind and never gets this callback.
