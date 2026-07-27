@@ -48,6 +48,12 @@ Then add **one line to your agent's rules file** (`CLAUDE.md` / `.cursorrules` /
 That line matters: measured head-to-head, agents with only the MCP config finish tasks without touching the board;
 with the rules line they bake it unprompted. Two lines total — that's the whole integration.
 
+**Who can connect**: any agent that can spawn a local process (stdio MCP). That includes
+the **ChatGPT desktop app's Codex workspaces** — they read `~/.codex/config.toml`, so the
+same `codex mcp add` line covers them (observed on Windows). What can't connect: browser-only
+sessions (chatgpt.com / claude.ai chats) and the desktop app's *regular* chat — those can't
+launch local processes, and OlchiPanel is local-only by design.
+
 Then open the panel — as the agent works, its situation appears and updates live.
 The port is picked automatically (6711, or the next free one); the actual URL is
 written to `~/.olchipanel/viewer.json`.
