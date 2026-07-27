@@ -297,6 +297,10 @@
   .cap{color:var(--muted); font-size:13px;}
   .empty{padding:52px 20px; text-align:center; color:var(--muted); font-size:14px;}
   .empty b{display:block; font-size:16px; margin-bottom:7px; color:var(--ink); font-weight:640;}
+  /* bootstrap one-liner must wrap, not punch through the viewport */
+  .empty pre{position:relative; white-space:pre-wrap; word-break:break-word; text-align:left;
+    max-width:640px; margin:14px auto 0; padding:12px 64px 12px 14px; background:var(--card);
+    border:1px solid var(--line); border-radius:4px; font-family:var(--mono); font-size:12.5px;}
 
   /* narrow screens: collapsed is only the INITIAL default (set by JS) —
      the user's toggle always wins, so no media query forces the rail shut */

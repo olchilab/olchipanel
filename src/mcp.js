@@ -12,7 +12,7 @@ const INSTRUCTIONS = `OlchiPanel is a live situation board for the HUMAN watchin
 It is narrative instrumentation, not logging. Keep it honest and current:
 - If a previous panel exists for this project (you'll be told below), call resume_project FIRST — it hands you the whole prior situation (goal, journey, decisions, dead ends, open asks) like an inherited memory, and archives the old panel.
 - If you connect mid-task with no previous panel, backfill: reconstruct the journey so far from the conversation (steps already done get status "done"), then continue live. A panel that starts at step 5 should still show steps 1-4.
-- If the human gives this session a name (e.g. "call this one Master"), call name_session immediately; otherwise pick a short name from the task.
+- Name this session after the conversation's title/topic: if the human names it (e.g. "call this one Master"), use exactly that; otherwise derive a short name from the task. The name must FOLLOW the conversation — when the human renames the topic or the mission visibly shifts, call name_session again so the panel always carries the current name.
 - Call set_goal once you understand the task (one sentence, the north star).
 - Build the journey map with add_step as your plan takes shape; statuses: now (exactly one), next, done, pause.
 - A stray idea appears mid-task: weigh it before you draw it, or the map fills with noise.
@@ -36,7 +36,7 @@ const TOOLS = [
   },
   {
     name: 'name_session',
-    description: 'Give this session a human-facing name shown big in the sidebar (e.g. "Master", "결제 리팩터"). Call when the human tells you what to call this session, or pick a short name from the task yourself. One session = one name; calling again renames.',
+    description: 'Give this session a human-facing name shown big in the sidebar (e.g. "Master", "결제 리팩터"). Name it after the conversation title/topic — the human\'s wording wins, otherwise derive from the task. Call again whenever the topic is renamed or the mission shifts: the panel name must follow the conversation, renames included.',
     inputSchema: {
       type: 'object',
       properties: { name: { type: 'string', description: 'Short display name for this session.' } },
