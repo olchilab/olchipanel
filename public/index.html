@@ -870,6 +870,14 @@
       var cp = el('button', 'resume-copy', T('resumeCopy'));
       cp.addEventListener('click', function(){ copyText(T('resumePrompt'), T('resumeCopied')); });
       bar.appendChild(cp);
+      // archive from the main view too — the sidebar ✕ was the only way out (Mark)
+      var ar = el('button', 'resume-copy', '✕ ' + T('archiveRow').split(' (')[0]);
+      ar.title = T('archiveRow');
+      ar.addEventListener('click', function(){
+        fetch('/api/archive', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: D.id }) }).then(function(){ current = null; refresh(); }).catch(function(){});
+      });
+      bar.appendChild(ar);
       rb.appendChild(bar);
     }
 
