@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.0](https://github.com/olchilab/olchipanel/compare/olchipanel-v0.3.0...olchipanel-v0.4.0) (2026-07-27)
+
+
+### Features
+
+* laptop-pilot batch — [@latest](https://github.com/latest) auto-update, update chip, star ask, now semantics, batch add_step, Windows field notes ([2c5b0c4](https://github.com/olchilab/olchipanel/commit/2c5b0c4274adf237d322b7c9d84ea9b5fe6d2db4))
+
+
+### Performance Improvements
+
+* background devices armed only in the bind-winning process ([ccf8ad6](https://github.com/olchilab/olchipanel/commit/ccf8ad6ab91cb3e4b2ded85071a7b4191ddaec37))
+
 ## [0.3.0](https://github.com/olchilab/olchipanel/compare/olchipanel-v0.2.0...olchipanel-v0.3.0) (2026-07-27)
 
 
