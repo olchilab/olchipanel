@@ -26,7 +26,7 @@ function ping(url, cb) {
   let done = false;
   const finish = (ok) => { if (!done) { done = true; cb(ok); } };
   try {
-    const req = http.get(url + '/api/state', { timeout: 900 }, (res) => {
+    const req = http.get(url + '/api/state', { timeout: 2000 }, (res) => {
       res.resume(); finish(res.statusCode === 200);
     });
     req.on('error', () => finish(false));
@@ -251,7 +251,9 @@ function start(opts) {
   state.ensureDirs();
   let t = null;
   const kick = () => { clearTimeout(t); t = setTimeout(broadcast, 120); };
-  try { fs.watch(state.SESSIONS, kick); } catch (e) { /* poll covers it */ }
+  // unref: watching must not keep a process alive that never won the bind —
+  // an adopting `open` would otherwise linger forever as a zombie
+  try { fs.watch(state.SESSIONS, kick).unref(); } catch (e) { /* poll covers it */ }
   let lastMtime = 0;
   setInterval(() => {
     let m;
