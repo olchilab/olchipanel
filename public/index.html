@@ -399,7 +399,7 @@
       uninitBody: 'The agent is connected but has not drawn anything. If its rules file has the OlchiPanel line it will start on the next task — or paste this to the agent now:',
       uninitPrompt: 'Initialize your OlchiPanel board now: resume_project if a previous panel exists, then name_session, set_goal, and backfill the journey so far.',
       started: 'started', updated: 'updated',
-      sessLive: '· ● live', sessEnded: '· session ended',
+      sessLive: '· ● live', sessEnded: '· session ended', sessStale: '· ◐ live but silent 30m+',
       stackEmptyT: 'Nothing set aside', stackEmpty: 'When you change topic mid-task, the agent parks its work here with a resume point.',
       changesEmpty: 'Nothing touched yet.',
       decEmptyT: 'No decisions yet', decEmpty: 'Choices the agent makes — and assumptions it makes without asking — show up here.',
@@ -448,7 +448,7 @@
       uninitBody: '에이전트가 연결만 되고 아직 아무것도 그리지 않았습니다. 룰파일에 올치패널 한 줄이 있으면 다음 작업부터 그립니다 — 지금 시키려면 아래를 에이전트에게 붙여넣으세요:',
       uninitPrompt: 'Initialize your OlchiPanel board now: resume_project if a previous panel exists, then name_session, set_goal, and backfill the journey so far.',
       started: '시작', updated: '갱신',
-      sessLive: '· ● 라이브', sessEnded: '· 세션 종료됨',
+      sessLive: '· ● 라이브', sessEnded: '· 세션 종료됨', sessStale: '· ◐ 라이브지만 30분+ 무갱신',
       stackEmptyT: '밀쳐둔 일 없음', stackEmpty: '작업 중 주제를 바꾸면, 에이전트가 하던 일을 재개점과 함께 여기 세워둡니다.',
       changesEmpty: '아직 건드린 것 없음.',
       decEmptyT: '아직 결정 없음', decEmpty: '에이전트가 내리는 선택 — 그리고 묻지 않고 세운 가정 — 이 여기 나타납니다.',
@@ -679,6 +679,13 @@
   });
 
   // ---------- time ----------
+  // stale-live: claims alive but hasn't written for 30+ minutes — likely an
+  // abandoned process. Treated like ended for archiving. Safe by construction:
+  // if the agent writes again, its writeSession carries no archived flag, so a
+  // hidden-but-actually-working panel puts itself back on the board.
+  var STALE_MS = 30 * 60 * 1000;
+  function isStale(s){ var t = Date.parse((s && s.updated) || ''); return !!t && (Date.now() - t > STALE_MS); }
+
   function ago(iso){
     if (!iso) return '';
     var s = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
@@ -797,7 +804,7 @@
         });
         var wrap = el('div', 'tab-wrap');
         wrap.appendChild(b);
-        if (!s.alive) { // dead sessions can be tucked away from the board
+        if (!s.alive || isStale(s)) { // dead or stale-live sessions can be tucked away; a stale one that speaks again comes back by itself
           var x = el('button', 'tab-x', '✕');
           x.setAttribute('aria-label', T('archiveRow'));
           x.title = T('archiveRow');
@@ -856,13 +863,14 @@
     var upd = el('span','', '· ' + T('updated') + ' ' + ago(D.updated));
     upd.id = 'updated-ago'; upd.dataset.iso = D.updated || '';
     st.appendChild(upd);
-    st.appendChild(el('span', D.alive ? 'sess-live' : '', D.alive ? T('sessLive') : T('sessEnded')));
+    st.appendChild(el('span', D.alive && !isStale(D) ? 'sess-live' : '',
+      !D.alive ? T('sessEnded') : (isStale(D) ? T('sessStale') : T('sessLive'))));
 
     // ended session → show how to carry the panel on (the viewer can't spawn agents;
     // the honest affordance is a paste-ready prompt)
     var rb = document.getElementById('resumebar');
     rb.innerHTML = '';
-    if (!D.alive) {
+    if (!D.alive || isStale(D)) {
       var bar = el('div', 'resume-bar');
       bar.appendChild(el('span', '', '↻ ' + T('resumeHow')));
       bar.appendChild(el('code', '', D.cwd || '?'));
