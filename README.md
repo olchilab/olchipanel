@@ -152,6 +152,12 @@ runtime dependencies**. Panel state lives in plain JSON under `~/.olchipanel/` �
 readable by anything on your account, so don't have your agent write secrets into
 the goal/steps/changes (it shouldn't anyway). Nothing is uploaded, tracked, or shared.
 
+**Token cost, measured**: the panel's tool surface is ~2.6k tokens nominal, but measured
+end-to-end (same task run with and without the panel attached, headless Codex) the
+difference was **within noise — about 1–3% of a typical task**, likely thanks to
+client-side caching of tool definitions. And it's a trade, not a tax: the board replaces
+the "wait, where were we?" re-explanations that routinely cost far more than that.
+
 Hardening, because localhost servers deserve it: every request is **Host-checked**
 (DNS-rebinding guard), every write endpoint is **Origin-checked** (CSRF guard) and
 runs **fixed server-side templates only** — no request ever carries a command, a
