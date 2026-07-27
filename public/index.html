@@ -733,7 +733,16 @@
     return /[a-z]/i.test(ch) ? ch.toUpperCase() : ch; // "마스터"→마, "master"→M
   }
   function sessionLabel(s){
-    return s.name || s.agent; // human-given name wins; vendor stays in the tiny tag
+    // human-given name wins; otherwise the PROJECT FOLDER tells sessions apart —
+    // seven unnamed "codex-mcp-client" rows are indistinguishable (Mark).
+    // The vendor stays in the tiny tag, so falling back to the agent name last is enough.
+    if (s.name) return s.name;
+    var raw = String(s.workspace || s.cwd || '');
+    if (/windowsapps/i.test(raw) && /openai/i.test(raw)) return 'ChatGPT app'; // install dir, not a project
+    var parts = raw.replace(/[\\/]+$/, '').split(/[\\/]/);
+    var folder = parts.pop() || '';
+    if (/^(app|src|bin|dist|build|repo)$/i.test(folder) && parts.length) folder = parts.pop() + '/' + folder;
+    return folder || s.agent;
   }
   // ---- manual ordering (drag & drop), persisted ----
   function savedOrder(){
