@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.3.0](https://github.com/olchilab/olchipanel/compare/olchipanel-v0.2.0...olchipanel-v0.3.0) (2026-07-27)
+
+
+### Features
+
+* archive button in the main view ([9dcc7c2](https://github.com/olchilab/olchipanel/commit/9dcc7c21cb5b439f5e2815c97b6629f8ab0b54f2))
+* stale-live state — alive but silent 30m+ gets marked and becomes archivable ([7004780](https://github.com/olchilab/olchipanel/commit/7004780d7ff6daff37335c789d29fb7474d2fa1c))
+
+
+### Bug Fixes
+
+* adopting open no longer lingers as a zombie process + ping timeout 900ms-&gt;2s ([624bb5f](https://github.com/olchilab/olchipanel/commit/624bb5f20ec3350f0bf6dd765e5071286d86d719))
+* bootstrap one-liner wraps; session name follows the conversation title via name_session contract ([d10c10a](https://github.com/olchilab/olchipanel/commit/d10c10a5689c52edbe1518c30d79e83b7229d9a8))
+
 ## [0.2.0](https://github.com/olchilab/olchipanel/compare/olchipanel-v0.1.1...olchipanel-v0.2.0) (2026-07-25)
 
 
