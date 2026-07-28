@@ -323,7 +323,7 @@ function start(opts) {
       fs.writeFileSync(VIEWER_FILE, JSON.stringify({ url, pid: process.pid, at: new Date().toISOString() }), 'utf8');
     } catch (e) {}
     armBackgroundDevices(); // the bind winner is the ONLY process doing background work
-    if (opts.announce) console.log(`olchipanel viewer → ${url}`);
+    if (opts.announce) console.log(`olchipanel READY → ${url}  (board is live; this window keeps serving it — minimize it, or close it and any connected agent will take over)`);
     // only the process that WON the bind reaches here — so "already open" never
     // double-opens: a second instance fails to bind and never gets this callback.
     if (shouldOpen(opts)) openBrowser(url);

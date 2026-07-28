@@ -167,6 +167,9 @@ Field notes from a corporate-laptop install:
   `.cmd` shims bypass the `.ps1` policy): `codex mcp add olchipanel -- npx.cmd -y olchipanel@latest`.
 - The Store/desktop-app `codex.exe` under `WindowsApps` may refuse to run from a
   shell → use the CLI path recorded in your Codex config instead.
+- `npm error ENOTCACHED … cache mode is 'only-if-cached'` → the agent's sandbox ran
+  npm offline; re-run the command with network access approved — first run needs
+  one download, after that the cache serves.
 
 ## Scope & privacy
 

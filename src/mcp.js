@@ -114,7 +114,7 @@ const TOOLS = [
   },
   {
     name: 'log_change',
-    description: 'Record something you touched: a file created/modified/deleted, a command run, a commit made. This list is what the human checks instead of re-reading the whole transcript — log every meaningful change as you make it.',
+    description: 'Record something you touched: a file created/modified/deleted, a command run, a commit made. Write paths with forward slashes (C:/...) — backslashes tend to die in tool-call string escaping. This list is what the human checks instead of re-reading the whole transcript — log every meaningful change as you make it.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -258,7 +258,7 @@ function makeToolRunner(session, getViewerUrl) {
         results.push(`Step "${node.label}" added${parent_id ? ` under ${parent_id}` : ' as root'}.`);
       }
       save();
-      return results.join(' ');
+      return results.join('\n');
     },
     set_status({ id, status, label }) {
       const node = state.findNode(session.map.tree, String(id));
