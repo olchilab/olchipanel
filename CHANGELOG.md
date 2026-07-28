@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/olchilab/olchipanel/compare/olchipanel-v0.5.0...olchipanel-v0.6.0) (2026-07-28)
+
+
+### Features
+
+* per-panel memo tab + fold idle panels + app-window without address bar + ChatGPT chat/work verdict ([dae136a](https://github.com/olchilab/olchipanel/commit/dae136af032f483ca2b757169540a16ae85eb2ee))
+
 ## [0.5.0](https://github.com/olchilab/olchipanel/compare/olchipanel-v0.4.0...olchipanel-v0.5.0) (2026-07-28)
 
 
