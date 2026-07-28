@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.5.0](https://github.com/olchilab/olchipanel/compare/olchipanel-v0.4.0...olchipanel-v0.5.0) (2026-07-28)
+
+
+### Features
+
+* memo drawer + olchipanel stop + honest quitting guidance ([c5a42e2](https://github.com/olchilab/olchipanel/commit/c5a42e238dffb4689c000be8955b9ff53f968976))
+
+
+### Bug Fixes
+
+* friend-pilot polish — batch newlines, READY line, path hint, ENOTCACHED note ([0b47ba8](https://github.com/olchilab/olchipanel/commit/0b47ba8c738f96675c3a3b660feba1dba2be3ea5))
+
 ## [0.4.0](https://github.com/olchilab/olchipanel/compare/olchipanel-v0.3.0...olchipanel-v0.4.0) (2026-07-27)
 
 
