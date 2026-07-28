@@ -297,6 +297,13 @@
   .cap{color:var(--muted); font-size:13px;}
   .empty{padding:52px 20px; text-align:center; color:var(--muted); font-size:14px;}
   .empty b{display:block; font-size:16px; margin-bottom:7px; color:var(--ink); font-weight:640;}
+  .memo-drawer{position:fixed; top:56px; right:0; bottom:0; width:min(340px,90vw); z-index:15;
+    background:var(--card); border-left:1px solid var(--line); display:flex; flex-direction:column;}
+  .memo-head{display:flex; justify-content:space-between; align-items:center; padding:10px 14px;
+    font-size:13px; font-weight:640; color:var(--ink); border-bottom:1px solid var(--line);}
+  .memo-state{font-weight:400; font-size:11.5px; color:var(--muted);}
+  .memo-drawer textarea{flex:1; resize:none; border:0; outline:0; background:transparent;
+    color:var(--ink); padding:12px 14px; font:13px/1.6 var(--mono);}
   /* bootstrap one-liner must wrap, not punch through the viewport */
   .empty pre{position:relative; white-space:pre-wrap; word-break:break-word; text-align:left;
     max-width:640px; margin:14px auto 0; padding:12px 64px 12px 14px; background:var(--card);
@@ -312,6 +319,7 @@
   <div class="brand"><span class="brand-mark" aria-hidden="true"></span>OlchiPanel <small id="tSubtitle"></small></div>
   <div class="top-right">
     <span role="status" id="connStatus"><span class="live-dot" id="livedot" aria-hidden="true"></span><span id="livetxt"></span></span>
+    <button class="top-btn" id="memoBtn" aria-label="Memo">MEMO</button>
     <button class="top-btn" id="helpBtn" aria-label="Help">?</button>
     <button class="top-btn" id="langBtn" aria-label="Switch language"></button>
     <button class="top-btn" id="themeBtn" aria-label="Toggle color theme">◐</button>
@@ -372,6 +380,10 @@
     <div class="legend" id="tLegendDeadends"></div>
     <div id="deadendlist"></div>
   </div>
+  <div class="memo-drawer" id="memoDrawer" hidden>
+    <div class="memo-head"><span id="memoTitle"></span><span class="memo-state" id="memoState"></span></div>
+    <textarea id="memoText" spellcheck="false"></textarea>
+  </div>
 </main>
 
 <script>
@@ -416,6 +428,7 @@
       resumeCopy: 'Copy prompt',
       resumeCopied: 'Copied — paste it to your agent in that folder',
       resumePrompt: "Resume this project's previous OlchiPanel — call resume_project to inherit it, then continue the work.",
+      memoTitle: 'Memo — your own scratchpad', memoSaved: 'saved', memoPh: 'Quick notes for yourself. Autosaves to this machine; agents never read or write this.',
       updateChip: function(v){ return '⬆ v' + v; },
       updateHow: 'New version available. Click to copy the update command — run it once in a terminal.',
       updateCopied: 'Copied: npx -y olchipanel@latest open — run it in a terminal',
@@ -469,6 +482,7 @@
       resumeCopy: '프롬프트 복사',
       resumeCopied: '복사됨 — 그 폴더에서 에이전트에 붙여넣으세요',
       resumePrompt: '이 프로젝트의 이전 올치패널을 이어받아줘 — resume_project를 호출해 인수인계 받고, 이어서 진행해.',
+      memoTitle: '메모 — 에이전트 아닌 내 것', memoSaved: '저장됨', memoPh: '나만의 간단 메모. 이 컴퓨터에 자동 저장되고, 에이전트는 읽지도 쓰지도 않습니다.',
       updateChip: function(v){ return '⬆ v' + v; },
       updateHow: '새 버전이 있어요. 클릭하면 업데이트 명령이 복사됩니다 — 터미널에 한 번 붙여넣으면 끝.',
       updateCopied: '복사됨: npx -y olchipanel@latest open — 터미널에 붙여넣어 실행하세요',
@@ -584,10 +598,13 @@
       + '<tr><td>need_human</td><td>사람에게 필요한 것 목록 (hot=급함)</td></tr>'
       + '<tr><td>get_panel</td><td>현재 패널 상태·뷰어 주소 읽기</td></tr>'
       + '</table>'
+      + '<h3>끄기 — 정직한 안내</h3>'
+      + '<p>이 창을 닫으면 <b>화면만</b> 닫힙니다 — 보드는 백그라운드에서 계속 돕니다(그래서 새로고침해도 살아있는 겁니다). 완전히 끄려면: <code>npx olchipanel stop</code>. 에이전트가 띄운 보조 프로세스는 그 에이전트를 종료하면 함께 꺼집니다. 최후 수단: 작업관리자에서 6711 포트를 쓰는 node.exe 종료.</p>'
       + '<h3>터미널 명령</h3>'
       + '<table>'
       + '<tr><td>npx olchipanel open</td><td>패널 창 열기 (떠 있으면 재사용, 죽었으면 새로)</td></tr>'
       + '<tr><td>npx olchipanel viewer</td><td>뷰어만 실행 + 창 자동 오픈</td></tr>'
+      + '<tr><td>npx olchipanel stop</td><td>보드 서버 완전 종료</td></tr>'
       + '<tr><td>npx olchipanel hook</td><td>(선택) Claude Code 훅 — 변경 탭 자동 기록</td></tr>'
       + '</table>'
       + '<p style="margin-top:18px"><a href="https://github.com/olchilab/olchipanel" target="_blank" rel="noreferrer">★ 쓸만하다면 GitHub 별 하나가 큰 힘이 됩니다</a></p>',
@@ -629,10 +646,13 @@
       + '<tr><td>need_human</td><td>what you need from the human (hot = urgent)</td></tr>'
       + '<tr><td>get_panel</td><td>read back panel state + viewer URL</td></tr>'
       + '</table>'
+      + '<h3>Quitting — the honest version</h3>'
+      + '<p>Closing this window only closes the <b>screen</b> — the board keeps serving in the background, which is what makes it survive reloads. To fully stop it: <code>npx olchipanel stop</code>. Helper processes owned by agents end when you close those agents. Last resort: Task Manager → the node.exe serving port 6711.</p>'
       + '<h3>Terminal commands</h3>'
       + '<table>'
       + '<tr><td>npx olchipanel open</td><td>open the panel window (reuses a live viewer, restarts a dead one)</td></tr>'
       + '<tr><td>npx olchipanel viewer</td><td>viewer only + auto-open window</td></tr>'
+      + '<tr><td>npx olchipanel stop</td><td>fully stop the board server</td></tr>'
       + '<tr><td>npx olchipanel hook</td><td>(optional) Claude Code hook — deterministic Changes tab</td></tr>'
       + '</table>'
       + '<p style="margin-top:18px"><a href="https://github.com/olchilab/olchipanel" target="_blank" rel="noreferrer">★ Useful? A GitHub star helps a lot</a></p>',
@@ -674,6 +694,37 @@
   helpBtn.addEventListener('click', openHelp);
   helpOverlay.addEventListener('click', function(e){ if (e.target === helpOverlay) closeHelp(); });
   document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && helpOverlay.classList.contains('on')) closeHelp(); });
+
+  // ---------- memo (the human's corner — agents never touch it) ----------
+  (function(){
+    var drawer = document.getElementById('memoDrawer');
+    var ta = document.getElementById('memoText');
+    var st = document.getElementById('memoState');
+    var loaded = false, timer = null;
+    function chrome(){
+      document.getElementById('memoTitle').textContent = T('memoTitle');
+      ta.placeholder = T('memoPh');
+    }
+    document.getElementById('memoBtn').addEventListener('click', function(){
+      chrome();
+      if (drawer.hidden && !loaded) {
+        fetch('/api/memo').then(function(r){ return r.json(); }).then(function(j){
+          ta.value = j.text || ''; loaded = true;
+        }).catch(function(){});
+      }
+      drawer.hidden = !drawer.hidden;
+      if (!drawer.hidden) ta.focus();
+    });
+    ta.addEventListener('input', function(){
+      clearTimeout(timer); st.textContent = '…';
+      timer = setTimeout(function(){
+        fetch('/api/memo', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: ta.value }) })
+          .then(function(r){ st.textContent = r.ok ? T('memoSaved') : '!'; })
+          .catch(function(){ st.textContent = '!'; });
+      }, 600);
+    });
+  })();
 
   // ---------- theme ----------
   function applyTheme(t){
