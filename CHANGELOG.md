@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.2](https://github.com/olchilab/olchipanel/compare/olchipanel-v0.6.1...olchipanel-v0.6.2) (2026-07-28)
+
+
+### Bug Fixes
+
+* auto-open opens one window per board (was one per connected agent) ([9aa92cc](https://github.com/olchilab/olchipanel/commit/9aa92ccb3ecebd6399af0c0bd2a418c90bc68339))
+
 ## [0.6.1](https://github.com/olchilab/olchipanel/compare/olchipanel-v0.6.0...olchipanel-v0.6.1) (2026-07-28)
 
 
