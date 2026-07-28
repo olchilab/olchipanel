@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.1](https://github.com/olchilab/olchipanel/compare/olchipanel-v0.6.0...olchipanel-v0.6.1) (2026-07-28)
+
+
+### Bug Fixes
+
+* hide idle-fold line when sidebar collapsed; dedicated Chrome app profile ([5600d87](https://github.com/olchilab/olchipanel/commit/5600d87c9aae5b10b751a58e0ced8038c97675bd))
+
 ## [0.6.0](https://github.com/olchilab/olchipanel/compare/olchipanel-v0.5.0...olchipanel-v0.6.0) (2026-07-28)
 
 
