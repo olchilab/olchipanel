@@ -42,6 +42,9 @@
   .topbar{height:56px; background:var(--card); color:var(--ink); display:flex; align-items:center;
     justify-content:space-between; padding:0 20px; border-bottom:1px solid var(--line);
     position:fixed; top:0; left:0; right:0; z-index:20;}
+  .idle-head{width:100%; text-align:left; background:transparent; border:0; border-top:1px solid var(--line);
+    margin-top:8px; padding:10px 12px; color:var(--muted); font-size:12px; cursor:pointer;}
+  .idle-head:hover{color:var(--ink);}
   /* installed PWA with window-controls-overlay: the topbar becomes the titlebar */
   @media (display-mode: window-controls-overlay) {
     .topbar{ -webkit-app-region:drag;
@@ -297,13 +300,11 @@
   .cap{color:var(--muted); font-size:13px;}
   .empty{padding:52px 20px; text-align:center; color:var(--muted); font-size:14px;}
   .empty b{display:block; font-size:16px; margin-bottom:7px; color:var(--ink); font-weight:640;}
-  .memo-drawer{position:fixed; top:56px; right:0; bottom:0; width:min(340px,90vw); z-index:15;
-    background:var(--card); border-left:1px solid var(--line); display:flex; flex-direction:column;}
-  .memo-head{display:flex; justify-content:space-between; align-items:center; padding:10px 14px;
-    font-size:13px; font-weight:640; color:var(--ink); border-bottom:1px solid var(--line);}
-  .memo-state{font-weight:400; font-size:11.5px; color:var(--muted);}
-  .memo-drawer textarea{flex:1; resize:none; border:0; outline:0; background:transparent;
-    color:var(--ink); padding:12px 14px; font:13px/1.6 var(--mono);}
+  .memo-box{width:100%; min-height:340px; resize:vertical; box-sizing:border-box;
+    border:1px solid var(--line); border-radius:4px; background:var(--card); color:var(--ink);
+    padding:12px 14px; font:13px/1.6 var(--mono); outline:0;}
+  .memo-box:focus{border-color:var(--brand-bd);}
+  .memo-state{margin-top:8px; font-size:11.5px; color:var(--muted); min-height:1em;}
   /* bootstrap one-liner must wrap, not punch through the viewport */
   .empty pre{position:relative; white-space:pre-wrap; word-break:break-word; text-align:left;
     max-width:640px; margin:14px auto 0; padding:12px 64px 12px 14px; background:var(--card);
@@ -319,7 +320,6 @@
   <div class="brand"><span class="brand-mark" aria-hidden="true"></span>OlchiPanel <small id="tSubtitle"></small></div>
   <div class="top-right">
     <span role="status" id="connStatus"><span class="live-dot" id="livedot" aria-hidden="true"></span><span id="livetxt"></span></span>
-    <button class="top-btn" id="memoBtn" aria-label="Memo">MEMO</button>
     <button class="top-btn" id="helpBtn" aria-label="Help">?</button>
     <button class="top-btn" id="langBtn" aria-label="Switch language"></button>
     <button class="top-btn" id="themeBtn" aria-label="Toggle color theme">◐</button>
@@ -354,6 +354,7 @@
     <button class="tab" role="tab" data-pane="dec" aria-controls="dec"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span id="tTabDec"></span> <span class="badge" id="bDec"></span></button>
     <button class="tab" role="tab" data-pane="needs" aria-controls="needs"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span id="tTabNeeds"></span> <span class="badge" id="bNeeds"></span></button>
     <button class="tab" role="tab" data-pane="deadends" aria-controls="deadends"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg><span id="tTabDeadends"></span> <span class="badge" id="bDeadends"></span></button>
+    <button class="tab" role="tab" data-pane="memo" aria-controls="memo"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h13l3 3v13a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg><span id="tTabMemo"></span></button>
   </div>
 
   <div class="pane" id="map" role="tabpanel">
@@ -380,9 +381,10 @@
     <div class="legend" id="tLegendDeadends"></div>
     <div id="deadendlist"></div>
   </div>
-  <div class="memo-drawer" id="memoDrawer" hidden>
-    <div class="memo-head"><span id="memoTitle"></span><span class="memo-state" id="memoState"></span></div>
-    <textarea id="memoText" spellcheck="false"></textarea>
+  <div class="pane" id="memo" role="tabpanel">
+    <div class="legend" id="tLegendMemo"></div>
+    <textarea id="memoText" class="memo-box" spellcheck="false"></textarea>
+    <div class="memo-state" id="memoState"></div>
   </div>
 </main>
 
@@ -394,7 +396,7 @@
       subtitle: "your agent's live situation board",
       sessions: 'SESSIONS',
       tabMap: 'Map', tabStack: 'Stack', tabChanges: 'Changes', tabDec: 'Decisions',
-      tabNeeds: 'Needs you', tabDeadends: 'Dead ends',
+      tabNeeds: 'Needs you', tabDeadends: 'Dead ends', tabMemo: 'Memo',
       legendMap: '✓ done · ▶ now · ↩ next · ⑂ fork (active) · dim ⑂ side-quest (parked) · ▾ fold',
       sideQuest: 'side',
       legendStack: 'When the human changes topic, interrupted work lands here with its resume point (top = resume first).',
@@ -402,9 +404,12 @@
       legendDec: 'Decisions the agent made, plus the assumptions it made silently (⚠) — so nothing was decided behind your back.',
       legendNeeds: 'Questions and approvals the agent is waiting on. This is your inbox from the agent.',
       legendDeadends: 'Paths tried and failed, with why — so nobody walks them twice.',
+      legendMemo: 'Your own notes for THIS panel. Autosaved to this machine; agents never read or write it.',
       connecting: 'connecting…', live: 'live', reconnecting: 'reconnecting…',
       noSessions: 'No sessions yet.',
       olderOnDisk: function(n){ return '+' + n + ' older sessions on disk'; },
+      idleConnected: function(n){ return n + ' connected · idle'; },
+      idleHint: 'Agents that attached (global MCP config) but have not drawn anything yet. They appear here so the board stays clean; one shows up above the moment it sets a goal or draws a step.',
       connectHint: 'Connect an agent — the panel bakes itself.',
       emptyTitle: 'Nothing here yet',
       emptyBody: 'Add olchipanel to any MCP-capable agent and give it work. Its situation appears here live.',
@@ -448,7 +453,7 @@
       subtitle: '에이전트가 그리는 라이브 상황판',
       sessions: '세션',
       tabMap: '지도', tabStack: '스택', tabChanges: '변경', tabDec: '결정',
-      tabNeeds: '요청', tabDeadends: '막힌 길',
+      tabNeeds: '요청', tabDeadends: '막힌 길', tabMemo: '메모',
       legendMap: '✓ 완료 · ▶ 지금 여기 · ↩ 다음 · ⑂ 분기(진행) · 흐린 ⑂ 샛길(보류) · ▾ 접기',
       sideQuest: '샛길',
       legendStack: '대화 주제가 바뀌면 하던 일이 재개점과 함께 여기 쌓입니다 (위 = 먼저 재개).',
@@ -456,9 +461,12 @@
       legendDec: '에이전트가 내린 결정 + 말없이 세운 가정(⚠) — 당신 모르게 정해진 게 없도록.',
       legendNeeds: '에이전트가 당신에게 기다리는 질문·승인. 에이전트가 보낸 받은편지함입니다.',
       legendDeadends: '시도했다 실패한 길과 그 이유 — 같은 길을 두 번 걷지 않도록.',
+      legendMemo: '이 패널에 대한 나만의 메모. 이 컴퓨터에 자동 저장되고, 에이전트는 읽지도 쓰지도 않습니다.',
       connecting: '연결 중…', live: '라이브', reconnecting: '재연결 중…',
       noSessions: '아직 세션이 없습니다.',
       olderOnDisk: function(n){ return '이전 세션 +' + n + '개 (디스크)'; },
+      idleConnected: function(n){ return n + '개 연결됨 · 대기'; },
+      idleHint: '전역 MCP 설정으로 자동 접속했지만 아직 아무것도 그리지 않은 에이전트들. 보드를 깔끔하게 유지하려고 여기 접어둡니다 — 목표를 정하거나 단계를 그리는 순간 위로 올라옵니다.',
       connectHint: '에이전트를 연결하면 — 상황판이 저절로 구워집니다.',
       emptyTitle: '아직 비어 있어요',
       emptyBody: 'MCP를 지원하는 아무 에이전트에 olchipanel을 붙이고 일을 시키면, 상황이 여기 라이브로 나타납니다.',
@@ -544,12 +552,14 @@
     document.getElementById('tTabDec').textContent = T('tabDec');
     document.getElementById('tTabNeeds').textContent = T('tabNeeds');
     document.getElementById('tTabDeadends').textContent = T('tabDeadends');
+    document.getElementById('tTabMemo').textContent = T('tabMemo');
     document.getElementById('tLegendMap').textContent = T('legendMap');
     document.getElementById('tLegendStack').textContent = T('legendStack');
     document.getElementById('tLegendChanges').textContent = T('legendChanges');
     document.getElementById('tLegendDec').textContent = T('legendDec');
     document.getElementById('tLegendNeeds').textContent = T('legendNeeds');
     document.getElementById('tLegendDeadends').textContent = T('legendDeadends');
+    document.getElementById('tLegendMemo').textContent = T('legendMemo');
     document.getElementById('langBtn').textContent = lang === 'ko' ? 'EN' : '한';
   }
   document.getElementById('langBtn').addEventListener('click', function(){
@@ -695,36 +705,31 @@
   helpOverlay.addEventListener('click', function(e){ if (e.target === helpOverlay) closeHelp(); });
   document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && helpOverlay.classList.contains('on')) closeHelp(); });
 
-  // ---------- memo (the human's corner — agents never touch it) ----------
-  (function(){
-    var drawer = document.getElementById('memoDrawer');
-    var ta = document.getElementById('memoText');
-    var st = document.getElementById('memoState');
-    var loaded = false, timer = null;
-    function chrome(){
-      document.getElementById('memoTitle').textContent = T('memoTitle');
-      ta.placeholder = T('memoPh');
-    }
-    document.getElementById('memoBtn').addEventListener('click', function(){
-      chrome();
-      if (drawer.hidden && !loaded) {
-        fetch('/api/memo').then(function(r){ return r.json(); }).then(function(j){
-          ta.value = j.text || ''; loaded = true;
-        }).catch(function(){});
-      }
-      drawer.hidden = !drawer.hidden;
-      if (!drawer.hidden) ta.focus();
-    });
-    ta.addEventListener('input', function(){
-      clearTimeout(timer); st.textContent = '…';
-      timer = setTimeout(function(){
-        fetch('/api/memo', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: ta.value }) })
-          .then(function(r){ st.textContent = r.ok ? T('memoSaved') : '!'; })
-          .catch(function(){ st.textContent = '!'; });
-      }, 600);
-    });
-  })();
+  // ---------- memo: one per panel, lives in its own tab (never covers anything) ----------
+  var memoTa = document.getElementById('memoText');
+  var memoSt = document.getElementById('memoState');
+  var memoLoadedFor = null, memoTimer = null;
+  function memoUrl(){ return current ? '/api/memo?id=' + encodeURIComponent(current) : '/api/memo'; }
+  function loadMemo(){
+    // called when the memo tab is shown or the selected panel changes
+    if (memoLoadedFor === current) return;
+    memoLoadedFor = current; memoSt.textContent = '';
+    var forWhom = current;
+    fetch(memoUrl()).then(function(r){ return r.json(); }).then(function(j){
+      if (memoLoadedFor === forWhom) memoTa.value = j.text || '';
+    }).catch(function(){});
+  }
+  memoTa.addEventListener('input', function(){
+    clearTimeout(memoTimer); memoSt.textContent = '…';
+    var forWhom = current;
+    memoTimer = setTimeout(function(){
+      fetch(current ? '/api/memo?id=' + encodeURIComponent(forWhom) : '/api/memo',
+        { method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: memoTa.value }) })
+        .then(function(r){ memoSt.textContent = r.ok ? T('memoSaved') : '!'; })
+        .catch(function(){ memoSt.textContent = '!'; });
+    }, 500);
+  });
 
   // ---------- theme ----------
   function applyTheme(t){
@@ -839,6 +844,15 @@
     return _rankCache[id] === undefined ? Infinity : _rankCache[id];
   }
 
+  // a panel is "touched" once the agent drew anything; untouched = connected
+  // but idle (no rules line, or hasn't started). Global codex/claude MCP config
+  // auto-attaches every session on the machine, so these pile up — we fold them.
+  function touched(s){
+    return !!(s.goal || (s.map && s.map.tree) || (s.stack||[]).length ||
+      (s.decisions||[]).length || (s.changes||[]).length ||
+      (s.deadends||[]).length || (s.pending||[]).length);
+  }
+  var idleOpen = false;
   function buildRail(){
     _rankCache = null;
     var root = document.getElementById('railTabs');
@@ -846,13 +860,14 @@
     // group by vendor; inside each group: manual order first, then newest-first
     var order = ['claude', 'codex', 'cursor', 'gemini', 'other'];
     var groups = {};
-    sessions.forEach(function(s){ var v = vendorOf(s.agent); (groups[v] = groups[v] || []).push(s); });
+    var idle = [];
+    sessions.forEach(function(s){
+      // keep untouched-but-selected visible so the current panel never vanishes
+      if (!touched(s) && s.id !== current) { idle.push(s); return; }
+      var v = vendorOf(s.agent); (groups[v] = groups[v] || []).push(s);
+    });
     var multi = Object.keys(groups).length > 1;
-    order.forEach(function(v){
-      if (!groups[v]) return;
-      if (multi) root.appendChild(el('div', 'rail-group', VENDOR_LABEL[v]));
-      groups[v].sort(function(a, b){ return displayRank(a.id) - displayRank(b.id); });
-      groups[v].forEach(function(s){
+    function renderRow(s, v){
         var b = el('button', 'panel-tab v-' + v + (current === s.id ? ' active' : ''));
         var face = el('span', 'face' + (s.alive ? '' : ' dead'), sessionFace(s));
         if (s.alive) face.appendChild(el('span', 'alive'));
@@ -865,7 +880,7 @@
         txt.appendChild(sub);
         b.appendChild(txt);
         b.title = sessionLabel(s) + ' — ' + s.agent + ' · ' + (s.started || '').slice(0, 16).replace('T', ' ');
-        b.addEventListener('click', function(){ current = s.id; try{localStorage.setItem('olchipanel.sel', s.id);}catch(e){} render(); });
+        b.addEventListener('click', function(){ current = s.id; try{localStorage.setItem('olchipanel.sel', s.id);}catch(e){} memoLoadedFor = null; if (document.getElementById('memo').classList.contains('on')) loadMemo(); render(); });
         // drag to reorder
         b.draggable = true;
         b.addEventListener('dragstart', function(e){ dragId = s.id; e.dataTransfer.effectAllowed = 'move'; });
@@ -890,8 +905,21 @@
           wrap.appendChild(x);
         }
         root.appendChild(wrap);
-      });
+    }
+    order.forEach(function(v){
+      if (!groups[v]) return;
+      if (multi) root.appendChild(el('div', 'rail-group', VENDOR_LABEL[v]));
+      groups[v].sort(function(a, b){ return displayRank(a.id) - displayRank(b.id); });
+      groups[v].forEach(function(s){ renderRow(s, vendorOf(s.agent)); });
     });
+    // folded idle panels: connected but never drew anything
+    if (idle.length) {
+      var head = el('button', 'idle-head', (idleOpen ? '▾ ' : '▸ ') + T('idleConnected')(idle.length));
+      head.title = T('idleHint');
+      head.addEventListener('click', function(){ idleOpen = !idleOpen; buildRail(); });
+      root.appendChild(head);
+      if (idleOpen) idle.forEach(function(s){ renderRow(s, vendorOf(s.agent)); });
+    }
     document.getElementById('railMore').textContent =
       total > sessions.length ? T('olderOnDisk')(total - sessions.length) : '';
     if (!sessions.length) root.appendChild(el('div', 'cap', T('noSessions')));
@@ -1112,6 +1140,7 @@
     });
     document.querySelectorAll('.pane').forEach(function(p){ p.classList.toggle('on', p.id === name); });
     try { localStorage.setItem('olchipanel.tab', name); } catch(e){}
+    if (name === 'memo') loadMemo();
   }
   document.querySelectorAll('.tab').forEach(function(t){
     t.addEventListener('click', function(){ showTab(t.dataset.pane); });

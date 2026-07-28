@@ -87,6 +87,19 @@ function sameOriginOk(req) {
   catch (e) { return false; }
 }
 
+// Memo file for a request: ?id=<session> → memo-<safe>.txt (per panel),
+// no id → memo.txt (board-wide). id is sanitized to a safe filename.
+function memoFile(rawUrl) {
+  let id = '';
+  const q = rawUrl.indexOf('?');
+  if (q >= 0) {
+    const m = /(?:^|&)id=([^&]*)/.exec(rawUrl.slice(q + 1));
+    if (m) id = decodeURIComponent(m[1]);
+  }
+  const safe = String(id).replace(/[^A-Za-z0-9._-]/g, '_').slice(0, 80);
+  return path.join(state.ROOT, safe ? `memo-${safe}.txt` : 'memo.txt');
+}
+
 // A session's cwd is machine-truth from the agent, but it can be tilde-prefixed,
 // stale, or from another machine. Resolve to a real directory or null — spawning
 // a terminal at a bad path pops an OS error dialog instead of a terminal.
@@ -160,11 +173,24 @@ function openBrowser(url) {
     } catch (e) { /* give up quietly */ }
   }
   if (mode === 'tab') return tab();
-  // app-window attempt (no chrome), fall back to a tab on any failure
+  // app-window attempt (no address bar). `start msedge --app=` silently opened
+  // a normal tabbed window when Edge wasn't the app alias — so on Windows we
+  // locate a real chrome/edge exe and pass --app directly; only then fall to a tab.
   try {
     if (plat === 'win32') {
-      const p = spawn('cmd', ['/c', 'start', 'msedge', '--app=' + url], detached);
-      p.on('error', tab); p.unref();
+      const env = process.env;
+      const candidates = [
+        env.LOCALAPPDATA && path.join(env.LOCALAPPDATA, 'Google/Chrome/Application/chrome.exe'),
+        env.PROGRAMFILES && path.join(env.PROGRAMFILES, 'Google/Chrome/Application/chrome.exe'),
+        env['PROGRAMFILES(X86)'] && path.join(env['PROGRAMFILES(X86)'], 'Google/Chrome/Application/chrome.exe'),
+        env['PROGRAMFILES(X86)'] && path.join(env['PROGRAMFILES(X86)'], 'Microsoft/Edge/Application/msedge.exe'),
+        env.PROGRAMFILES && path.join(env.PROGRAMFILES, 'Microsoft/Edge/Application/msedge.exe'),
+      ].filter(Boolean);
+      const exe = candidates.find(p => { try { return fs.existsSync(p); } catch (e) { return false; } });
+      if (exe) {
+        const p = spawn(exe, ['--app=' + url], detached);
+        p.on('error', tab); p.unref();
+      } else { tab(); } // no Chromium browser found → plain tab is the honest fallback
     } else if (plat === 'darwin') {
       const p = spawn('open', ['-na', 'Google Chrome', '--args', '--app=' + url], detached);
       p.on('error', tab); p.unref();
@@ -182,7 +208,8 @@ function start(opts) {
 
   const server = http.createServer((req, res) => {
     if (!hostOk(req)) { res.writeHead(403); return res.end('forbidden'); }
-    const url = (req.url || '/').split('?')[0];
+    const rawUrl = req.url || '/';
+    const url = rawUrl.split('?')[0];
     if (url === '/' || url === '/index.html') {
       // no-store: the page must always reflect the shipped UI, never a stale cache
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
@@ -212,20 +239,21 @@ function start(opts) {
       const MAX = 30;
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
       res.end(JSON.stringify({ sessions: visible.slice(0, MAX), total: all.length, version: VERSION, latest: latestKnown, pid: process.pid }));
-    } else if (url === '/api/memo' && req.method === 'GET') {
-      // one plain-text scratchpad per board — the human's corner of the panel
+    } else if (rawUrl.split('?')[0] === '/api/memo' && req.method === 'GET') {
+      // human's scratchpad — one per panel (id), plus a board-wide one (no id).
+      // Agents never read or write these files; this is the human's corner.
       let text = '';
-      try { text = fs.readFileSync(path.join(state.ROOT, 'memo.txt'), 'utf8'); } catch (e) {}
+      try { text = fs.readFileSync(memoFile(rawUrl), 'utf8'); } catch (e) {}
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
       res.end(JSON.stringify({ text }));
-    } else if (url === '/api/memo' && req.method === 'POST') {
+    } else if (rawUrl.split('?')[0] === '/api/memo' && req.method === 'POST') {
       if (!sameOriginOk(req)) { res.writeHead(403); return res.end('{"ok":false,"error":"forbidden"}'); }
       let body = '';
       req.on('data', d => { body += d; if (body.length > 262144) req.destroy(); });
       req.on('end', () => {
         try {
           const { text } = JSON.parse(body || '{}');
-          fs.writeFileSync(path.join(state.ROOT, 'memo.txt'), String(text == null ? '' : text).slice(0, 65536), 'utf8');
+          fs.writeFileSync(memoFile(rawUrl), String(text == null ? '' : text).slice(0, 65536), 'utf8');
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end('{"ok":true}');
         } catch (e) {
