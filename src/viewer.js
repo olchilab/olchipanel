@@ -171,7 +171,20 @@ function appArgs(url) {
   return ['--app=' + url, '--user-data-dir=' + profile, '--no-first-run', '--no-default-browser-check'];
 }
 
-function openBrowser(url) {
+// Auto-open dedupe: with OLCHIPANEL_OPEN=app in the MCP config, EVERY agent that
+// connects would pop its own window at the same board — 5 agents, 5 windows.
+// A marker records that a window was already opened for the current board; auto
+// opens skip when it matches. Explicit `olchipanel open`/`viewer` ignore it
+// (the human asked for a window). Marker resets when the board process changes.
+const WINDOW_MARKER = path.join(state.ROOT, 'window.json');
+function boardStamp() { try { const j = JSON.parse(fs.readFileSync(VIEWER_FILE, 'utf8')); return j.at || j.adopted_at || ''; } catch (e) { return ''; } }
+function windowAlreadyOpen() { try { return JSON.parse(fs.readFileSync(WINDOW_MARKER, 'utf8')).boardAt === boardStamp(); } catch (e) { return false; } }
+function markWindowOpen() { try { fs.writeFileSync(WINDOW_MARKER, JSON.stringify({ boardAt: boardStamp(), at: new Date().toISOString() }), 'utf8'); } catch (e) {} }
+
+function openBrowser(url, opts) {
+  // auto opens (agent-triggered) dedupe; explicit human opens always proceed
+  if (opts && opts.auto && windowAlreadyOpen()) return;
+  markWindowOpen();
   const mode = String(process.env.OLCHIPANEL_OPEN || '').toLowerCase();
   const plat = process.platform;
   const detached = { detached: true, stdio: 'ignore' };
@@ -368,7 +381,7 @@ function start(opts) {
             try { fs.writeFileSync(VIEWER_FILE, JSON.stringify({ url: takenUrl, pid: null, adopted_at: new Date().toISOString() }), 'utf8'); } catch (err) {}
           }
           if (opts.announce) console.log(`olchipanel viewer (existing) → ${takenUrl}`);
-          if (shouldOpen(opts)) openBrowser(takenUrl);
+          if (shouldOpen(opts)) openBrowser(takenUrl, { auto: !opts.open });
           return;
         }
         if (++attempt < MAX_TRIES) return tryListen(); // squatter that isn't a viewer → next port
@@ -385,7 +398,7 @@ function start(opts) {
     if (opts.announce) console.log(`olchipanel READY → ${url}  (board is live; this window keeps serving it — minimize it, or close it and any connected agent will take over)`);
     // only the process that WON the bind reaches here — so "already open" never
     // double-opens: a second instance fails to bind and never gets this callback.
-    if (shouldOpen(opts)) openBrowser(url);
+    if (shouldOpen(opts)) openBrowser(url, { auto: !opts.open });
   });
   tryListen();
   return server;
