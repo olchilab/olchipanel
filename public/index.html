@@ -89,12 +89,16 @@
     color:var(--ink-2); font-size:14.5px; font-weight:600; cursor:pointer; font-family:inherit;
     display:flex; align-items:center; gap:11px; text-align:left; width:100%; position:relative;}
   .panel-tab:hover{background:var(--hover);}
-  .panel-tab.active{background:var(--card); color:var(--ink); border-left-color:var(--brand);
+  /* per-vendor accent: Codex blue, Claude orange (Mark) */
+  .v-claude{--vc:#d97706;} .v-codex{--vc:#2f6fed;} .v-cursor{--vc:#7a6ae0;}
+  .v-gemini{--vc:#3d7fe0;} .v-other{--vc:var(--muted);}
+  .panel-tab.active{background:var(--card); color:var(--ink); border-left-color:var(--vc, var(--brand));
     box-shadow:var(--shadow);}
-  .panel-tab.dragover{box-shadow:0 -2px 0 0 var(--brand);}
+  .panel-tab.dragover{box-shadow:0 -2px 0 0 var(--vc, var(--brand));}
   .panel-tab .face{flex:none; display:none; place-items:center; width:34px; height:34px;
-    border-radius:7px; background:var(--hover); color:var(--ink-2); font-weight:700; font-size:14px; position:relative;}
-  .panel-tab.active .face{background:var(--brand); color:#fff;}
+    border-radius:7px; background:color-mix(in srgb, var(--vc, var(--muted)) 16%, transparent);
+    color:var(--vc, var(--ink-2)); font-weight:700; font-size:14px; position:relative;}
+  .panel-tab.active .face{background:var(--vc, var(--brand)); color:#fff;}
   .face .alive{position:absolute; right:-3px; top:-3px; width:9px; height:9px; border-radius:50%;
     background:var(--done); border:2px solid var(--rail-bg);}
   .panel-tab .txt{min-width:0; overflow:hidden; flex:1;}
@@ -144,11 +148,7 @@
   /* vendor identity: a hairline tag, never a colour-only signal */
   .vendor-tag{font-size:9.5px; font-weight:700; letter-spacing:.06em; margin-right:5px; opacity:.72;}
   .panel-tab.active .vendor-tag{opacity:1;}
-  .v-claude .vendor-tag{color:#c96442;}
-  .v-codex .vendor-tag{color:#1a8f70;}
-  .v-cursor .vendor-tag{color:#7a6ae0;}
-  .v-gemini .vendor-tag{color:#3d7fe0;}
-  .v-other .vendor-tag{color:var(--muted);}
+  .vendor-tag{color:var(--vc, var(--muted));}
 
   /* collapsed rail */
   body.rail-closed .rail{width:66px; padding:18px 10px;}
