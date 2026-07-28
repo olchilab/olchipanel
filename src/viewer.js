@@ -161,6 +161,16 @@ function setupAgent(agent, dir) {
 // Open the panel. Default: an app window (no address bar; shows in the taskbar
 // like its own app) via Edge/Chrome. Falls back to the default browser as a tab.
 // OLCHIPANEL_OPEN=tab forces a normal tab. Opening is best-effort, never fatal.
+// App-mode args with a DEDICATED profile dir. Without --user-data-dir, a new
+// --app window attaches to the user's already-running Chrome — which then
+// shows the address bar and inherits that instance's flags (e.g. a stray
+// --no-sandbox warning banner). A separate profile forces a clean app window.
+function appArgs(url) {
+  const profile = path.join(state.ROOT, 'browser-profile');
+  try { fs.mkdirSync(profile, { recursive: true }); } catch (e) {}
+  return ['--app=' + url, '--user-data-dir=' + profile, '--no-first-run', '--no-default-browser-check'];
+}
+
 function openBrowser(url) {
   const mode = String(process.env.OLCHIPANEL_OPEN || '').toLowerCase();
   const plat = process.platform;
@@ -188,15 +198,15 @@ function openBrowser(url) {
       ].filter(Boolean);
       const exe = candidates.find(p => { try { return fs.existsSync(p); } catch (e) { return false; } });
       if (exe) {
-        const p = spawn(exe, ['--app=' + url], detached);
+        const p = spawn(exe, appArgs(url), detached);
         p.on('error', tab); p.unref();
       } else { tab(); } // no Chromium browser found → plain tab is the honest fallback
     } else if (plat === 'darwin') {
-      const p = spawn('open', ['-na', 'Google Chrome', '--args', '--app=' + url], detached);
+      const p = spawn('open', ['-na', 'Google Chrome', '--args'].concat(appArgs(url)), detached);
       p.on('error', tab); p.unref();
     } else {
-      const p = spawn('google-chrome', ['--app=' + url], detached);
-      p.on('error', function () { try { spawn('chromium', ['--app=' + url], detached).unref(); } catch (e) { tab(); } });
+      const p = spawn('google-chrome', appArgs(url), detached);
+      p.on('error', function () { try { spawn('chromium', appArgs(url), detached).unref(); } catch (e) { tab(); } });
       p.unref();
     }
   } catch (e) { tab(); }
