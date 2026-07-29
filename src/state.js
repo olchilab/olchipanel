@@ -100,23 +100,46 @@ function pidAlive(id) {
   try { process.kill(Number(m[1]), 0); return true; } catch (e) { return false; }
 }
 
-// Housekeeping at process start: repair ghost-alive sessions (owner pid dead),
-// drop untouched probe sessions, expire old files. Never throws.
+// Housekeeping at process start: keep the live board to alive + recently-active
+// sessions. A dead session (owner pid gone) that hasn't been touched in
+// DEAD_HOURS is MOVED to ROOT/archive/ — off the board but recoverable — so
+// stale sessions don't pile up. Untouched probes and very old files are deleted.
+// Never throws.
 const KEEP_DAYS = Number(process.env.OLCHIPANEL_KEEP_DAYS || 7);
+const DEAD_HOURS = Number(process.env.OLCHIPANEL_DEAD_HOURS || 12);
+const ARCHIVE = path.join(ROOT, 'archive');
 function cleanup() {
   ensureDirs();
-  const cutoff = Date.now() - KEEP_DAYS * 86400e3;
+  const now = Date.now();
+  const cutoffDelete = now - KEEP_DAYS * 86400e3;
+  const cutoffDead = now - DEAD_HOURS * 3600e3;
   for (const f of fs.readdirSync(SESSIONS)) {
     if (!f.endsWith('.json')) continue;
     const p = path.join(SESSIONS, f);
     try {
-      if (fs.statSync(p).mtimeMs < cutoff) { fs.unlinkSync(p); continue; }
-      const s = JSON.parse(fs.readFileSync(p, 'utf8'));
+      const mtime = fs.statSync(p).mtimeMs;
+      if (mtime < cutoffDelete) { fs.unlinkSync(p); continue; }             // very old → delete
+      // Staleness is by mtime, NOT pid: a session not updated in DEAD_HOURS is
+      // not being worked on. Pid liveness is unreliable across time (pid reuse
+      // makes a days-old dead session look "alive"), so old files were surviving.
+      // If a live agent acts again it rewrites SESSIONS/<id>.json and reappears.
+      if (mtime < cutoffDead) {                                             // stale → archive off board
+        try { fs.mkdirSync(ARCHIVE, { recursive: true }); fs.renameSync(p, path.join(ARCHIVE, f)); } catch (e) {}
+        continue;
+      }
+      const s = JSON.parse(fs.readFileSync(p, 'utf8'));                     // recent (< DEAD_HOURS):
       const owner = pidAlive(s.id);
-      if (owner === false && !isTouched(s)) { fs.unlinkSync(p); continue; } // dead probe
-      if (owner === false && s.alive) { s.alive = false; writeSession(s); }  // ghost repair
+      if (owner === false && !isTouched(s)) { fs.unlinkSync(p); continue; } // recent dead probe → delete
+      if (owner === false && s.alive) { s.alive = false; writeSession(s); }  // recently dead → ghost repair
     } catch (e) { /* torn/corrupt handled by readAllSessions; expiry will collect it */ }
   }
+  // keep the archive bounded: purge archived files older than KEEP_DAYS
+  try {
+    for (const f of fs.readdirSync(ARCHIVE)) {
+      const p = path.join(ARCHIVE, f);
+      try { if (fs.statSync(p).mtimeMs < cutoffDelete) fs.unlinkSync(p); } catch (e) {}
+    }
+  } catch (e) { /* no archive yet */ }
 }
 
 // ---- journey tree helpers ----

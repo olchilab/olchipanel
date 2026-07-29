@@ -37,7 +37,6 @@ function checkUpdate() {
 }
 
 const BASE_PORT = Number(process.env.OLCHIPANEL_PORT || 6711);
-const MAX_TRIES = 10;
 const PUBLIC = path.join(__dirname, '..', 'public');
 const VIEWER_FILE = path.join(state.ROOT, 'viewer.json');
 
@@ -57,6 +56,18 @@ function ping(url, cb) {
     req.on('error', () => finish(false));
     req.on('timeout', () => { req.destroy(); finish(false); });
   } catch (e) { finish(false); }
+}
+
+// A single ping can misfire during a race: an incumbent viewer that just won the
+// bind may not answer /api/state for a beat, and a briefly-busy one can blow the
+// 2s window. Declaring it dead on one miss is what made a new viewer spawn on the
+// NEXT port — a fresh panel each launch. Retry a few times before giving up so
+// "adopt the existing viewer" is reliable and the machine keeps ONE panel.
+function pingRetry(url, tries, cb) {
+  ping(url, (ok) => {
+    if (ok || tries <= 1) return cb(ok);
+    setTimeout(() => pingRetry(url, tries - 1, cb), 300);
+  });
 }
 
 // Whether to auto-open a browser. `olchipanel viewer`/`open` always do.
@@ -208,8 +219,20 @@ function openBrowser(url, opts) {
         env['PROGRAMFILES(X86)'] && path.join(env['PROGRAMFILES(X86)'], 'Google/Chrome/Application/chrome.exe'),
         env['PROGRAMFILES(X86)'] && path.join(env['PROGRAMFILES(X86)'], 'Microsoft/Edge/Application/msedge.exe'),
         env.PROGRAMFILES && path.join(env.PROGRAMFILES, 'Microsoft/Edge/Application/msedge.exe'),
+        // registry-independent last resorts (App Paths / common install roots)
+        env.LOCALAPPDATA && path.join(env.LOCALAPPDATA, 'Microsoft/Edge/Application/msedge.exe'),
+        'C:/Program Files/Google/Chrome/Application/chrome.exe',
+        'C:/Program Files/Microsoft/Edge/Application/msedge.exe',
       ].filter(Boolean);
-      const exe = candidates.find(p => { try { return fs.existsSync(p); } catch (e) { return false; } });
+      let exe = candidates.find(p => { try { return fs.existsSync(p); } catch (e) { return false; } });
+      if (!exe) {
+        // PATH lookup as a final resort so a nonstandard install still gets app mode
+        try {
+          const out = require('child_process').execSync('where chrome 2>NUL || where msedge 2>NUL',
+            { encoding: 'utf8', windowsHide: true }).split(/\r?\n/).find(Boolean);
+          if (out && fs.existsSync(out.trim())) exe = out.trim();
+        } catch (e) { /* none on PATH */ }
+      }
       if (exe) {
         const p = spawn(exe, appArgs(url), detached);
         p.on('error', tab); p.unref();
@@ -225,7 +248,65 @@ function openBrowser(url, opts) {
   } catch (e) { tab(); }
 }
 
+// Read a JSON body, run handler(body), and reply. Maps plan invariant errors to
+// HTTP: stale→409, bad_*→400, no_*/not found→404, else 500. Never leaks stacks.
+function readJson(req, res, handler) {
+  let body = '';
+  req.on('data', (d) => { body += d; if (body.length > 262144) req.destroy(); });
+  req.on('end', () => {
+    let out;
+    try {
+      const parsed = body ? JSON.parse(body) : {};
+      out = handler(parsed);
+    } catch (e) {
+      const code = e && e.code;
+      const status = code === 'stale' ? 409
+        : /^bad_|^cycle$/.test(String(code)) ? 400
+          : /^no_|_not/.test(String(code)) || code === 'no_plan' || code === 'no_item' || code === 'no_parent' ? 404
+            : 400;
+      res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
+      return res.end(JSON.stringify({ ok: false, error: code || 'bad_request' }));
+    }
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
+    res.end(JSON.stringify(Object.assign({ ok: true }, out)));
+  });
+}
+
+function query(rawUrl, key) {
+  const q = rawUrl.indexOf('?');
+  if (q < 0) return '';
+  const m = new RegExp('(?:^|&)' + key + '=([^&]*)').exec(rawUrl.slice(q + 1));
+  return m ? decodeURIComponent(m[1]) : '';
+}
+
 function start(opts) {
+  opts = opts || {};
+  try { state.cleanup(); } catch (e) {} // archive dead+stale sessions so the board stays clean
+
+  // Discovery-first single-instance: if viewer.json already names a viewer that
+  // still answers (retried, to survive a startup race or a busy beat), ADOPT it
+  // and spawn nothing — regardless of which port it's on. This is what keeps the
+  // machine to ONE panel instead of binding a fresh port every launch. Only when
+  // no live viewer is on record do we bind (bindNew walks ports for a free one).
+  const known = currentViewerUrl();
+  if (known) {
+    pingRetry(known, 4, (alive) => {
+      if (alive) {
+        if (currentViewerUrl() !== known) {
+          try { fs.writeFileSync(VIEWER_FILE, JSON.stringify({ url: known, pid: null, adopted_at: new Date().toISOString() }), 'utf8'); } catch (e) {}
+        }
+        if (opts.announce) console.log(`olchipanel viewer (existing) → ${known}`);
+        if (shouldOpen(opts)) openBrowser(known, { auto: !opts.open });
+      } else {
+        bindNew(opts); // discovery record is stale → start a fresh viewer
+      }
+    });
+    return null;
+  }
+  return bindNew(opts);
+}
+
+function bindNew(opts) {
   opts = opts || {};
   const clients = new Set();
 
@@ -284,6 +365,25 @@ function start(opts) {
           res.end('{"ok":false,"error":"bad_request"}');
         }
       });
+    } else if (url === '/api/rename' && req.method === 'POST') {
+      // rename a session from the sidebar (human affordance). Origin-checked (CSRF).
+      if (!sameOriginOk(req)) { res.writeHead(403); return res.end('{"ok":false,"error":"forbidden"}'); }
+      let body = '';
+      req.on('data', d => { body += d; if (body.length > 4096) req.destroy(); });
+      req.on('end', () => {
+        try {
+          const { id, name } = JSON.parse(body || '{}');
+          const s = state.readAllSessions().find(x => x.id === id);
+          if (!s) { res.writeHead(404, { 'Content-Type': 'application/json' }); return res.end('{"ok":false,"error":"not_found"}'); }
+          s.name = String(name == null ? '' : name).slice(0, 60);
+          state.writeSession(s); // touches the dir → SSE broadcasts
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ ok: true, name: s.name }));
+        } catch (e) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end('{"ok":false,"error":"bad_request"}');
+        }
+      });
     } else if (url === '/api/setup-agent' && req.method === 'POST') {
       // One-click MCP setup from the help screen. The request names an agent
       // (whitelisted) and a session (for the project folder) — config content
@@ -323,6 +423,36 @@ function start(opts) {
           res.end('{"ok":false,"error":"bad_request"}');
         }
       });
+    } else if (url === '/plan' || url === '/plans' || url === '/plan.html') {
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
+      res.end(fs.readFileSync(path.join(PUBLIC, 'plan.html')));
+    } else if (url === '/api/plans' && req.method === 'GET') {
+      const plan = require('./plan');
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
+      res.end(JSON.stringify(plan.listPlans()));
+    } else if (url === '/api/plans' && req.method === 'POST') {
+      if (!sameOriginOk(req)) { res.writeHead(403); return res.end('{"ok":false,"error":"forbidden"}'); }
+      readJson(req, res, (b) => {
+        const plan = require('./plan');
+        const p = plan.createPlan(b.title);
+        return { id: p.id, version: p.version };
+      });
+    } else if (rawUrl.split('?')[0] === '/api/plan' && req.method === 'GET') {
+      const plan = require('./plan');
+      const id = query(rawUrl, 'id');
+      const p = plan.getPlan(id);
+      if (!p) { res.writeHead(404, { 'Content-Type': 'application/json' }); return res.end('{"ok":false,"error":"not_found"}'); }
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
+      res.end(JSON.stringify(p));
+    } else if (rawUrl.split('?')[0] === '/api/plan/item' && req.method === 'POST') {
+      if (!sameOriginOk(req)) { res.writeHead(403); return res.end('{"ok":false,"error":"forbidden"}'); }
+      readJson(req, res, (b) => require('./plan').plan_mutate(query(rawUrl, 'plan'), 'add', b, b.baseVersion));
+    } else if (rawUrl.split('?')[0] === '/api/plan/item' && req.method === 'PATCH') {
+      if (!sameOriginOk(req)) { res.writeHead(403); return res.end('{"ok":false,"error":"forbidden"}'); }
+      readJson(req, res, (b) => require('./plan').plan_mutate(query(rawUrl, 'plan'), 'update', { id: query(rawUrl, 'id'), patch: b.patch }, b.baseVersion));
+    } else if (rawUrl.split('?')[0] === '/api/plan/item' && req.method === 'DELETE') {
+      if (!sameOriginOk(req)) { res.writeHead(403); return res.end('{"ok":false,"error":"forbidden"}'); }
+      readJson(req, res, (b) => require('./plan').plan_mutate(query(rawUrl, 'plan'), 'delete', { id: query(rawUrl, 'id') }, b.baseVersion));
     } else if (url === '/events') {
       res.writeHead(200, {
         'Content-Type': 'text/event-stream',
@@ -363,20 +493,22 @@ function start(opts) {
     setInterval(checkUpdate, 24 * 60 * 60 * 1000).unref();
   }
 
-  // Bind: walk candidate ports. A taken port is first health-checked: if a live
-  // olchipanel viewer already answers there, ADOPT it (heal the discovery file,
-  // spawn nothing) instead of binding the next port — port-walking used to
-  // create duplicate viewers whose death left viewer.json pointing at a corpse.
-  let attempt = 0;
+  // Bind ONE canonical port only (no port-walking). One machine → one viewer →
+  // one port. Port-walking is what let instances pile up: a busy/slow 6711 sent
+  // the launch to 6712, 6713… each a separate viewer, and their corpses left
+  // stale discovery. So: if BASE_PORT is taken, health-check it — if an
+  // olchipanel viewer already owns it, ADOPT (spawn nothing); if it's taken by
+  // something that isn't our viewer, fail loud and DO NOT drift to another port.
   function tryListen() {
-    server.listen(BASE_PORT + attempt, '127.0.0.1');
+    server.listen(BASE_PORT, '127.0.0.1');
   }
+  const takenUrl = `http://127.0.0.1:${BASE_PORT}`;
   server.on('error', (e) => {
     if (e.code === 'EADDRINUSE' || e.code === 'EACCES') {
-      const takenUrl = `http://127.0.0.1:${BASE_PORT + attempt}`;
-      return ping(takenUrl, (aliveViewer) => {
+      // retry generously so a viewer mid-startup isn't mistaken for a squatter
+      return pingRetry(takenUrl, 8, (aliveViewer) => {
         if (aliveViewer) {
-          // someone else serves — by design. Make sure discovery points at them.
+          // an olchipanel viewer already owns the port → adopt it, spawn nothing
           if (currentViewerUrl() !== takenUrl) {
             try { fs.writeFileSync(VIEWER_FILE, JSON.stringify({ url: takenUrl, pid: null, adopted_at: new Date().toISOString() }), 'utf8'); } catch (err) {}
           }
@@ -384,7 +516,9 @@ function start(opts) {
           if (shouldOpen(opts)) openBrowser(takenUrl, { auto: !opts.open });
           return;
         }
-        if (++attempt < MAX_TRIES) return tryListen(); // squatter that isn't a viewer → next port
+        // port busy but no olchipanel viewer answers → do NOT bind a second port.
+        console.error(`[olchipanel] port ${BASE_PORT} is busy but no olchipanel viewer responds there. ` +
+          `Free that port (or set OLCHIPANEL_PORT) and relaunch — not spawning a second instance.`);
       });
     }
     console.error('[olchipanel viewer]', e.message);
