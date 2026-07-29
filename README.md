@@ -4,6 +4,11 @@
 
 **A living situation board your AI agent draws for you — live.**
 
+> **No API key. No token cost of its own.** OlchiPanel never calls a model — it
+> visualizes the agent you already run (Claude Code, Cursor, Codex…), which works
+> inside your own ChatGPT/Claude subscription. Nothing is added on top of the usage
+> your agent already consumes.
+
 ![OlchiPanel demo — agent forks two fix strategies and you watch both develop live](https://raw.githubusercontent.com/olchilab/olchipanel/main/assets/demo.gif)
 
 Your agent tells you what it's doing in a wall of text you'll never re-read.
@@ -200,4 +205,5 @@ v0.1 — working vertical slice (MCP server, live viewer, branch-aware journey m
 
 ## License
 
-MIT
+AGPL-3.0-or-later (from v0.7.0). Versions 0.6.x and earlier were released under
+the MIT License and remain available under MIT. See `LICENSE`.

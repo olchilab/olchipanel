@@ -30,7 +30,7 @@
   "homepage": "https://github.com/olchilab/olchipanel#readme",
   "bugs": "https://github.com/olchilab/olchipanel/issues",
   "author": "olchilab <orpa@olchilab.com>",
-  "license": "MIT",
+  "license": "AGPL-3.0-or-later",
   "files": [
     "bin",
     "src",
