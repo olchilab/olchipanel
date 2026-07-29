@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.7.0](https://github.com/olchilab/olchipanel/compare/olchipanel-v0.6.2...olchipanel-v0.7.0) (2026-07-29)
+
+
+### Features
+
+* brand tokens, session rename, plan tab, empty-board onboarding ([015c37b](https://github.com/olchilab/olchipanel/commit/015c37b7eab06e492052187d25d1cc9a41b31780))
+* Linear/Jira-style plan feature ([f2231e3](https://github.com/olchilab/olchipanel/commit/f2231e312fc21d39d660b14abd670e8298a8cfc9))
+
+
+### Bug Fixes
+
+* single-port single-instance viewer + auto-archive stale sessions ([44e8685](https://github.com/olchilab/olchipanel/commit/44e86851d8d0d4561e56c37a5f8b129a37426f33))
+
 ## [0.6.2](https://github.com/olchilab/olchipanel/compare/olchipanel-v0.6.1...olchipanel-v0.6.2) (2026-07-28)
 
 
