@@ -160,6 +160,53 @@ const TOOLS = [
     description: 'Read back this session\'s current panel state and the viewer URL. Use to verify the panel matches reality.',
     inputSchema: { type: 'object', properties: {} },
   },
+  {
+    name: 'plan_open',
+    description: 'Open (or create) a shared plan board for this session, so the human can watch tasks on the /plan page. Returns the plan id. Call once; later plan_add/plan_set target it.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', description: 'Title if a new plan is created (ignored if one is already open).' },
+        id: { type: 'string', description: 'Attach to an existing plan by id instead of creating one.' },
+      },
+    },
+  },
+  {
+    name: 'plan_add',
+    description: 'Add a task to this session\'s open plan. The task is auto-linked to this agent session so the board shows who owns it. Call plan_open first.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', description: 'Task title.' },
+        status: { type: 'string', enum: ['backlog', 'todo', 'in_progress', 'done', 'canceled'], description: 'Default todo.' },
+        priority: { type: 'number', description: '0 none, 1 low, 2 med, 3 high, 4 urgent.' },
+        parent: { type: 'string', description: 'Parent task id for a sub-task.' },
+      },
+      required: ['title'],
+    },
+  },
+  {
+    name: 'plan_set',
+    description: 'Update a task on this session\'s plan (status/priority/note) as you make progress. The human sees it live.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'Task id (from plan_add / plan_list).' },
+        status: { type: 'string', enum: ['backlog', 'todo', 'in_progress', 'done', 'canceled'] },
+        priority: { type: 'number' },
+        note: { type: 'string' },
+      },
+      required: ['id'],
+    },
+  },
+  {
+    name: 'plan_list',
+    description: 'List tasks on this session\'s open plan (optionally filtered by status) to decide what to do next.',
+    inputSchema: {
+      type: 'object',
+      properties: { status: { type: 'string', enum: ['backlog', 'todo', 'in_progress', 'done', 'canceled'] } },
+    },
+  },
 ];
 
 // ---------- tool implementations ----------
@@ -303,6 +350,49 @@ function makeToolRunner(session, getViewerUrl) {
     get_panel() {
       const viewer = (typeof getViewerUrl === 'function' && getViewerUrl()) || 'viewer not running';
       return JSON.stringify({ viewer, state: session }, null, 2);
+    },
+    // ---- plan board tools: the agent drives a Linear/Jira-style plan the human watches ----
+    plan_open({ title, id } = {}) {
+      const plan = require('./plan');
+      if (id) {
+        if (!plan.getPlan(id)) throw new Error(`No plan with id ${id}.`);
+        session.plan_id = id;
+      } else if (!session.plan_id || !plan.getPlan(session.plan_id)) {
+        const p = plan.createPlan(title || session.name || session.goal || 'Plan');
+        session.plan_id = p.id;
+      }
+      save();
+      const url = (typeof getViewerUrl === 'function' && getViewerUrl()) || '';
+      return `Plan open: ${session.plan_id}${url ? ` — human view: ${url}/plan` : ''}`;
+    },
+    plan_add({ title, status, priority, parent } = {}) {
+      const plan = require('./plan');
+      if (!session.plan_id) this.plan_open({});
+      const cur = plan.getPlan(session.plan_id);
+      const { item, version } = plan.plan_mutate(session.plan_id, 'add',
+        { title, status, priority, parent, session: session.id }, cur.version);
+      return `Task added: ${item.id} [${item.status}] "${item.title}" (plan v${version})`;
+    },
+    plan_set({ id, status, priority, note } = {}) {
+      const plan = require('./plan');
+      if (!session.plan_id) throw new Error('No plan open — call plan_open first.');
+      const patch = {};
+      if (status !== undefined) patch.status = status;
+      if (priority !== undefined) patch.priority = priority;
+      if (note !== undefined) patch.note = note;
+      const cur = plan.getPlan(session.plan_id);
+      const { version } = plan.plan_mutate(session.plan_id, 'update', { id, patch }, cur.version);
+      return `Task ${id} updated (plan v${version}).`;
+    },
+    plan_list({ status } = {}) {
+      const plan = require('./plan');
+      if (!session.plan_id) return 'No plan open — call plan_open first.';
+      const p = plan.getPlan(session.plan_id);
+      if (!p) return 'Plan not found.';
+      let items = p.items;
+      if (status) items = items.filter((i) => i.status === status);
+      if (!items.length) return status ? `No ${status} tasks.` : 'No tasks yet.';
+      return items.map((i) => `${i.id} [${i.status}] P${i.priority} ${i.title}${i.session === session.id ? ' (mine)' : ''}`).join('\n');
     },
   };
 }
