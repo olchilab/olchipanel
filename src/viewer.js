@@ -55,6 +55,7 @@ const ICON_ASSETS = {
   '/icons/olchi-dark-32.png': ['icons/olchi-dark-32.png', 'image/png'],
   '/icons/olchi-dark-48.png': ['icons/olchi-dark-48.png', 'image/png'],
   '/icons/olchi-favicon-v2.ico': ['icons/olchi-favicon-v2.ico', 'image/x-icon'],
+  '/icons/olchi-favicon-v3.ico': ['icons/olchi-favicon-v3.ico', 'image/x-icon'],
 };
 
 function currentViewerUrl() {
@@ -194,7 +195,10 @@ function setupAgent(agent, dir) {
 // shows the address bar and inherits that instance's flags (e.g. a stray
 // --no-sandbox warning banner). A separate profile forces a clean app window.
 function appArgs(url) {
-  const profile = path.join(state.ROOT, 'browser-profile');
+  // Version the dedicated app profile when the Windows taskbar icon changes.
+  // Chromium caches an origin's HWND icon inside the profile even when the
+  // favicon URL changes, so a fresh profile is the non-destructive cache bust.
+  const profile = path.join(state.ROOT, 'browser-profile-icon-v3');
   try { fs.mkdirSync(profile, { recursive: true }); } catch (e) {}
   return ['--app=' + url, '--user-data-dir=' + profile, '--no-first-run', '--no-default-browser-check'];
 }
