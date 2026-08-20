@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.8.0](https://github.com/olchilab/olchipanel/compare/olchipanel-v0.7.0...olchipanel-v0.8.0) (2026-08-20)
+
+
+### Features
+
+* **ui:** add responsive shell and Olchi app icons ([d2fd734](https://github.com/olchilab/olchipanel/commit/d2fd7346b769b4a1a1084c5897817d0e1d0d4cb5))
+* **ui:** responsive shell and Olchi app icons ([3c18d29](https://github.com/olchilab/olchipanel/commit/3c18d298ba39d663559426b42a3c9ee2aeb95f55))
+
 ## [0.7.0](https://github.com/olchilab/olchipanel/compare/olchipanel-v0.6.2...olchipanel-v0.7.0) (2026-07-29)
 
 
