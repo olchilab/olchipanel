@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.8.1](https://github.com/olchilab/olchipanel/compare/olchipanel-v0.8.0...olchipanel-v0.8.1) (2026-08-20)
+
+
+### Bug Fixes
+
+* **ui:** sharpen Windows taskbar icon ([39818a8](https://github.com/olchilab/olchipanel/commit/39818a88d133c94b3b3cba148eabc8c7fe06a88d))
+* **ui:** sharpen Windows taskbar icon ([fba8096](https://github.com/olchilab/olchipanel/commit/fba8096de095c9f04012dfdd168835dd3db52fd0))
+
 ## [0.8.0](https://github.com/olchilab/olchipanel/compare/olchipanel-v0.7.0...olchipanel-v0.8.0) (2026-08-20)
 
 
