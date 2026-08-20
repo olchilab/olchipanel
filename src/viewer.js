@@ -39,6 +39,23 @@ function checkUpdate() {
 const BASE_PORT = Number(process.env.OLCHIPANEL_PORT || 6711);
 const PUBLIC = path.join(__dirname, '..', 'public');
 const VIEWER_FILE = path.join(state.ROOT, 'viewer.json');
+const ICON_ASSETS = {
+  '/olchi.png': ['olchi.png', 'image/png'],
+  '/icon.svg': ['olchi.png', 'image/png'], // compatibility for older cached manifests
+  '/icons/olchi-16.png': ['icons/olchi-16.png', 'image/png'],
+  '/icons/olchi-24.png': ['icons/olchi-24.png', 'image/png'],
+  '/icons/olchi-32.png': ['icons/olchi-32.png', 'image/png'],
+  '/icons/olchi-48.png': ['icons/olchi-48.png', 'image/png'],
+  '/icons/olchi-64.png': ['icons/olchi-64.png', 'image/png'],
+  '/icons/olchi-128.png': ['icons/olchi-128.png', 'image/png'],
+  '/icons/olchi-192.png': ['icons/olchi-192.png', 'image/png'],
+  '/icons/olchi-256.png': ['icons/olchi-256.png', 'image/png'],
+  '/icons/olchi-512.png': ['icons/olchi-512.png', 'image/png'],
+  '/icons/olchi-dark-16.png': ['icons/olchi-dark-16.png', 'image/png'],
+  '/icons/olchi-dark-32.png': ['icons/olchi-dark-32.png', 'image/png'],
+  '/icons/olchi-dark-48.png': ['icons/olchi-dark-48.png', 'image/png'],
+  '/icons/olchi-favicon-v2.ico': ['icons/olchi-favicon-v2.ico', 'image/x-icon'],
+};
 
 function currentViewerUrl() {
   try { return JSON.parse(fs.readFileSync(VIEWER_FILE, 'utf8')).url; } catch (e) { return null; }
@@ -323,13 +340,17 @@ function bindNew(opts) {
       res.writeHead(200, { 'Content-Type': 'application/manifest+json; charset=utf-8', 'Cache-Control': 'no-store' });
       res.end(JSON.stringify({
         name: 'OlchiPanel', short_name: 'OlchiPanel', start_url: '/',
-        display: 'standalone', display_override: ['window-controls-overlay', 'standalone'],
+        display: 'standalone',
         background_color: '#16161a', theme_color: '#16161a',
-        icons: [{ src: '/icon.svg', sizes: 'any', type: 'image/svg+xml' }],
+        icons: [
+          { src: '/icons/olchi-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: '/icons/olchi-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+        ],
       }));
-    } else if (url === '/icon.svg') {
-      res.writeHead(200, { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'no-store' });
-      res.end("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='#17324f'/><path d='M12 9.5v13l10.5-6.5z' fill='#b7d95b'/></svg>");
+    } else if (ICON_ASSETS[url]) {
+      const [assetPath, contentType] = ICON_ASSETS[url];
+      res.writeHead(200, { 'Content-Type': contentType, 'Cache-Control': 'no-store' });
+      res.end(fs.readFileSync(path.join(PUBLIC, assetPath)));
     } else if (url === '/api/state') {
       // read-time truth overlay: a session whose owner pid is gone is not alive,
       // whatever its file says (SIGKILL leaves no chance to write alive:false)
