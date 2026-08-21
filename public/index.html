@@ -36,7 +36,7 @@
     --shadow:0 1px 2px rgba(0,0,0,.3), 0 12px 30px -14px rgba(0,0,0,.6);
   }
   *{box-sizing:border-box; margin:0; padding:0;}
-  html,body{height:100%; background:var(--paper); color:var(--ink);
+  html,body{min-height:100%; background:var(--paper); color:var(--ink);
     font-family:ui-sans-serif,-apple-system,"Segoe UI Variable Text","Segoe UI",
       "Pretendard","Apple SD Gothic Neo","Malgun Gothic",Roboto,sans-serif;
     font-size:15.5px; line-height:1.55; -webkit-font-smoothing:antialiased;
@@ -196,14 +196,16 @@
     padding:1px 7px; font-weight:700; line-height:1.5; font-variant-numeric:tabular-nums;}
   .tab.on .badge{background:var(--brand); color:#fff;}
   .tab .badge:empty{display:none;}
-  /* plan board embedded as a same-origin iframe: reuses the standalone board
-     (storage, keyboard, inline edit) with no JS duplication or handler clash. */
-  .pane-plan{padding:0;}
-  .pane-plan.on{display:flex;}
-  #planFrame{flex:1;width:100%;height:100%;min-height:60vh;border:0;background:var(--paper);}
   .pane{display:none; background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
     box-shadow:var(--shadow); padding:24px 26px; min-height:340px;}
   .pane.on{display:block;}
+  /* plan board embedded as a same-origin iframe: reuses the standalone board
+     (storage, keyboard, inline edit) with no JS duplication or handler clash.
+     Keep these selectors after the generic pane rules so the plan does not
+     inherit their padding/min-height or lose its flex layout. */
+  .pane.pane-plan{padding:0;min-height:0;overflow:hidden;}
+  .pane.pane-plan.on{display:flex;}
+  #planFrame{display:block;flex:1 1 auto;width:100%;height:180px;min-height:0;border:0;background:var(--paper);}
   .legend{font-size:12px; color:var(--muted); margin-bottom:20px;}
 
   /* ── journey tree ── */
@@ -353,8 +355,8 @@
       scrollbar-width:thin; padding:0 1px 2px; gap:1px;}
     .tab{flex:0 0 auto; white-space:nowrap; padding:9px 11px 10px;}
     .pane{min-width:0; min-height:300px; padding:18px 16px; border-radius:8px;}
-    .pane-plan{padding:0;}
-    #planFrame{min-height:calc(100dvh - 178px);}
+    .pane.pane-plan{padding:0;min-height:0;}
+    #planFrame{min-height:0;}
     .legend{margin-bottom:16px; line-height:1.65;}
     .empty{padding:34px 0;}
     .empty pre{width:100%; padding-right:58px;}
@@ -1240,6 +1242,28 @@
   }, 1000);
 
   // ---------- tabs ----------
+  var planFrameResizeObserver = null;
+  function fitPlanFrame(){
+    var f = document.getElementById('planFrame');
+    var doc = f && f.contentDocument;
+    if (!doc || !doc.body) return;
+    var bodyBox = doc.body.getBoundingClientRect();
+    var height = Math.ceil(Math.max(doc.body.offsetHeight, bodyBox.height));
+    if (height > 0) f.style.height = height + 'px';
+  }
+  function watchPlanFrame(){
+    var f = document.getElementById('planFrame');
+    var doc = f && f.contentDocument;
+    if (!doc || !doc.body) return;
+    if (planFrameResizeObserver) planFrameResizeObserver.disconnect();
+    fitPlanFrame();
+    if ('ResizeObserver' in window) {
+      planFrameResizeObserver = new ResizeObserver(fitPlanFrame);
+      planFrameResizeObserver.observe(doc.body);
+    }
+  }
+  document.getElementById('planFrame').addEventListener('load', watchPlanFrame);
+  window.addEventListener('resize', fitPlanFrame);
   function showTab(name){
     document.querySelectorAll('.tab').forEach(function(t){
       var on = t.dataset.pane === name;
@@ -1250,7 +1274,11 @@
     document.querySelectorAll('.pane').forEach(function(p){ p.classList.toggle('on', p.id === name); });
     try { localStorage.setItem('olchipanel.tab', name); } catch(e){}
     if (name === 'memo') loadMemo();
-    if (name === 'plan') { var f = document.getElementById('planFrame'); if (f && !f.src) f.src = '/plan'; } // lazy: board runs only when viewed
+    if (name === 'plan') {
+      var f = document.getElementById('planFrame');
+      if (f && !f.src) f.src = '/plan';
+      else fitPlanFrame();
+    } // lazy: board runs only when viewed
   }
   document.querySelectorAll('.tab').forEach(function(t){
     t.addEventListener('click', function(){ showTab(t.dataset.pane); });

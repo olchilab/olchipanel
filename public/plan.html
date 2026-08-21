@@ -32,8 +32,8 @@ button:hover{border-color:var(--sel)}
 .primary{background:var(--teal);color:#fff;border-color:var(--teal)}
 .primary:hover{background:#12595c;border-color:#12595c}
 .mut{color:var(--mut);font-size:13px}
-#board{display:flex;gap:12px;padding:16px;overflow-x:auto;align-items:flex-start}
-.col{flex:0 0 244px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px}
+#board{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;padding:16px;align-items:start}
+.col{min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px}
 .col h3{margin:2px 4px 10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);display:flex;align-items:center;justify-content:space-between}
 .col h3 .n{background:var(--bg);border-radius:20px;padding:1px 8px;font-weight:700;color:var(--fg)}
 .dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:6px;vertical-align:middle}
@@ -143,7 +143,7 @@ async function loadPlans(sel){
 }
 let selId=null;      // selected item id (keyboard focus)
 let editing=false;   // inline edit/add in progress → suspend keyboard + live refresh
-async function loadPlan(id){ plan=await api('GET','/api/plan?id='+encodeURIComponent(id)); render(); }
+async function loadPlan(id,revealSelection){ plan=await api('GET','/api/plan?id='+encodeURIComponent(id)); render(!!revealSelection); }
 // column→ordered items, for keyboard geometry
 function byCol(){ const m={}; for(const st of STATES) m[st]=plan.items.filter(i=>i.status===st).sort((a,b)=>(a.order||0)-(b.order||0)); return m; }
 function selItem(){ return plan? plan.items.find(i=>i.id===selId) : null; }
@@ -152,7 +152,7 @@ function renderFilters(){
   const done=document.createElement('button'); done.className='chip'+(hideDone?' on':''); done.textContent='완료·취소 숨기기';
   done.onclick=()=>{ hideDone=!hideDone; render(); }; f.appendChild(done);
 }
-function render(){
+function render(revealSelection){
   if(!plan)return; closeMenu();
   renderFilters();
   $('#meta').textContent=plan.items.length+' items · v'+plan.version;
@@ -185,7 +185,7 @@ function render(){
     add.onclick=(e)=>{e.stopPropagation();startAdd(st,col);}; col.appendChild(add);
     board.appendChild(col);
   }
-  const sel=board.querySelector('.card.sel'); if(sel) sel.scrollIntoView({block:'nearest',inline:'nearest'});
+  const sel=board.querySelector('.card.sel'); if(revealSelection&&sel) sel.scrollIntoView({block:'nearest',inline:'nearest'});
 }
 function closeMenu(){ if(menuEl){menuEl.remove();menuEl=null;} }
 // click-driven card menu: every action reachable without the keyboard
@@ -213,7 +213,7 @@ function setStatusTo(it,st){ if(it.status===st)return; return mutate(()=>api('PA
 function toggleLabel(it,id){ const cur=(it.labels||[]).slice(); const i=cur.indexOf(id); if(i>=0)cur.splice(i,1); else cur.push(id);
   return mutate(()=>api('PATCH','/api/plan/item?plan='+plan.id+'&id='+it.id,{baseVersion:plan.version,patch:{labels:cur}})); }
 document.addEventListener('click',()=>closeMenu());
-async function mutate(op){ if(editing)return; try{ await op(); }catch(e){} await loadPlan(plan.id); }
+async function mutate(op){ if(editing)return; try{ await op(); }catch(e){} await loadPlan(plan.id,true); }
 function advance(it){ const n=STATES[(STATES.indexOf(it.status)+1)%STATES.length];
   return mutate(()=>api('PATCH','/api/plan/item?plan='+plan.id+'&id='+it.id,{baseVersion:plan.version,patch:{status:n}})); }
 function setStatusRel(dir){ const it=selItem(); if(!it)return; let i=STATES.indexOf(it.status)+dir; i=(i+STATES.length)%STATES.length;
@@ -224,12 +224,12 @@ function delSel(){ const it=selItem(); if(!it)return; if(!confirm('삭제: "'+it
   return mutate(()=>api('DELETE','/api/plan/item?plan='+plan.id+'&id='+it.id,{baseVersion:plan.version})); }
 // keyboard geometry: move selection within/between columns
 function move(dr,dc){
-  const cols=byCol(); const cur=selItem(); if(!cur){ const f=STATES.map(s=>cols[s][0]).find(Boolean); if(f)selId=f.id; render(); return; }
+  const cols=byCol(); const cur=selItem(); if(!cur){ const f=STATES.map(s=>cols[s][0]).find(Boolean); if(f)selId=f.id; render(true); return; }
   let ci=STATES.indexOf(cur.status); let ri=cols[cur.status].findIndex(i=>i.id===cur.id);
   if(dc){ // move to nearest non-empty column in direction dc, same-ish row
     for(let k=1;k<STATES.length;k++){ const nc=ci+dc*k; if(nc<0||nc>=STATES.length)break; const list=cols[STATES[nc]]; if(list.length){ selId=list[Math.min(ri,list.length-1)].id; break; } }
   } else if(dr){ const list=cols[cur.status]; const nr=ri+dr; if(nr>=0&&nr<list.length) selId=list[nr].id; }
-  render();
+  render(true);
 }
 // inline edit the selected card's title
 function startEdit(){ const it=selItem(); if(!it||editing)return; editing=true;
