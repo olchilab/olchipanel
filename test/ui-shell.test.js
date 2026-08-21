@@ -68,10 +68,18 @@ assert.match(viewer, /browser-profile-icon-v3/, 'Chromium app profile must bypas
 assert.match(html, /@media \(max-width:760px\)/, 'situation board must include the UI Core narrow layout');
 assert.match(html, /body:not\(\.rail-closed\) #railTabs/, 'mobile rail must open as a drawer instead of squeezing content');
 assert.match(html, /body\.rail-closed #railTabs > \.cap/, 'collapsed empty rail must not render vertical helper text');
+assert.match(html, /html,body\{min-height:100%/, 'the document must grow beyond the viewport on tall plan boards');
+assert.match(html, /\.pane\.pane-plan\{[^}]*padding:0;[^}]*min-height:0;[^}]*overflow:hidden/, 'plan pane must not inherit generic padding or minimum height');
+assert.match(html, /\.pane\.pane-plan\.on\{display:flex;?\}/, 'plan pane flex layout must win over the generic active pane rule');
+assert.match(html, /new ResizeObserver\(fitPlanFrame\)/, 'the embedded plan frame must track its content height');
+assert.doesNotMatch(html, /#planFrame\{[^}]*min-height:60vh/, 'plan frame must not reserve an empty 60vh viewport');
 assert.match(html, /e\.key === 'ArrowRight'/, 'tabs must support keyboard arrow navigation');
 assert.match(html, /prefers-reduced-motion:reduce/, 'situation board must respect reduced motion');
 assert.match(html, /\.memo-box:focus-visible\{[^}]*outline:2px solid var\(--brand\)/, 'memo editor must expose a visible keyboard focus ring');
 assert.match(plan, /grid-template-columns:1fr/, 'plan columns must stack on narrow screens');
+assert.match(plan, /grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/, 'desktop plan columns must fit without a hidden horizontal tail');
+assert.doesNotMatch(plan, /#board\{[^}]*overflow-x:auto/, 'desktop plan board must not put a scrollbar halfway down the pane');
+assert.match(plan, /if\(revealSelection&&sel\) sel\.scrollIntoView/, 'live refresh must not force the outer page back to the selected card');
 assert.match(plan, /prefers-reduced-motion:reduce/, 'plan board must respect reduced motion');
 
 assert.deepStrictEqual([...icon.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
