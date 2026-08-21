@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.8.2](https://github.com/olchilab/olchipanel/compare/olchipanel-v0.8.1...olchipanel-v0.8.2) (2026-08-21)
+
+
+### Bug Fixes
+
+* **ui:** fit plan board without clipping ([b1ed03a](https://github.com/olchilab/olchipanel/commit/b1ed03a77e70656851af0292c32805b3cd2a8ad1))
+* **ui:** fit plan board without clipping ([3a4f0ea](https://github.com/olchilab/olchipanel/commit/3a4f0ea04c8e58207d0d91e166826d5bbfba8684))
+
 ## [0.8.1](https://github.com/olchilab/olchipanel/compare/olchipanel-v0.8.0...olchipanel-v0.8.1) (2026-08-20)
 
 
