@@ -194,12 +194,24 @@
   .tab:hover{color:var(--ink); background:var(--hover);}
   .tab.on{color:var(--brand-ink); border-bottom-color:var(--brand); background:none;}
   .tab.on .ic{opacity:1;}
-  .tab:focus-visible, .panel-tab:focus-visible, .top-btn:focus-visible, .rail-toggle:focus-visible{
+  .tab:focus-visible, .view-tab:focus-visible, .panel-tab:focus-visible, .top-btn:focus-visible, .rail-toggle:focus-visible{
     outline:2px solid var(--brand); outline-offset:2px;}
   .tab .badge{background:var(--hover); color:var(--muted); border-radius:99px; font-size:10.5px;
     padding:1px 7px; font-weight:700; line-height:1.5; font-variant-numeric:tabular-nums;}
   .tab.on .badge{background:var(--brand); color:#fff;}
   .tab .badge:empty{display:none;}
+  .view-tabs{display:flex; align-items:center; gap:6px; overflow-x:auto; margin:-5px 0 20px;
+    padding:0 0 11px; border-bottom:1px solid var(--line); scrollbar-width:thin;}
+  .view-tab{flex:0 0 auto; border:1px solid transparent; background:transparent; color:var(--muted);
+    border-radius:7px; padding:6px 10px; font:600 12.5px/1.35 inherit; cursor:pointer;
+    display:flex; align-items:center; gap:6px; white-space:nowrap;}
+  .view-tab:hover{background:var(--hover); color:var(--ink);}
+  .view-tab.on{background:var(--brand-soft); border-color:var(--brand-bd); color:var(--brand-ink);}
+  .view-tab .badge{min-width:18px; border-radius:99px; padding:0 5px; background:var(--card);
+    color:var(--muted); font-size:10px; line-height:1.7; text-align:center; font-variant-numeric:tabular-nums;}
+  .view-tab .badge:empty{display:none;}
+  .view-panel{display:none;}
+  .view-panel.on{display:block;}
   .pane{display:none; background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
     box-shadow:var(--shadow); padding:24px 26px; min-height:340px;}
   .pane.on{display:block;}
@@ -358,6 +370,8 @@
     .tabs{flex-wrap:nowrap; overflow-x:auto; overscroll-behavior-inline:contain;
       scrollbar-width:thin; padding:0 1px 2px; gap:1px;}
     .tab{flex:0 0 auto; white-space:nowrap; padding:9px 11px 10px;}
+    .view-tabs{margin-top:-2px;}
+    .view-tab{padding:7px 10px;}
     .pane{min-width:0; min-height:300px; padding:18px 16px; border-radius:8px;}
     .pane.pane-plan{padding:0;min-height:0;}
     #planFrame{min-height:0;}
@@ -407,48 +421,58 @@
   <div id="resumebar"></div>
   <div id="toast" role="status"></div>
 
-  <div class="tabs" role="tablist">
-    <button class="tab" role="tab" data-pane="map" aria-controls="map"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg><span id="tTabMap"></span></button>
-    <button class="tab" role="tab" data-pane="stack" aria-controls="stack"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 3 8l9 5 9-5-9-5z"/><path d="M3 13l9 5 9-5"/></svg><span id="tTabStack"></span> <span class="badge" id="bStack"></span></button>
-    <button class="tab" role="tab" data-pane="changes" aria-controls="changes"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H4a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-8L9 4z"/></svg><span id="tTabChanges"></span> <span class="badge" id="bChanges"></span></button>
-    <button class="tab" role="tab" data-pane="dec" aria-controls="dec"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span id="tTabDec"></span> <span class="badge" id="bDec"></span></button>
-    <button class="tab" role="tab" data-pane="needs" aria-controls="needs"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span id="tTabNeeds"></span> <span class="badge" id="bNeeds"></span></button>
-    <button class="tab" role="tab" data-pane="deadends" aria-controls="deadends"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg><span id="tTabDeadends"></span> <span class="badge" id="bDeadends"></span></button>
-    <button class="tab" role="tab" data-pane="memo" aria-controls="memo"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h13l3 3v13a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg><span id="tTabMemo"></span></button>
-    <button class="tab tab-plan" role="tab" data-pane="plan" aria-controls="plan"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="6" height="16" rx="1"/><rect x="10" y="4" width="6" height="10" rx="1"/><rect x="17" y="4" width="4" height="7" rx="1"/></svg><span id="tTabPlan"></span></button>
+  <div class="tabs top-tabs" role="tablist" aria-label="OlchiPanel views">
+    <button class="tab" id="tabSituation" role="tab" data-pane="situation" aria-controls="situation"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg><span id="tTabSituation"></span> <span class="badge" id="bSituation"></span></button>
+    <button class="tab tab-plan" id="tabPlan" role="tab" data-pane="plan" aria-controls="plan"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="6" height="16" rx="1"/><rect x="10" y="4" width="6" height="10" rx="1"/><rect x="17" y="4" width="4" height="7" rx="1"/></svg><span id="tTabPlan"></span></button>
+    <button class="tab" id="tabNeeds" role="tab" data-pane="needs" aria-controls="needs"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span id="tTabNeeds"></span> <span class="badge" id="bNeeds"></span></button>
+    <button class="tab" id="tabRecords" role="tab" data-pane="records" aria-controls="records"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H4a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-8L9 4z"/></svg><span id="tTabRecords"></span> <span class="badge" id="bRecords"></span></button>
+    <button class="tab" id="tabMemo" role="tab" data-pane="memo" aria-controls="memo"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h13l3 3v13a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg><span id="tTabMemo"></span></button>
   </div>
 
-  <div class="pane" id="map" role="tabpanel">
-    <div class="legend" id="tLegendMap"></div>
-    <div class="tree" id="vtree"></div>
+  <div class="pane" id="situation" role="tabpanel" aria-labelledby="tabSituation" hidden>
+    <div class="view-tabs" role="tablist" data-view-group="situation">
+      <button class="view-tab" id="viewTabMap" role="tab" data-view="map" aria-controls="map"><span id="tTabMap"></span></button>
+      <button class="view-tab" id="viewTabStack" role="tab" data-view="stack" aria-controls="stack"><span id="tTabStack"></span> <span class="badge" id="bStack"></span></button>
+    </div>
+    <div class="view-panel" id="map" role="tabpanel" aria-labelledby="viewTabMap" hidden>
+      <div class="legend" id="tLegendMap"></div>
+      <div class="tree" id="vtree"></div>
+    </div>
+    <div class="view-panel" id="stack" role="tabpanel" aria-labelledby="viewTabStack" hidden>
+      <div class="legend" id="tLegendStack"></div>
+      <div id="stacklist"></div>
+    </div>
   </div>
-  <div class="pane" id="stack" role="tabpanel">
-    <div class="legend" id="tLegendStack"></div>
-    <div id="stacklist"></div>
+  <div class="pane pane-plan" id="plan" role="tabpanel" aria-labelledby="tabPlan" hidden>
+    <iframe id="planFrame" title="Plan board" loading="lazy"></iframe>
   </div>
-  <div class="pane" id="changes" role="tabpanel">
-    <div class="legend" id="tLegendChanges"></div>
-    <div id="changelist"></div>
-  </div>
-  <div class="pane" id="dec" role="tabpanel">
-    <div class="legend" id="tLegendDec"></div>
-    <div id="declist"></div>
-  </div>
-  <div class="pane" id="needs" role="tabpanel">
+  <div class="pane" id="needs" role="tabpanel" aria-labelledby="tabNeeds" hidden>
     <div class="legend" id="tLegendNeeds"></div>
     <div id="needslist"></div>
   </div>
-  <div class="pane" id="deadends" role="tabpanel">
-    <div class="legend" id="tLegendDeadends"></div>
-    <div id="deadendlist"></div>
+  <div class="pane" id="records" role="tabpanel" aria-labelledby="tabRecords" hidden>
+    <div class="view-tabs" role="tablist" data-view-group="records">
+      <button class="view-tab" id="viewTabChanges" role="tab" data-view="changes" aria-controls="changes"><span id="tTabChanges"></span> <span class="badge" id="bChanges"></span></button>
+      <button class="view-tab" id="viewTabDec" role="tab" data-view="dec" aria-controls="dec"><span id="tTabDec"></span> <span class="badge" id="bDec"></span></button>
+      <button class="view-tab" id="viewTabDeadends" role="tab" data-view="deadends" aria-controls="deadends"><span id="tTabDeadends"></span> <span class="badge" id="bDeadends"></span></button>
+    </div>
+    <div class="view-panel" id="changes" role="tabpanel" aria-labelledby="viewTabChanges" hidden>
+      <div class="legend" id="tLegendChanges"></div>
+      <div id="changelist"></div>
+    </div>
+    <div class="view-panel" id="dec" role="tabpanel" aria-labelledby="viewTabDec" hidden>
+      <div class="legend" id="tLegendDec"></div>
+      <div id="declist"></div>
+    </div>
+    <div class="view-panel" id="deadends" role="tabpanel" aria-labelledby="viewTabDeadends" hidden>
+      <div class="legend" id="tLegendDeadends"></div>
+      <div id="deadendlist"></div>
+    </div>
   </div>
-  <div class="pane" id="memo" role="tabpanel">
+  <div class="pane" id="memo" role="tabpanel" aria-labelledby="tabMemo" hidden>
     <div class="legend" id="tLegendMemo"></div>
     <textarea id="memoText" class="memo-box" spellcheck="false"></textarea>
     <div class="memo-state" id="memoState"></div>
-  </div>
-  <div class="pane pane-plan" id="plan" role="tabpanel">
-    <iframe id="planFrame" title="Plan board" loading="lazy"></iframe>
   </div>
 </main>
 
@@ -459,8 +483,10 @@
     en: {
       subtitle: "your agent's live situation board",
       sessions: 'SESSIONS',
+      tabSituation: 'Situation', tabRecords: 'Records',
       tabMap: 'Map', tabStack: 'Stack', tabChanges: 'Changes', tabDec: 'Decisions',
       tabNeeds: 'Needs you', tabDeadends: 'Dead ends', tabMemo: 'Memo', tabPlan: 'Plan',
+      topViews: 'OlchiPanel views', situationViews: 'Situation views', recordViews: 'Record views',
       legendMap: '✓ done · ▶ now · ↩ next · ⑂ fork (active) · dim ⑂ side-quest (parked) · ▾ fold',
       sideQuest: 'side',
       legendStack: 'When the human changes topic, interrupted work lands here with its resume point (top = resume first).',
@@ -521,8 +547,10 @@
     ko: {
       subtitle: '에이전트가 그리는 라이브 상황판',
       sessions: '세션',
+      tabSituation: '상황', tabRecords: '기록',
       tabMap: '지도', tabStack: '스택', tabChanges: '변경', tabDec: '결정',
       tabNeeds: '요청', tabDeadends: '막힌 길', tabMemo: '메모', tabPlan: '플랜',
+      topViews: '올치패널 보기', situationViews: '상황 보기', recordViews: '기록 보기',
       legendMap: '✓ 완료 · ▶ 지금 여기 · ↩ 다음 · ⑂ 분기(진행) · 흐린 ⑂ 샛길(보류) · ▾ 접기',
       sideQuest: '샛길',
       legendStack: '대화 주제가 바뀌면 하던 일이 재개점과 함께 여기 쌓입니다 (위 = 먼저 재개).',
@@ -661,6 +689,8 @@
   function applyChrome(){
     document.documentElement.lang = lang;
     document.getElementById('tSessions').textContent = T('sessions');
+    document.getElementById('tTabSituation').textContent = T('tabSituation');
+    document.getElementById('tTabRecords').textContent = T('tabRecords');
     document.getElementById('tTabMap').textContent = T('tabMap');
     document.getElementById('tTabStack').textContent = T('tabStack');
     document.getElementById('tTabChanges').textContent = T('tabChanges');
@@ -676,6 +706,9 @@
     document.getElementById('tLegendNeeds').textContent = T('legendNeeds');
     document.getElementById('tLegendDeadends').textContent = T('legendDeadends');
     document.getElementById('tLegendMemo').textContent = T('legendMemo');
+    document.querySelector('.top-tabs').setAttribute('aria-label', T('topViews'));
+    document.querySelector('[data-view-group="situation"]').setAttribute('aria-label', T('situationViews'));
+    document.querySelector('[data-view-group="records"]').setAttribute('aria-label', T('recordViews'));
     document.getElementById('exportBtn').textContent = T('exportBtn');
     document.getElementById('exportBtn').title = T('exportBtn');
     document.getElementById('exportBtn').setAttribute('aria-label', T('exportBtn'));
@@ -703,12 +736,11 @@
       + '<pre>이 작업을 OlchiPanel로 추적해.</pre>'
       + '<h3>탭</h3>'
       + '<table>'
-      + '<tr><td>지도</td><td>플랜(트리)과 해결 순서. ▶ 지금 여기 · ⑂ 분기(진행) · 흐린 ⑂ 샛길(보류)</td></tr>'
-      + '<tr><td>스택</td><td>주제를 돌렸을 때 밀쳐둔 일 + 재개점 (위=먼저 재개)</td></tr>'
-      + '<tr><td>변경</td><td>건드린 파일·명령·커밋 — 트랜스크립트 재독 대체. 날짜·시간별</td></tr>'
-      + '<tr><td>결정</td><td>내린 결정 ✓ + 말없이 세운 가정 ⚠</td></tr>'
+      + '<tr><td>상황</td><td>지도(작업 여정·해결 순서)와 스택(밀쳐둔 일·재개점)</td></tr>'
+      + '<tr><td>플랜</td><td>상태와 우선순위로 관리하는 전체 폭 작업 보드</td></tr>'
       + '<tr><td>요청</td><td>에이전트가 당신에게 기다리는 것 — 받은편지함. 빨강=급함</td></tr>'
-      + '<tr><td>막힌 길</td><td>시도했다 실패한 길과 이유 — 같은 길 두 번 안 걷게</td></tr>'
+      + '<tr><td>기록</td><td>변경·결정·막힌 길을 한곳에서 전환해 확인</td></tr>'
+      + '<tr><td>메모</td><td>이 패널에만 남기는 개인 메모</td></tr>'
       + '</table>'
       + '<h3>세션과 프로젝트 기억</h3>'
       + '<p>패널은 <b>프로젝트(폴더)</b> 소속입니다. 새 에이전트에게 OlchiPanel 사용을 요청하면 <code>resume_project</code>로 직전 패널을 통째로 이어받습니다(옛 패널은 자동 보관). 죽은 세션은 행에 마우스를 올려 <b>✕</b>로 보관할 수 있고, 보관된 패널은 7일 뒤 자동 정리됩니다.</p>'
@@ -750,12 +782,11 @@
       + '<pre>Track this task in OlchiPanel.</pre>'
       + '<h3>Tabs</h3>'
       + '<table>'
-      + '<tr><td>Map</td><td>the plan (tree) and solve order. ▶ now · ⑂ fork (active) · dim ⑂ side-quest (parked)</td></tr>'
-      + '<tr><td>Stack</td><td>work set aside on topic change, with resume points (top = first)</td></tr>'
-      + '<tr><td>Changes</td><td>files/commands/commits touched — instead of re-reading the transcript</td></tr>'
-      + '<tr><td>Decisions</td><td>choices made ✓ and silent assumptions ⚠</td></tr>'
+      + '<tr><td>Situation</td><td>Map (journey and solve order) plus Stack (interrupted work and resume points)</td></tr>'
+      + '<tr><td>Plan</td><td>a full-width work board organized by status and priority</td></tr>'
       + '<tr><td>Needs you</td><td>your inbox from the agent. red = urgent</td></tr>'
-      + '<tr><td>Dead ends</td><td>tried & failed, with why — no path walked twice</td></tr>'
+      + '<tr><td>Records</td><td>switch between changes, decisions, and dead ends in one place</td></tr>'
+      + '<tr><td>Memo</td><td>your private notes for this panel</td></tr>'
       + '</table>'
       + '<h3>Sessions & project memory</h3>'
       + '<p>Panels belong to a <b>project</b> (folder). When you ask a new agent to use OlchiPanel, <code>resume_project</code> inherits the previous panel wholesale (the old one is archived). Hover a dead session row and hit <b>✕</b> to tuck it away; archived panels are cleaned up after 7 days.</p>'
@@ -1110,7 +1141,8 @@
       document.getElementById('goalbar').textContent = T('connectHint');
       document.getElementById('substamp').textContent = '';
       document.getElementById('resumebar').innerHTML = '';
-      setBadge('bStack',0); setBadge('bChanges',0); setBadge('bDec',0); setBadge('bNeeds',0); setBadge('bDeadends',0);
+      setBadge('bSituation',0); setBadge('bRecords',0); setBadge('bStack',0);
+      setBadge('bChanges',0); setBadge('bDec',0); setBadge('bNeeds',0); setBadge('bDeadends',0);
       var em = el('div','empty');
       em.appendChild(el('b','', T('emptyTitle')));
       em.appendChild(document.createTextNode(T('emptyBody')));
@@ -1161,6 +1193,8 @@
       rb.appendChild(bar);
     }
 
+    setBadge('bSituation', (D.stack || []).length);
+    setBadge('bRecords', (D.changes || []).length + (D.decisions || []).length + (D.deadends || []).length);
     setBadge('bStack', (D.stack || []).length);
     setBadge('bChanges', (D.changes || []).length);
     setBadge('bDec', (D.decisions || []).length);
@@ -1324,15 +1358,52 @@
   }
   document.getElementById('planFrame').addEventListener('load', watchPlanFrame);
   window.addEventListener('resize', fitPlanFrame);
+  function showView(group, name){
+    var nav = document.querySelector('[data-view-group="' + group + '"]');
+    var host = document.getElementById(group);
+    if (!nav || !host || !nav.querySelector('[data-view="' + name + '"]')) return;
+    nav.querySelectorAll('.view-tab').forEach(function(t){
+      var on = t.dataset.view === name;
+      t.classList.toggle('on', on);
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+      t.tabIndex = on ? 0 : -1;
+    });
+    host.querySelectorAll('.view-panel').forEach(function(p){
+      var on = p.id === name;
+      p.classList.toggle('on', on);
+      p.hidden = !on;
+    });
+    try { localStorage.setItem('olchipanel.view.' + group, name); } catch(e){}
+  }
+  document.querySelectorAll('[data-view-group]').forEach(function(nav){
+    var group = nav.dataset.viewGroup;
+    nav.querySelectorAll('.view-tab').forEach(function(t){
+      t.addEventListener('click', function(){ showView(group, t.dataset.view); });
+      t.addEventListener('keydown', function(e){
+        var tabs = Array.from(nav.querySelectorAll('.view-tab'));
+        var i = tabs.indexOf(t), next = i;
+        if (e.key === 'ArrowRight') next = (i + 1) % tabs.length;
+        else if (e.key === 'ArrowLeft') next = (i - 1 + tabs.length) % tabs.length;
+        else if (e.key === 'Home') next = 0;
+        else if (e.key === 'End') next = tabs.length - 1;
+        else return;
+        e.preventDefault(); showView(group, tabs[next].dataset.view); tabs[next].focus();
+      });
+    });
+  });
   function showTab(name){
     document.body.classList.toggle('plan-active', name === 'plan');
-    document.querySelectorAll('.tab').forEach(function(t){
+    document.querySelectorAll('.top-tabs > .tab').forEach(function(t){
       var on = t.dataset.pane === name;
       t.classList.toggle('on', on);
       t.setAttribute('aria-selected', on ? 'true' : 'false');
       t.tabIndex = on ? 0 : -1;
     });
-    document.querySelectorAll('.pane').forEach(function(p){ p.classList.toggle('on', p.id === name); });
+    document.querySelectorAll('.workspace > .pane').forEach(function(p){
+      var on = p.id === name;
+      p.classList.toggle('on', on);
+      p.hidden = !on;
+    });
     try { localStorage.setItem('olchipanel.tab', name); } catch(e){}
     if (name === 'memo') loadMemo();
     if (name === 'plan') {
@@ -1341,10 +1412,10 @@
       else fitPlanFrame();
     } // lazy: board runs only when viewed
   }
-  document.querySelectorAll('.tab').forEach(function(t){
+  document.querySelectorAll('.top-tabs > .tab').forEach(function(t){
     t.addEventListener('click', function(){ showTab(t.dataset.pane); });
     t.addEventListener('keydown', function(e){
-      var tabs = Array.from(document.querySelectorAll('.tab'));
+      var tabs = Array.from(document.querySelectorAll('.top-tabs > .tab'));
       var i = tabs.indexOf(t), next = i;
       if (e.key === 'ArrowRight') next = (i + 1) % tabs.length;
       else if (e.key === 'ArrowLeft') next = (i - 1 + tabs.length) % tabs.length;
@@ -1391,8 +1462,26 @@
 
   applyChrome();
   document.getElementById('livetxt').textContent = T('connecting');
-  var savedTab = 'map'; try { savedTab = localStorage.getItem('olchipanel.tab') || 'map'; } catch(e){}
-  showTab(document.getElementById(savedTab) ? savedTab : 'map');
+  var savedTab = 'situation';
+  var situationView = 'map', recordsView = 'changes';
+  try {
+    savedTab = localStorage.getItem('olchipanel.tab') || 'situation';
+    situationView = localStorage.getItem('olchipanel.view.situation') || 'map';
+    recordsView = localStorage.getItem('olchipanel.view.records') || 'changes';
+  } catch(e){}
+  var legacyTabs = {
+    map: ['situation', 'map'], stack: ['situation', 'stack'],
+    changes: ['records', 'changes'], dec: ['records', 'dec'], deadends: ['records', 'deadends']
+  };
+  if (legacyTabs[savedTab]) {
+    var legacy = legacyTabs[savedTab];
+    savedTab = legacy[0];
+    if (savedTab === 'situation') situationView = legacy[1];
+    else recordsView = legacy[1];
+  }
+  showView('situation', ['map','stack'].indexOf(situationView) >= 0 ? situationView : 'map');
+  showView('records', ['changes','dec','deadends'].indexOf(recordsView) >= 0 ? recordsView : 'changes');
+  showTab(['situation','plan','needs','records','memo'].indexOf(savedTab) >= 0 ? savedTab : 'situation');
   refresh();
   connectSSE();
 })();

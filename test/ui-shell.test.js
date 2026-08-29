@@ -68,6 +68,13 @@ assert.match(viewer, /browser-profile-icon-v4/, 'Chromium app profile must bypas
 assert.match(viewer, /findInstalledWindowsAppShortcut/, 'Windows must reuse the installed PWA app identity');
 assert.match(viewer, /'olchipanel\.lnk'/, 'Windows app lookup must target the OlchiPanel shortcut case-insensitively');
 assert.match(html, /@media \(max-width:760px\)/, 'situation board must include the UI Core narrow layout');
+assert.strictEqual((html.match(/data-pane="/g) || []).length, 5, 'primary navigation must stay consolidated to five tabs');
+assert.doesNotMatch(html, /data-pane="(?:map|stack|changes|dec|deadends)"/, 'detail views must not return to the primary tab row');
+assert.match(html, /data-view-group="situation"[\s\S]*data-view="map"[\s\S]*data-view="stack"/, 'Situation must group Map and Stack');
+assert.match(html, /data-view-group="records"[\s\S]*data-view="changes"[\s\S]*data-view="dec"[\s\S]*data-view="deadends"/, 'Records must group Changes, Decisions, and Dead ends');
+assert.match(html, /var legacyTabs = \{[\s\S]*map: \['situation', 'map'\][\s\S]*changes: \['records', 'changes'\]/, 'saved legacy tabs must migrate without losing the selected view');
+assert.match(html, /document\.querySelectorAll\('\.top-tabs > \.tab'\)/, 'primary-tab behavior must not capture nested view tabs');
+assert.match(html, /document\.querySelectorAll\('\[data-view-group\]'\)/, 'nested view groups must own their keyboard behavior');
 assert.match(html, /body:not\(\.rail-closed\) #railTabs/, 'mobile rail must open as a drawer instead of squeezing content');
 assert.match(html, /body\.rail-closed #railTabs > \.cap/, 'collapsed empty rail must not render vertical helper text');
 assert.match(html, /root\.appendChild\(el\('div', 'rail-divider'\)\);[\s\S]*if \(idle\.length\)/, 'stable divider must be inserted before the folded idle area');

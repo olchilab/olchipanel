@@ -2,11 +2,11 @@
 
 ## Current Goal
 
-OlchiPanel 개발 정본을 `C:/OlchiProjects/olchipanel` 하나로 통합하고 플랜 화면 잘림 회귀를 닫는다.
+OlchiPanel 단일 정본에서 상단 정보 구조를 5개 작업군으로 단순화하고 검증 상태를 유지한다.
 
 ## Stage
 
-로컬 통합본 0.8.2 검증 및 주 폴더 단일화 완료. GitHub 쓰기 권한 대기.
+로컬 통합본 0.8.2의 주 폴더 단일화·플랜 폭·5개 상단 탭 검증 완료. GitHub 쓰기 권한 대기.
 
 ## Completed
 
@@ -15,6 +15,9 @@ OlchiPanel 개발 정본을 `C:/OlchiProjects/olchipanel` 하나로 통합하고
 - 전체 회귀: smoke, beta-feedback, single-instance, UI shell, Windows icon launch, plan 3종 PASS.
 - 실제 PWA는 설치된 Chrome app-id로 실행되며 viewer는 127.0.0.1:6711 on-demand로 동작한다.
 - 보조 worktree 4개를 제거했고 개발 정본은 `C:/OlchiProjects/olchipanel`의 `master` 하나다. 제거 전 변경은 archive/checkpoint 브랜치에 보존했다.
+- 상단 8개 탭을 `상황·플랜·요청·기록·메모` 5개로 정리했다. `지도·스택`은 상황 안에서, `변경·결정·막힌 길`은 기록 안에서 전환하며 플랜과 요청은 즉시 접근성을 유지한다.
+- 기존 저장 탭 값은 새 그룹으로 자동 이관되고, 상위·내부 탭 모두 Arrow/Home/End 키보드 이동과 ARIA 상태를 유지한다.
+- 1440급 PWA 실물과 390×844 렌더에서 5개 상단 탭 및 내부 탭 구성을 확인했다.
 
 ## In Progress
 
@@ -31,4 +34,4 @@ OlchiPanel 개발 정본을 `C:/OlchiProjects/olchipanel` 하나로 통합하고
 
 ## Last Updated
 
-2026-08-29 12:34 KST
+2026-08-29 12:54 KST

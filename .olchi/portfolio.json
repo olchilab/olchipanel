@@ -19,9 +19,9 @@
     "operating_state": "blocked",
     "attention_state": "foreground",
     "health": "at_risk",
-    "status_summary": "0.8.2 통합 master의 플랜 전체 폭·단일창·원본 아이콘 검증과 주 폴더 단일화는 완료됐고, 원격 배포만 GitHub 쓰기 권한에 막혔다.",
-    "updated_at": "2026-08-29T12:34:00+09:00",
-    "next_update_at": "2026-09-05T12:34:00+09:00",
+    "status_summary": "0.8.2 통합 master의 주 폴더 단일화·플랜 전체 폭·단일창·원본 아이콘·상단 5개 작업군 검증은 완료됐고, 원격 배포만 GitHub 쓰기 권한에 막혔다.",
+    "updated_at": "2026-08-29T12:54:00+09:00",
+    "next_update_at": "2026-09-05T12:54:00+09:00",
     "next_action": "Olchi-Mark에 olchilab/olchipanel 쓰기 권한을 부여하거나 쓰기 가능한 저장소 한정 인증으로 push를 재개한다.",
     "next_owner": "Master_D_Fable",
     "blocker": {

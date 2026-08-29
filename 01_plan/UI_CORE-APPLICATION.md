@@ -55,3 +55,11 @@ P1(키보드·인라인 편집·narrow/mobile 검수), 필요 시 control-feedba
 - `consumer_checks`: 탭 Arrow/Home/End, 세션 Alt+Arrow 재정렬, Escape 서랍 닫기, named click, `prefers-reduced-motion` 대안을 적용했다.
 - `visual_checks`: 1440×1000과 390×844 실제 렌더링 PASS. 390px에서 문서 scrollWidth=390, 목표 폭=362이며 clipping·한글 세로 찢김이 없다. 플랜 1열, 세션 서랍, 2px 키보드 포커스, reduced-motion 0.01ms 대안도 확인했다.
 - `decision`: 적용. 구현자 자기검수 단계이며 독립 인수는 별도다.
+
+## 2026-08-29 상단 정보 구조 단순화
+
+- `user_outcome`: 사용자가 탭 이름을 해석하는 시간을 줄이고, 현재 상황·실행 플랜·응답 필요·과거 기록·자유 메모 중 원하는 작업군으로 바로 이동한다.
+- `composition_note`: 상위 탭은 상황·플랜·요청·기록·메모 5개만 둔다. 지도·스택은 상황의 내부 보기, 변경·결정·막힌 길은 기록의 내부 보기다. 즉시 행동이 필요한 플랜과 요청은 상위 접근성을 유지한다.
+- `consumer_checks`: 예전 저장 값(map/stack/changes/dec/deadends)을 새 상위 그룹과 내부 보기로 이관하고, 상위·내부 탭 모두 Arrow/Home/End, focus, selected, hidden 계약을 지킨다.
+- `visual_checks`: 설치 PWA 데스크톱에서 상위 5개와 두 내부 그룹을 직접 전환했고, 390×844 렌더에서 5개 상위 탭이 한 줄에 들어가는 것을 확인했다.
+- `decision`: 적용. 정보 구조만 재배치하며 데이터·API·플랜 전체 폭 계약은 바꾸지 않는다.
