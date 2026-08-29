@@ -3,9 +3,11 @@
 ## Commit And Tree
 
 - canonical_path: `C:/OlchiProjects/olchipanel`.
-- canonical_line: `origin/main` 0.8.2 + 로컬 단일창·원본 아이콘 + 공개판 베타 피드백 + 내부 운영 문서.
+- canonical_line: 로컬 `master` 0.8.2 + 단일창·원본 아이콘 + 공개판 베타 피드백 + 내부 운영 문서.
+- base_commit: `80ba675`.
 - pre-consolidation checkpoints: primary `3b6a12f`, public beta `812eacc`, latest product `7dad29f`.
-- expected dirty paths: `output/` 시각 검증 artifact와 ignored `.olchi/pane-hooks.disabled`만 허용.
+- preservation refs: `archive/master-before-consolidation`=`3b6a12f`, `archive/public-beta-before-consolidation`=`812eacc`, `fix/single-panel-window`=`7dad29f`, `fix/plan-layout-fit`=`3a4f0ea`, `fix/taskbar-icon-v3`=`fba8096`.
+- expected dirty paths: untracked `output/` 시각 검증 artifact만 허용.
 
 ## Current Goal
 
@@ -17,12 +19,12 @@ STATE.md 참조. **다시 하지 말 것**: ①패널 뷰어 반복 재기동으
 
 ## In Progress
 
-- 보조 worktree 폴더 정리와 통합 브랜치의 `master` 승격.
+- 없음. 보조 worktree 4개 제거 및 통합 브랜치 `master` 승격 완료.
 
 ## Next Actions
 
 1. 코드 작업은 `C:/OlchiProjects/olchipanel` 한 곳에서만 한다.
-2. `npm test`와 플랜 Playwright 렌더를 통과한 뒤에만 배포 경계로 이동한다.
+2. `npm test`와 플랜 Playwright 렌더의 전체 폭·무가로넘침을 통과한 뒤에만 배포 경계로 이동한다.
 3. push·release·npm publish는 Mark 승인 시 실행한다.
 
 ## Blockers And Approval

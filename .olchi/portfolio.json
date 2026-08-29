@@ -19,10 +19,10 @@
     "operating_state": "running",
     "attention_state": "foreground",
     "health": "on_track",
-    "status_summary": "0.8.2 기반 로컬 통합본이 플랜 5열·단일창·원본 남색 투명 아이콘 회귀를 통과했고 주 폴더 단일 정본으로 정리 중이다.",
-    "updated_at": "2026-08-29T12:26:00+09:00",
-    "next_update_at": "2026-09-05T12:26:00+09:00",
-    "next_action": "보조 worktree 제거 후 통합 master를 배포 후보로 검수한다.",
+    "status_summary": "0.8.2 기반 통합본이 플랜 전체 폭 5열·단일창·원본 남색 투명 아이콘 회귀를 통과했고 주 폴더 master 하나로 정리됐다.",
+    "updated_at": "2026-08-29T12:31:00+09:00",
+    "next_update_at": "2026-09-05T12:31:00+09:00",
+    "next_action": "Mark 승인 범위에서 통합 master를 push·release·npm 배포한다.",
     "next_owner": "Master_D_Fable",
     "blocker": null,
     "pause": null
@@ -45,10 +45,6 @@
     ]
   },
   "relations": [
-    {
-      "type": "publishes_to",
-      "target": "olchipanel-public"
-    },
     {
       "type": "uses_asset",
       "target": "olchi-brand"
