@@ -158,6 +158,9 @@
 
   /* ── workspace ── */
   .workspace{margin-left:262px; padding:26px 32px 40px; max-width:1180px; transition:margin-left .16s ease;}
+  /* The kanban needs the whole app canvas. Keep prose/map tabs readable, but
+     let Plan use every pixel to the right of the session rail. */
+  body.plan-active .workspace{max-width:none;}
   .goalbar{font-size:22px; font-weight:660; line-height:1.35; letter-spacing:-.015em;
     color:var(--ink); overflow-wrap:anywhere; margin:0 0 9px; padding:0 0 0 15px;
     border-left:3px solid var(--brand);}
@@ -1322,6 +1325,7 @@
   document.getElementById('planFrame').addEventListener('load', watchPlanFrame);
   window.addEventListener('resize', fitPlanFrame);
   function showTab(name){
+    document.body.classList.toggle('plan-active', name === 'plan');
     document.querySelectorAll('.tab').forEach(function(t){
       var on = t.dataset.pane === name;
       t.classList.toggle('on', on);

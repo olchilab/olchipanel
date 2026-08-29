@@ -37,6 +37,13 @@ text-motion · gallery-transition · image-inspection · raster-reveal · ambien
 ## 다음
 P1(키보드·인라인 편집·narrow/mobile 검수), 필요 시 control-feedback 세부 적용.
 
+## 데스크톱 플랜 폭 계약
+
+- 플랜은 OlchiPanel의 운영 보드이므로 글 중심 탭의 `max-width`를 상속하지 않고 세션 레일 오른쪽 가용 폭 전체를 사용한다.
+- 5열을 좁은 컨테이너에 압축해 단순히 모두 보이게 한 상태는 PASS가 아니다. 각 열이 실사용 가능한 폭을 가져야 한다.
+- 실제 렌더 검수는 `workspace` 오른쪽 경계가 viewport에 닿고, document·plan iframe·board 각각 `scrollWidth === clientWidth`이며, 중간 또는 하단 가로 스크롤바가 없는지를 함께 확인한다.
+- 이 폭 해제는 플랜 탭에만 적용한다. 지도·스택·변경·결정·요청·막힌 길·메모의 읽기 폭은 유지한다.
+
 ## 2026-08-20 P1 업그레이드
 
 - `user_outcome`: 데스크톱과 390px 화면 모두에서 세션→목표→탭→현재 내용을 같은 읽기 순서로 판단한다.

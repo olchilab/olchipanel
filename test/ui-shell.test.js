@@ -78,6 +78,8 @@ assert.doesNotMatch(html, /!touched\(s\) && s\.id !== current/, 'selecting an id
 assert.match(html, /html,body\{min-height:100%/, 'the document must grow beyond the viewport on tall plan boards');
 assert.match(html, /\.pane\.pane-plan\{[^}]*padding:0;[^}]*min-height:0;[^}]*overflow:hidden/, 'plan pane must not inherit generic padding or minimum height');
 assert.match(html, /\.pane\.pane-plan\.on\{display:flex;?\}/, 'plan pane flex layout must win over the generic active pane rule');
+assert.match(html, /body\.plan-active \.workspace\{max-width:none;?\}/, 'plan tab must use the full OlchiPanel canvas width');
+assert.match(html, /classList\.toggle\('plan-active', name === 'plan'\)/, 'full-width plan mode must follow the selected tab');
 assert.match(html, /new ResizeObserver\(fitPlanFrame\)/, 'the embedded plan frame must track its content height');
 assert.doesNotMatch(html, /#planFrame\{[^}]*min-height:60vh/, 'plan frame must not reserve an empty 60vh viewport');
 assert.match(html, /e\.key === 'ArrowRight'/, 'tabs must support keyboard arrow navigation');
