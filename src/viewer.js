@@ -56,6 +56,7 @@ const ICON_ASSETS = {
   '/icons/olchi-dark-48.png': ['icons/olchi-dark-48.png', 'image/png'],
   '/icons/olchi-favicon-v2.ico': ['icons/olchi-favicon-v2.ico', 'image/x-icon'],
   '/icons/olchi-favicon-v3.ico': ['icons/olchi-favicon-v3.ico', 'image/x-icon'],
+  '/icons/olchi-favicon-v4.ico': ['icons/olchi-favicon-v4.ico', 'image/x-icon'],
 };
 
 function currentViewerUrl() {
@@ -198,28 +199,46 @@ function appArgs(url) {
   // Version the dedicated app profile when the Windows taskbar icon changes.
   // Chromium caches an origin's HWND icon inside the profile even when the
   // favicon URL changes, so a fresh profile is the non-destructive cache bust.
-  const profile = path.join(state.ROOT, 'browser-profile-icon-v3');
+  const profile = path.join(state.ROOT, 'browser-profile-icon-v4');
   try { fs.mkdirSync(profile, { recursive: true }); } catch (e) {}
   return ['--app=' + url, '--user-data-dir=' + profile, '--no-first-run', '--no-default-browser-check'];
 }
 
-// Auto-open dedupe: with OLCHIPANEL_OPEN=app in the MCP config, EVERY agent that
-// connects would pop its own window at the same board — 5 agents, 5 windows.
-// A marker records that a window was already opened for the current board; auto
-// opens skip when it matches. Explicit `olchipanel open`/`viewer` ignore it
-// (the human asked for a window). Marker resets when the board process changes.
-const WINDOW_MARKER = path.join(state.ROOT, 'window.json');
-function boardStamp() { try { const j = JSON.parse(fs.readFileSync(VIEWER_FILE, 'utf8')); return j.at || j.adopted_at || ''; } catch (e) { return ''; } }
-function windowAlreadyOpen() { try { return JSON.parse(fs.readFileSync(WINDOW_MARKER, 'utf8')).boardAt === boardStamp(); } catch (e) { return false; } }
-function markWindowOpen() { try { fs.writeFileSync(WINDOW_MARKER, JSON.stringify({ boardAt: boardStamp(), at: new Date().toISOString() }), 'utf8'); } catch (e) {} }
+function findShortcut(root, depth) {
+  if (!root || depth < 0) return null;
+  let entries;
+  try { entries = fs.readdirSync(root, { withFileTypes: true }); } catch (e) { return null; }
+  const exact = entries.find(entry => entry.isFile() && entry.name.toLowerCase() === 'olchipanel.lnk');
+  if (exact) return path.join(root, exact.name);
+  if (depth === 0) return null;
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+    const found = findShortcut(path.join(root, entry.name), depth - 1);
+    if (found) return found;
+  }
+  return null;
+}
+
+// An installed Chromium PWA has its own app id, AUMI and multi-resolution icon
+// resources. Reusing its shortcut is what keeps the Windows taskbar on that app
+// identity; launching only `chrome --app=<url>` falls back to generic Chrome.
+function findInstalledWindowsAppShortcut(env) {
+  env = env || process.env;
+  const roots = [
+    env.APPDATA && path.join(env.APPDATA, 'Microsoft', 'Windows', 'Start Menu', 'Programs'),
+    env.USERPROFILE && path.join(env.USERPROFILE, 'Desktop'),
+  ].filter(Boolean);
+  for (const root of roots) {
+    const found = findShortcut(root, 4);
+    if (found) return found;
+  }
+  return null;
+}
 
 function openBrowser(url, opts) {
-  // auto opens (agent-triggered) dedupe; explicit human opens always proceed
-  if (opts && opts.auto && windowAlreadyOpen()) return;
-  markWindowOpen();
   const mode = String(process.env.OLCHIPANEL_OPEN || '').toLowerCase();
   const plat = process.platform;
-  const detached = { detached: true, stdio: 'ignore' };
+  const detached = { detached: true, stdio: 'ignore', windowsHide: true };
   function tab() {
     try {
       if (plat === 'win32') spawn('cmd', ['/c', 'start', '', url], detached).unref();
@@ -234,6 +253,14 @@ function openBrowser(url, opts) {
   try {
     if (plat === 'win32') {
       const env = process.env;
+      const shortcut = findInstalledWindowsAppShortcut(env);
+      if (shortcut) {
+        // `start` follows the .lnk through chrome_proxy.exe with its exact
+        // --app-id, instead of creating a generic --app window.
+        const p = spawn('cmd', ['/d', '/c', 'start', '', shortcut], detached);
+        p.on('error', tab); p.unref();
+        return;
+      }
       const candidates = [
         env.LOCALAPPDATA && path.join(env.LOCALAPPDATA, 'Google/Chrome/Application/chrome.exe'),
         env.PROGRAMFILES && path.join(env.PROGRAMFILES, 'Google/Chrome/Application/chrome.exe'),
@@ -267,6 +294,38 @@ function openBrowser(url, opts) {
       p.unref();
     }
   } catch (e) { tab(); }
+}
+
+// Ask the canonical viewer for the one window-opening slot before launching a
+// browser. The viewer owns the truth because it can see live SSE connections;
+// a short pending claim also collapses simultaneous `open` commands before the
+// first browser has connected. Network failures fail closed to avoid duplicates.
+function openBrowserOnce(url, opts, cb) {
+  let finished = false;
+  const finish = (opened) => {
+    if (finished) return;
+    finished = true;
+    if (opened) openBrowser(url, opts);
+    if (cb) cb(opened);
+  };
+  try {
+    const req = http.request(url + '/api/window/claim', {
+      method: 'POST', timeout: 2000,
+      headers: { 'Content-Length': '0' },
+    }, (res) => {
+      let body = '';
+      res.on('data', d => { body += d; if (body.length > 4096) req.destroy(); });
+      res.on('end', () => {
+        try {
+          const result = JSON.parse(body || '{}');
+          finish(res.statusCode === 200 && result.open === true);
+        } catch (e) { finish(false); }
+      });
+    });
+    req.on('error', () => finish(false));
+    req.on('timeout', () => { req.destroy(); finish(false); });
+    req.end();
+  } catch (e) { finish(false); }
 }
 
 // Read a JSON body, run handler(body), and reply. Maps plan invariant errors to
@@ -317,7 +376,7 @@ function start(opts) {
           try { fs.writeFileSync(VIEWER_FILE, JSON.stringify({ url: known, pid: null, adopted_at: new Date().toISOString() }), 'utf8'); } catch (e) {}
         }
         if (opts.announce) console.log(`olchipanel viewer (existing) → ${known}`);
-        if (shouldOpen(opts)) openBrowser(known, { auto: !opts.open });
+        if (shouldOpen(opts)) openBrowserOnce(known, { auto: !opts.open });
       } else {
         bindNew(opts); // discovery record is stale → start a fresh viewer
       }
@@ -330,6 +389,20 @@ function start(opts) {
 function bindNew(opts) {
   opts = opts || {};
   const clients = new Set();
+  let windowClaimUntil = 0;
+  let lastWindowSeenAt = 0;
+  const WINDOW_CLAIM_MS = 7000;
+  const WINDOW_RECONNECT_GRACE_MS = 1500;
+
+  function claimWindow() {
+    const now = Date.now();
+    const connected = clients.size > 0;
+    const reconnecting = lastWindowSeenAt > 0 && now - lastWindowSeenAt < WINDOW_RECONNECT_GRACE_MS;
+    const pending = now < windowClaimUntil;
+    const open = !(connected || reconnecting || pending);
+    if (open) windowClaimUntil = now + WINDOW_CLAIM_MS;
+    return { open, occupied: connected || reconnecting || pending };
+  }
 
   const server = http.createServer((req, res) => {
     if (!hostOk(req)) { res.writeHead(403); return res.end('forbidden'); }
@@ -367,7 +440,12 @@ function bindNew(opts) {
       const visible = all.filter(s => !s.archived);
       const MAX = 30;
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
-      res.end(JSON.stringify({ sessions: visible.slice(0, MAX), total: all.length, version: VERSION, latest: latestKnown, pid: process.pid }));
+      res.end(JSON.stringify({ sessions: visible.slice(0, MAX), total: all.length, version: VERSION, latest: latestKnown, pid: process.pid, windowOpen: clients.size > 0 }));
+    } else if (url === '/api/window/claim' && req.method === 'POST') {
+      if (!sameOriginOk(req)) { res.writeHead(403); return res.end('{"ok":false,"error":"forbidden"}'); }
+      const result = claimWindow();
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
+      res.end(JSON.stringify({ ok: true, open: result.open, occupied: result.occupied }));
     } else if (rawUrl.split('?')[0] === '/api/memo' && req.method === 'GET') {
       // human's scratchpad — one per panel (id), plus a board-wide one (no id).
       // Agents never read or write these files; this is the human's corner.
@@ -486,7 +564,8 @@ function bindNew(opts) {
       });
       res.write(': connected\n\n');
       clients.add(res);
-      req.on('close', () => clients.delete(res));
+      lastWindowSeenAt = Date.now();
+      req.on('close', () => { clients.delete(res); lastWindowSeenAt = Date.now(); });
     } else {
       res.writeHead(404); res.end('not found');
     }
@@ -538,7 +617,7 @@ function bindNew(opts) {
             try { fs.writeFileSync(VIEWER_FILE, JSON.stringify({ url: takenUrl, pid: null, adopted_at: new Date().toISOString() }), 'utf8'); } catch (err) {}
           }
           if (opts.announce) console.log(`olchipanel viewer (existing) → ${takenUrl}`);
-          if (shouldOpen(opts)) openBrowser(takenUrl, { auto: !opts.open });
+          if (shouldOpen(opts)) openBrowserOnce(takenUrl, { auto: !opts.open });
           return;
         }
         // port busy but no olchipanel viewer answers → do NOT bind a second port.
@@ -555,12 +634,15 @@ function bindNew(opts) {
     } catch (e) {}
     armBackgroundDevices(); // the bind winner is the ONLY process doing background work
     if (opts.announce) console.log(`olchipanel READY → ${url}  (board is live; this window keeps serving it — minimize it, or close it and any connected agent will take over)`);
-    // only the process that WON the bind reaches here — so "already open" never
-    // double-opens: a second instance fails to bind and never gets this callback.
-    if (shouldOpen(opts)) openBrowser(url, { auto: !opts.open });
+    // Claim locally before opening: concurrent `open` processes will hit the
+    // endpoint above and see this pending claim until the new window connects.
+    if (shouldOpen(opts) && claimWindow().open) openBrowser(url, { auto: !opts.open });
   });
   tryListen();
   return server;
 }
 
-module.exports = { start, currentViewerUrl, openBrowser, ping, BASE_PORT };
+module.exports = {
+  start, currentViewerUrl, openBrowser, openBrowserOnce, ping,
+  findInstalledWindowsAppShortcut, BASE_PORT,
+};

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // olchipanel — entry point.
-//   olchipanel            → MCP stdio server for the connected agent + viewer (if port free)
+//   olchipanel            → MCP stdio server; viewer starts on first explicit tool call
 //   olchipanel viewer     → viewer only (no MCP); auto-opens the panel window
 //   olchipanel open       → open the panel window for a running viewer (or start one)
 //   olchipanel stop       → fully stop the board server (closing the window only closes the screen)
@@ -17,7 +17,11 @@ if (mode === 'viewer') {
   const url = viewer.currentViewerUrl();
   if (url) {
     viewer.ping(url, (alive) => {
-      if (alive) { viewer.openBrowser(url); console.log(`olchipanel → ${url}`); }
+      if (alive) {
+        viewer.openBrowserOnce(url, {}, (opened) => {
+          console.log(opened ? `olchipanel → ${url}` : `olchipanel already open → ${url}`);
+        });
+      }
       else viewer.start({ announce: true, open: true }); // stale URL — start a fresh viewer
     });
   } else viewer.start({ announce: true, open: true });
@@ -49,7 +53,16 @@ if (mode === 'viewer') {
   require('../src/hook').run();
 } else {
   // MCP mode: stdout belongs to JSON-RPC. Never console.log here.
-  // Auto-open here is opt-in via OLCHIPANEL_OPEN (so headless/CI never pops a window).
-  viewer.start(); // walks ports; no-op if another instance already serves
-  mcp.serve({ getViewerUrl: viewer.currentViewerUrl });
+  // Merely configuring the MCP must not create a panel or start a viewer. The
+  // first explicit OlchiPanel tool call is the user's opt-in boundary.
+  let viewerRequested = false;
+  mcp.serve({
+    getViewerUrl: viewer.currentViewerUrl,
+    ensureViewer: () => {
+      if (viewerRequested) return;
+      viewerRequested = true;
+      // Auto-open remains separately opt-in via OLCHIPANEL_OPEN.
+      viewer.start();
+    },
+  });
 }

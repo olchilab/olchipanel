@@ -6,23 +6,25 @@ tools, humans watch it render live in a browser. Three source files, one entry p
 ## Process model
 
 Every connected agent spawns its own `olchipanel` process (`bin/olchipanel.js`),
-which does two things:
+which exposes two things:
 
 1. **MCP server** (`src/mcp.js`) — speaks newline-delimited JSON-RPC 2.0 over
-   stdio with that one agent. One process per agent; each `initialize` creates a
-   fresh session. Stdout belongs to the protocol, so nothing else may print there.
-2. **Viewer** (`src/viewer.js`) — every process *attempts* to start the HTTP/SSE
-   viewer. Ports are walked from `OLCHIPANEL_PORT` (default 6711) upward; if all
-   candidates are taken, another instance is already serving and this process
-   silently skips it. Whoever binds writes the real URL to
-   `~/.olchipanel/viewer.json` so every process (and the `get_panel` tool) can
-   report it. `olchipanel viewer` runs the viewer alone, without MCP.
+   stdio with that one agent. One process per agent; `initialize` is read-only.
+   The first explicit OlchiPanel tool call creates the session. Stdout belongs to
+   the protocol, so nothing else may print there.
+2. **Viewer** (`src/viewer.js`) — the first explicit tool call discovers and health-checks
+   the canonical HTTP/SSE viewer. Only one process binds `OLCHIPANEL_PORT`
+   (default 6711); another OlchiPanel adopts it, while a non-OlchiPanel port
+   collision fails loud instead of drifting to another port. Whoever binds
+   writes the real URL to `~/.olchipanel/viewer.json` so every process (and the `get_panel` tool) can
+   report it. `olchipanel viewer` runs the viewer alone, without MCP. Browser
+   opening is also claimed through that viewer: an active SSE client or pending
+   claim blocks duplicate app windows, including simultaneous `open` commands.
 
-There is no coordination between processes beyond the filesystem: N MCP servers
-share state through files. Because each process binds the first *free* candidate
-port, several viewers can end up serving at once (up to the number of candidate
-ports); that is harmless — viewers are stateless readers of the same files — and
-`viewer.json` always points at whichever viewer bound most recently.
+N MCP servers share state through files. Viewer ownership is coordinated by the
+discovery record plus the one canonical loopback port; window ownership is
+coordinated by the viewer's `/api/window/claim` endpoint and live SSE clients.
+An MCP handshake that never calls a tool creates no OlchiPanel storage and starts no viewer.
 
 ## Data flow
 
@@ -50,7 +52,7 @@ browser ◀──SSE "changed" ping── viewer.js ◀──fs.watch──┘
 
 ## Session lifecycle
 
-- Session IDs are timestamp + PID; files are never deleted by the server.
+- Session IDs are timestamp + PID; no file exists until the first explicit tool call.
 - On stdin close / SIGINT / SIGTERM the MCP process marks its session
   `alive: false` and exits, so the viewer can distinguish live from dead panels.
 - The viewer is stateless: all truth lives in the session files, so a viewer

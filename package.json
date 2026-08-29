@@ -8,7 +8,7 @@
   "main": "./bin/olchipanel.js",
   "type": "commonjs",
   "scripts": {
-    "test": "node test/smoke.js && node test/ui-shell.test.js"
+    "test": "node test/smoke.js && node test/single-instance.js && node test/ui-shell.test.js && node test/windows-icon-launch.js"
   },
   "engines": {
     "node": ">=18"

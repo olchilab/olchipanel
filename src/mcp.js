@@ -8,9 +8,9 @@ const state = require('./state');
 const PROTOCOL_VERSION = '2024-11-05';
 const VERSION = require('../package.json').version; // single source — a hardcoded copy drifted (issue #3)
 
-const INSTRUCTIONS = `OlchiPanel is a live situation board for the HUMAN watching you work.
-It is narrative instrumentation, not logging. Keep it honest and current:
-- If a previous panel exists for this project (you'll be told below), call resume_project FIRST — it hands you the whole prior situation (goal, journey, decisions, dead ends, open asks) like an inherited memory, and archives the old panel.
+const INSTRUCTIONS = `OlchiPanel is an opt-in live situation board for the HUMAN watching you work.
+Do not call an OlchiPanel tool merely because this MCP server is connected. Wait until the HUMAN explicitly asks to use, open, or track work in OlchiPanel. Once they opt in, keep the board honest and current:
+- If a previous panel exists for this project (you'll be told below), call resume_project FIRST after opt-in — it hands you the whole prior situation (goal, journey, decisions, dead ends, open asks) like an inherited memory, and archives the old panel.
 - If you connect mid-task with no previous panel, backfill: reconstruct the journey so far from the conversation (steps already done get status "done"), then continue live. A panel that starts at step 5 should still show steps 1-4.
 - Name this session after the conversation's title/topic: if the human names it (e.g. "call this one Master"), use exactly that; otherwise derive a short name from the task. The name must FOLLOW the conversation — when the human renames the topic or the mission visibly shifts, call name_session again so the panel always carries the current name.
 - Call set_goal once you understand the task (one sentence, the north star).
@@ -31,7 +31,7 @@ Update immediately when reality changes — a stale panel is worse than none.`;
 const TOOLS = [
   {
     name: 'resume_project',
-    description: 'Inherit the previous panel of THIS project (same working directory): its goal, journey map, decisions, dead ends, changes and open asks become yours, and the old panel is archived. Returns the inherited situation as text — read it as your predecessor\'s handoff memo. Call this first when a previous panel exists; then update statuses to match present reality.',
+    description: 'After the human opts in to OlchiPanel, inherit the previous panel of THIS project (same working directory): its goal, journey map, decisions, dead ends, changes and open asks become yours, and the old panel is archived. Returns the inherited situation as text — read it as your predecessor\'s handoff memo. Call this first when a previous panel exists; then update statuses to match present reality.',
     inputSchema: { type: 'object', properties: {} },
   },
   {
@@ -398,10 +398,10 @@ function makeToolRunner(session, getViewerUrl) {
 }
 
 // ---------- JSON-RPC over stdio ----------
-function serve({ getViewerUrl }) {
+function serve({ getViewerUrl, ensureViewer }) {
   let session = null;
   let runner = null;
-  try { state.cleanup(); } catch (e) {} // housekeeping: expiry, dead probes, ghost-alive repair
+  let registered = false;
 
   const rl = readline.createInterface({ input: process.stdin, terminal: false });
 
@@ -429,7 +429,7 @@ function serve({ getViewerUrl }) {
           const prev = state.findPrevious(state.panelKey(session), session.id);
           if (prev) {
             const label = prev.name || (prev.goal || '').slice(0, 60) || prev.id;
-            instructions += `\n\n>>> A previous panel EXISTS for this project: "${label}" (last updated ${prev.updated}). Call resume_project FIRST to inherit it as your memory.`;
+            instructions += `\n\n>>> A previous panel EXISTS for this project: "${label}" (last updated ${prev.updated}). If the human opts in to OlchiPanel, call resume_project FIRST to inherit it as your memory.`;
           }
         } catch (e) { /* hint is best-effort */ }
         reply(id, {
@@ -450,6 +450,15 @@ function serve({ getViewerUrl }) {
         const fn = runner[name];
         if (!fn) return replyErr(id, -32602, `Unknown tool: ${name}`);
         try {
+          // MCP clients initialize every configured server at session start. Do
+          // not turn that handshake into a visible panel or a background viewer.
+          // The first explicit OlchiPanel tool call is the opt-in boundary.
+          if (!registered) {
+            try { state.cleanup(); } catch (e) {} // housekeeping starts only after opt-in
+            state.writeSession(session);
+            registered = true;
+            if (typeof ensureViewer === 'function') ensureViewer();
+          }
           const text = fn(params?.arguments || {});
           reply(id, { content: [{ type: 'text', text: String(text) }] });
         } catch (e) {

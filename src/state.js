@@ -1,5 +1,5 @@
 // state.js — shared session state on disk. Zero deps.
-// Every MCP server process (one per agent) writes its own session file atomically.
+// Every opted-in MCP session writes its own state file atomically.
 // The viewer (whoever holds the port) watches the dir and pushes SSE to browsers.
 'use strict';
 const fs = require('fs');
@@ -19,7 +19,6 @@ function sessionPath(id) {
 }
 
 function newSession(agentName) {
-  ensureDirs();
   const now = new Date();
   const id = now.toISOString().replace(/[-:T]/g, '').slice(0, 14) + '-' + process.pid;
   const state = {
@@ -42,7 +41,6 @@ function newSession(agentName) {
     deadends: [],     // [{tried, why, at}] — failed paths, so nobody walks them twice
     pending: [],      // [{text, hot}] — what the agent needs from the human
   };
-  writeSession(state);
   return state;
 }
 
@@ -57,7 +55,9 @@ function writeSession(state) {
 }
 
 function readAllSessions() {
-  ensureDirs();
+  // Reads must stay read-only: a globally configured MCP client performs its
+  // handshake automatically, before the human opts in to OlchiPanel.
+  if (!fs.existsSync(SESSIONS)) return [];
   const out = [];
   for (const f of fs.readdirSync(SESSIONS)) {
     if (!f.endsWith('.json')) continue;

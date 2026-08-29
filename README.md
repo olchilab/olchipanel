@@ -46,12 +46,12 @@ The panel's help screen (`?`) also has **Add for me** buttons that write these c
 
 (Running from a clone instead: `"command": "node", "args": ["<path-to>/bin/olchipanel.js"]`.)
 
-Then add **one line to your agent's rules file** (`CLAUDE.md` / `.cursorrules` / `AGENTS.md`):
+No always-on rules line is required. When you want a board for a task, tell the agent explicitly:
 
-> Maintain your OlchiPanel situation board while you work: set_goal when you understand the task, add_step/set_status as you progress, push_interrupt on topic changes.
+> Track this task in OlchiPanel.
 
-That line matters: measured head-to-head, agents with only the MCP config finish tasks without touching the board;
-with the rules line they bake it unprompted. Two lines total — that's the whole integration.
+The MCP remains available but idle until that request. Its automatic startup handshake creates
+no OlchiPanel directory, sidebar row, session file, or viewer process.
 
 **Who can connect**: any agent that can spawn a local process (stdio MCP). Confirmed working:
 Claude Code, Codex CLI, Cursor, and the **ChatGPT desktop app's agent/"Work" mode** (its Codex
@@ -61,14 +61,15 @@ chat, and browser-only sessions (chatgpt.com / claude.ai) — those can't launch
 and OlchiPanel is local-only by design.
 
 Then open the panel — as the agent works, its situation appears and updates live.
-The port is picked automatically (6711, or the next free one); the actual URL is
-written to `~/.olchipanel/viewer.json`.
+The viewer uses one canonical loopback port (6711, or `OLCHIPANEL_PORT` when set);
+the actual URL is written to `~/.olchipanel/viewer.json`.
 
 **Auto-open the window.** `npx olchipanel open` opens the panel in its own
 app window — no address bar, shows in the taskbar like a native app (Edge/Chrome;
-falls back to a normal tab). If a viewer is already running it reuses it; if the
-last one died it starts a fresh one. To have the window pop **automatically when
-an agent connects**, add an env flag to the MCP config:
+falls back to a normal tab). If the server or panel window is already running it
+reuses it instead of launching a duplicate; after the window closes, `open` can
+launch it again. If the last server died it starts a fresh one. To have the window pop **when
+the first explicit OlchiPanel tool is used**, add an env flag to the MCP config:
 
 ```json
 { "mcpServers": { "olchipanel": {
@@ -82,7 +83,7 @@ an agent connects**, add an env flag to the MCP config:
 
 ## What the agent gets
 
-Twelve tools, self-explanatory enough that agents use them unprompted:
+Twelve tools the agent uses after your explicit OlchiPanel request:
 
 | tool | what it does |
 |---|---|
@@ -101,14 +102,17 @@ Twelve tools, self-explanatory enough that agents use them unprompted:
 Sessions are auto-grouped by vendor (Claude / Codex / Cursor / Gemini) with color coding —
 the agent identifies itself in the MCP handshake, so this needs zero config.
 
+OlchiPanel is opt-in: an MCP client's automatic startup handshake does not create a
+sidebar session or start the viewer. The first explicit OlchiPanel tool call does.
+
 Parallel subagents inherit the tools — each one updates its own branch,
 so you watch alternatives develop **side by side, live**.
 
 ## Sessions die. The panel doesn't.
 
 Every panel belongs to a **project** (its working directory), not just a session.
-When a new agent connects where a previous panel exists, the server tells it up
-front, and one `resume_project` call hands over the whole situation — goal,
+When the human opts in and a previous panel exists, the server tells the agent,
+and one `resume_project` call hands over the whole situation — goal,
 journey so far, decisions, dead ends, open asks — as an inherited memory the new
 agent actually reads. The old panel is archived; the board keeps **one living
 panel per project**. This works across vendors: a panel baked by Claude Code can
@@ -119,9 +123,8 @@ backfill: a panel that starts at step 5 should still show steps 1–4.
 
 ## Optional: deterministic Changes via hooks (Claude Code)
 
-The rules line makes agents fill the board unprompted — measured — but it still relies on
-model discipline. For the Changes tab you can remove that reliance entirely: a hook logs
-every file edit, command, and commit automatically, even when the model forgets.
+After a panel is explicitly started, a hook can keep its Changes tab deterministic: it logs
+file edits, commands, and commits into that existing live panel even when the model forgets.
 
 `.claude/settings.json` in your project:
 ```json
@@ -138,9 +141,8 @@ every file edit, command, and commit automatically, even when the model forgets.
 Repeated edits of the same file coalesce; read-only commands are skipped. The MCP core
 stays agent-agnostic — hooks are a per-agent enhancer, not a requirement.
 
-**Codex CLI note**: Codex has no equivalent hook yet, so its bootstrap is the rules line
-in `AGENTS.md`. If a Codex board sits in "not initialized", paste the one-liner the empty
-board shows you — it tells the agent to `resume_project` / `set_goal` / backfill.
+**Codex CLI note**: Codex has no equivalent change hook yet. Ask it to track the task in
+OlchiPanel; the MCP instructions then tell it to `resume_project` / `set_goal` / backfill.
 
 ## Optional: stable workspace identity
 
