@@ -633,7 +633,10 @@ function bindNew(opts) {
       fs.writeFileSync(VIEWER_FILE, JSON.stringify({ url, pid: process.pid, at: new Date().toISOString() }), 'utf8');
     } catch (e) {}
     armBackgroundDevices(); // the bind winner is the ONLY process doing background work
-    if (opts.announce) console.log(`olchipanel READY → ${url}  (board is live; this window keeps serving it — minimize it, or close it and any connected agent will take over)`);
+    if (opts.announce) {
+      console.log(`olchipanel READY → ${url}`);
+      console.log('Keep this terminal open. Stop with Ctrl+C, or run "olchipanel stop" from another terminal.');
+    }
     // Claim locally before opening: concurrent `open` processes will hit the
     // endpoint above and see this pending claim until the new window connects.
     if (shouldOpen(opts) && claimWindow().open) openBrowser(url, { auto: !opts.open });

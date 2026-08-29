@@ -8,12 +8,44 @@
 'use strict';
 const viewer = require('../src/viewer');
 const mcp = require('../src/mcp');
+const VERSION = require('../package.json').version;
 
 const mode = process.argv[2] || 'mcp';
 
+const HELP = `OlchiPanel ${VERSION}
+
+Usage:
+  olchipanel                 Start the MCP stdio server (used by agents)
+  olchipanel open            Open the board; starts a local viewer if needed
+  olchipanel viewer          Start the local viewer and open its window
+  olchipanel stop            Stop the discovered local viewer
+  olchipanel hook            Read one agent hook event from stdin
+  olchipanel --help          Show this help
+  olchipanel --version       Print the installed version
+
+The viewer binds to 127.0.0.1 (default port 6711). When open/viewer starts a
+server, keep that terminal open; stop it with Ctrl+C or run "olchipanel stop"
+from another terminal.`;
+
+if (mode === '--help' || mode === '-h' || mode === 'help') {
+  console.log(HELP);
+  process.exit(0);
+}
+if (mode === '--version' || mode === '-v' || mode === 'version') {
+  console.log(VERSION);
+  process.exit(0);
+}
+if (!['mcp', 'viewer', 'open', 'stop', 'hook'].includes(mode)) {
+  console.error(`olchipanel: unknown command "${mode}".\n`);
+  console.error(HELP);
+  process.exit(1);
+}
+
 if (mode === 'viewer') {
+  console.log('olchipanel: starting the local viewer…');
   viewer.start({ announce: true, open: true });
 } else if (mode === 'open') {
+  console.log('olchipanel: opening the board…');
   const url = viewer.currentViewerUrl();
   if (url) {
     viewer.ping(url, (alive) => {

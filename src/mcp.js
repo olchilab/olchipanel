@@ -8,7 +8,7 @@ const state = require('./state');
 const PROTOCOL_VERSION = '2024-11-05';
 const VERSION = require('../package.json').version; // single source — a hardcoded copy drifted (issue #3)
 
-const INSTRUCTIONS = `OlchiPanel is an opt-in live situation board for the HUMAN watching you work.
+const LEGACY_INSTRUCTIONS = `OlchiPanel is an opt-in live situation board for the HUMAN watching you work.
 Do not call an OlchiPanel tool merely because this MCP server is connected. Wait until the HUMAN explicitly asks to use, open, or track work in OlchiPanel. Once they opt in, keep the board honest and current:
 - If a previous panel exists for this project (you'll be told below), call resume_project FIRST after opt-in — it hands you the whole prior situation (goal, journey, decisions, dead ends, open asks) like an inherited memory, and archives the old panel.
 - If you connect mid-task with no previous panel, backfill: reconstruct the journey so far from the conversation (steps already done get status "done"), then continue live. A panel that starts at step 5 should still show steps 1-4.
@@ -26,6 +26,20 @@ Do not call an OlchiPanel tool merely because this MCP server is connected. Wait
 - When you try something and it fails, log_deadend with why — so nobody walks that path twice.
 - When you need the human (a question, an approval, a blocker), call need_human — that list is their inbox from you.
 Update immediately when reality changes — a stale panel is worse than none.`;
+
+// Compact because some clients repeat server instructions beside every tool.
+const INSTRUCTIONS = `OlchiPanel is opt-in. Do not call an OlchiPanel tool merely because the MCP is connected; wait until the HUMAN explicitly asks to use, open, or track work in OlchiPanel. After opt-in, name the session, set the goal, map real steps, and record meaningful changes, decisions, dead ends, and requests. If initialization says a previous panel exists, call resume_project first. Follow each tool's own description and schema.`;
+
+const STEP_STATUSES = ['done', 'now', 'next', 'pause', 'container'];
+const STEP_PROPERTIES = {
+  id: { type: 'string', description: 'Short unique id for this step.' },
+  label: { type: 'string', description: 'Human-readable step name.' },
+  parent_id: { type: 'string', description: 'Parent step id. Omit for the root.' },
+  status: { type: 'string', enum: STEP_STATUSES, description: 'Use container for a structural parent with no progress glyph.' },
+  branch: { type: 'boolean', description: 'Whether this step starts a real branch.' },
+  weight: { type: 'string', enum: ['fork', 'side'], description: 'fork is active; side is parked.' },
+  note: { type: 'string', description: 'Why the branch happened.' },
+};
 
 // ---------- tool definitions ----------
 const TOOLS = [
@@ -57,17 +71,14 @@ const TOOLS = [
     description: 'Add a step to the journey map (a tree; root = the overall journey). Steps nest under parent_id. Set branch=true when a stray idea splits the path, and use weight to size it — this is how the map stays signal, not noise: "fork" = you are actually stopping/splitting current work to explore now (drawn active); "side" = worth revisiting but not now (parked, auto-folded). A passing thought you could forget should not be a step at all — put at most one line in the parent step\'s note. Branch notes must say WHY the branch happened.',
     inputSchema: {
       type: 'object',
-      properties: {
-        id: { type: 'string', description: 'Short unique id for this step, e.g. "impl-mcp" or "branch-a".' },
-        label: { type: 'string', description: 'Human-readable step name.' },
-        parent_id: { type: 'string', description: 'Id of parent step. Omit for the root step (first call).' },
-        status: { type: 'string', enum: ['done', 'now', 'next', 'pause'], description: '"now" = currently here (only one in the whole tree).' },
-        branch: { type: 'boolean', description: 'true if this step is the head of a branch (a stray idea that split the path).' },
-        weight: { type: 'string', enum: ['fork', 'side'], description: 'For branches: "fork" = actively exploring now (splitting/pausing current work); "side" = a parked side-quest, auto-folded so it does not clutter the map. Omit for normal steps.' },
-        note: { type: 'string', description: 'For branches: why this branch happened, one sentence.' },
-        steps: { type: 'array', description: 'Batch form: an array of step objects (same fields as above, including parent_id). Lays out a whole plan in one call — prefer this when registering several steps at once. When present, the top-level fields are ignored.', items: { type: 'object' } },
-      },
-      required: [],
+      properties: Object.assign({}, STEP_PROPERTIES, {
+        steps: {
+          type: 'array', minItems: 1,
+          description: 'Batch form using the same typed fields as one step.',
+          items: { type: 'object', properties: STEP_PROPERTIES, required: ['id', 'label'], additionalProperties: false },
+        },
+      }),
+      anyOf: [{ required: ['id', 'label'] }, { required: ['steps'] }],
     },
   },
   {
@@ -77,7 +88,7 @@ const TOOLS = [
       type: 'object',
       properties: {
         id: { type: 'string' },
-        status: { type: 'string', enum: ['done', 'now', 'next', 'pause'] },
+        status: { type: 'string', enum: STEP_STATUSES, description: 'Use container for a structural parent.' },
         label: { type: 'string', description: 'Optionally rename the step at the same time.' },
       },
       required: ['id', 'status'],
@@ -280,6 +291,7 @@ function makeToolRunner(session, getViewerUrl) {
       const results = [];
       for (const { id, label, parent_id, status, branch, note, weight } of list) {
         if (id == null || label == null) throw new Error('Each step needs an id and a label.');
+        if (status && !STEP_STATUSES.includes(status)) throw new Error(`Invalid step status "${status}".`);
         const node = { id: String(id), label: String(label) };
         if (status) node.status = status;
         if (branch) node.branch = true;
@@ -310,6 +322,7 @@ function makeToolRunner(session, getViewerUrl) {
     set_status({ id, status, label }) {
       const node = state.findNode(session.map.tree, String(id));
       if (!node) throw new Error(`Step id "${id}" not found.`);
+      if (!STEP_STATUSES.includes(status)) throw new Error(`Invalid step status "${status}".`);
       if (status === 'now') state.clearNow(session.map.tree, state.pathIds(session.map.tree, String(id)));
       node.status = status;
       if (label) node.label = String(label);

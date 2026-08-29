@@ -1,0 +1,51 @@
+{
+  "schema_version": "olchi-project-surfaces.v1",
+  "project_id": "olchipanel",
+  "runtimes": [
+    {
+      "id": "viewer",
+      "status": "active",
+      "mode": "on_demand",
+      "owner": "project-agent",
+      "source_path": "src/viewer.js",
+      "exposure": "local",
+      "bind_host": "127.0.0.1",
+      "port_policy": {
+        "mode": "fixed",
+        "port": 6711
+      },
+      "start_command": [
+        "node",
+        "bin/olchipanel.js",
+        "open"
+      ],
+      "stop_method": "Ctrl+C in the owning terminal or `node bin/olchipanel.js stop`",
+      "health_url": "http://127.0.0.1:6711/api/state",
+      "discovery_file": "${USERPROFILE}/.olchipanel/viewer.json",
+      "discovery_method": "file",
+      "startup": "manual",
+      "expiry": {
+        "mode": "condition",
+        "condition": "열린 MCP 세션·viewer가 없으면 종료 가능"
+      },
+      "approval_ref": null
+    }
+  ],
+  "surfaces": [
+    {
+      "id": "situation-board",
+      "title": "OlchiPanel Situation Board",
+      "kind": "viewer",
+      "purpose": "AI 작업의 목표·여정·분기·인터럽트를 live로 표시",
+      "owner": "project-agent",
+      "status": "active",
+      "source_path": "public/index.html",
+      "data_source": "${USERPROFILE}/.olchipanel/sessions",
+      "runtime_ref": "viewer",
+      "route": "/",
+      "expiry": {
+        "mode": "none"
+      }
+    }
+  ]
+}

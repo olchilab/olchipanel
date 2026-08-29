@@ -154,12 +154,12 @@ function findNode(node, id) {
 }
 
 // Demote every "now" before a new one is set. keepIds (optional): ids on the
-// path to the NEW now — an ancestor that was "now" becomes a plain container
-// (no status), NOT "done". First real-user feedback: moving "now" into a child
-// used to stamp the parent ✓done while its child was still in progress.
+// path to the NEW now. Every node on that path becomes an explicit container;
+// the caller restores the target to now immediately after.
 function clearNow(node, keepIds) {
   if (!node) return;
-  if (node.status === 'now') node.status = (keepIds && keepIds.has(node.id)) ? '' : 'done';
+  if (keepIds && keepIds.has(node.id)) node.status = 'container';
+  else if (node.status === 'now') node.status = 'done';
   for (const c of node.children || []) clearNow(c, keepIds);
 }
 

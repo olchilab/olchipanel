@@ -1,0 +1,57 @@
+{
+  "schema_version": "olchi-project-portfolio.v1",
+  "project_id": "olchipanel",
+  "title": "OlchiPanel",
+  "portfolio_class": "project",
+  "purpose": "에이전트가 목표·여정·분기·인터럽트를 직접 그리는 agent-agnostic MCP 상황판을 제공한다.",
+  "ownership": {
+    "project_owner": "Master_D_Fable",
+    "owner_kind": "seat",
+    "portfolio_owner": "Master_X_Sol"
+  },
+  "repository": {
+    "expected": true,
+    "role": "primary",
+    "canonical_branch": "master"
+  },
+  "state": {
+    "lifecycle_phase": "executing",
+    "operating_state": "running",
+    "attention_state": "foreground",
+    "health": "on_track",
+    "status_summary": "0.8.2 기반 로컬 통합본이 플랜 5열·단일창·원본 남색 투명 아이콘 회귀를 통과했고 주 폴더 단일 정본으로 정리 중이다.",
+    "updated_at": "2026-08-29T12:26:00+09:00",
+    "next_update_at": "2026-09-05T12:26:00+09:00",
+    "next_action": "보조 worktree 제거 후 통합 master를 배포 후보로 검수한다.",
+    "next_owner": "Master_D_Fable",
+    "blocker": null,
+    "pause": null
+  },
+  "governance": {
+    "plan_ref": "01_plan/PRODUCT-BRIEF.md",
+    "jira_ref": null,
+    "appetite": "파일럿 피드백을 작은 릴리스로 반영하되 배포·홍보는 Mark 승인 경계",
+    "definition_of_done_ref": "VERDICT.md",
+    "approval_grade": "L5",
+    "external_effects": "approved"
+  },
+  "continuity": {
+    "mode": "persistent",
+    "state_path": "STATE.md",
+    "handoff_path": "HANDOFF.md",
+    "check_command": [
+      "python",
+      "tools/continuity_check.py"
+    ]
+  },
+  "relations": [
+    {
+      "type": "publishes_to",
+      "target": "olchipanel-public"
+    },
+    {
+      "type": "uses_asset",
+      "target": "olchi-brand"
+    }
+  ]
+}
