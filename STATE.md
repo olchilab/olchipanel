@@ -6,7 +6,7 @@ OlchiPanel 개발 정본을 `C:/OlchiProjects/olchipanel` 하나로 통합하고
 
 ## Stage
 
-로컬 통합본 0.8.2 검증 및 주 폴더 단일화 완료. 외부 push·npm 배포 전 상태.
+로컬 통합본 0.8.2 검증 및 주 폴더 단일화 완료. GitHub 쓰기 권한 대기.
 
 ## Completed
 
@@ -18,17 +18,17 @@ OlchiPanel 개발 정본을 `C:/OlchiProjects/olchipanel` 하나로 통합하고
 
 ## In Progress
 
-- 없음. 로컬 배포 후보 검수 마감.
+- 로컬 배포 후보 검수는 마감했고, 원격 배포만 인증 권한에 막혀 있다.
 
 ## Next Branches
 
-- Mark가 원할 때 통합본 push·release·npm 배포.
+- `Olchi-Mark`에 `olchilab/olchipanel` 쓰기 권한을 부여하거나 쓰기 가능한 계정으로 이 저장소에만 인증한 뒤 통합본 push·release·npm 배포.
 - 배포 뒤 친구 설치 경로(운영체제·Claude/Codex/Antigravity 구분) 재검증.
 
 ## Approval Status
 
-- 외부 push·release PR·npm 배포는 Mark 승인 경계. 이번 체크포인트는 로컬 통합만 수행한다.
+- Mark의 push·PR·release·npm 배포 승인은 확보했다. HTTPS와 SSH 모두 `Olchi-Mark` 권한 부족(403/permission denied)으로 원격 변경 없이 중단했다.
 
 ## Last Updated
 
-2026-08-29 12:31 KST
+2026-08-29 12:34 KST

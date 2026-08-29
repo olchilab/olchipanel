@@ -19,17 +19,17 @@ STATE.md 참조. **다시 하지 말 것**: ①패널 뷰어 반복 재기동으
 
 ## In Progress
 
-- 없음. 보조 worktree 4개 제거 및 통합 브랜치 `master` 승격 완료.
+- 보조 worktree 4개 제거 및 통합 브랜치 `master` 승격 완료. 원격 push만 권한 대기.
 
 ## Next Actions
 
 1. 코드 작업은 `C:/OlchiProjects/olchipanel` 한 곳에서만 한다.
 2. `npm test`와 플랜 Playwright 렌더의 전체 폭·무가로넘침을 통과한 뒤에만 배포 경계로 이동한다.
-3. push·release·npm publish는 Mark 승인 시 실행한다.
+3. `Olchi-Mark`에 저장소 쓰기 권한을 부여하거나 이 저장소에만 쓰기 가능한 인증을 제공한 뒤 `master`를 PR 브랜치로 push하고 release-please 경로를 진행한다.
 
 ## Blockers And Approval
 
-- release PR #9 머지=Mark(L5). 홍보=L5.
+- 배포 승인은 확보됨. blocker=`Olchi-Mark`의 `olchilab/olchipanel` 쓰기 권한 없음(HTTPS 403, SSH permission denied). 두 시도 모두 원격 변경 없음. 홍보=L5.
 
 ## Verification Commands
 

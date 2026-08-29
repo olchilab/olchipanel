@@ -16,15 +16,21 @@
   },
   "state": {
     "lifecycle_phase": "executing",
-    "operating_state": "running",
+    "operating_state": "blocked",
     "attention_state": "foreground",
-    "health": "on_track",
-    "status_summary": "0.8.2 기반 통합본이 플랜 전체 폭 5열·단일창·원본 남색 투명 아이콘 회귀를 통과했고 주 폴더 master 하나로 정리됐다.",
-    "updated_at": "2026-08-29T12:31:00+09:00",
-    "next_update_at": "2026-09-05T12:31:00+09:00",
-    "next_action": "Mark 승인 범위에서 통합 master를 push·release·npm 배포한다.",
+    "health": "at_risk",
+    "status_summary": "0.8.2 통합 master의 플랜 전체 폭·단일창·원본 아이콘 검증과 주 폴더 단일화는 완료됐고, 원격 배포만 GitHub 쓰기 권한에 막혔다.",
+    "updated_at": "2026-08-29T12:34:00+09:00",
+    "next_update_at": "2026-09-05T12:34:00+09:00",
+    "next_action": "Olchi-Mark에 olchilab/olchipanel 쓰기 권한을 부여하거나 쓰기 가능한 저장소 한정 인증으로 push를 재개한다.",
     "next_owner": "Master_D_Fable",
-    "blocker": null,
+    "blocker": {
+      "summary": "GitHub HTTPS와 SSH 모두 Olchi-Mark의 olchilab/olchipanel 쓰기 권한 부족으로 push 거부",
+      "resolution_owner": "Mark",
+      "successor": "통합 master를 원격 PR 브랜치로 push하고 release-please 배포 재개",
+      "wake_source": "Mark가 저장소 쓰기 권한 또는 저장소 한정 쓰기 인증 확보를 확인",
+      "deadline": "2026-09-05T12:34:00+09:00"
+    },
     "pause": null
   },
   "governance": {
