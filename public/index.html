@@ -194,7 +194,8 @@
   .tab:hover{color:var(--ink); background:var(--hover);}
   .tab.on{color:var(--brand-ink); border-bottom-color:var(--brand); background:none;}
   .tab.on .ic{opacity:1;}
-  .tab:focus-visible, .view-tab:focus-visible, .panel-tab:focus-visible, .top-btn:focus-visible, .rail-toggle:focus-visible{
+  .tab:focus-visible, .view-tab:focus-visible, .map-mode-btn:focus-visible, .graph-btn:focus-visible,
+  .graph-viewport:focus-visible, .panel-tab:focus-visible, .top-btn:focus-visible, .rail-toggle:focus-visible{
     outline:2px solid var(--brand); outline-offset:2px;}
   .tab .badge{background:var(--hover); color:var(--muted); border-radius:99px; font-size:10.5px;
     padding:1px 7px; font-weight:700; line-height:1.5; font-variant-numeric:tabular-nums;}
@@ -223,6 +224,51 @@
   .pane.pane-plan.on{display:flex;}
   #planFrame{display:block;flex:1 1 auto;width:100%;height:180px;min-height:0;border:0;background:var(--paper);}
   .legend{font-size:12px; color:var(--muted); margin-bottom:20px;}
+
+  /* ── journey graph ──
+     Gravity UI Graph's useful idea is a camera over node/edge data. OlchiPanel's
+     graphs stay small, so a dependency-free SVG keeps the package buildless. */
+  .map-head{display:flex; align-items:flex-start; justify-content:space-between; gap:14px;
+    margin-bottom:16px;}
+  .map-head .legend{margin:2px 0 0; flex:1;}
+  .map-mode{display:flex; flex:none; gap:2px; padding:2px; border:1px solid var(--line);
+    border-radius:8px; background:var(--hover);}
+  .map-mode-btn,.graph-btn{border:0; background:transparent; color:var(--muted); font:650 11.5px/1.4 inherit;
+    min-height:30px; border-radius:6px; padding:5px 10px; cursor:pointer; white-space:nowrap;}
+  .map-mode-btn:hover,.graph-btn:hover{color:var(--ink); background:var(--card);}
+  .map-mode-btn.on{color:var(--brand-ink); background:var(--card); box-shadow:0 1px 3px rgba(27,53,86,.1);}
+  .journey-mode[hidden]{display:none;}
+  .journey-graph{border:1px solid var(--line); border-radius:10px; overflow:hidden; background:var(--paper);}
+  .graph-toolbar{display:flex; align-items:center; gap:4px; min-height:43px; padding:6px 8px;
+    border-bottom:1px solid var(--line); background:var(--card);}
+  .graph-btn{border:1px solid transparent; font-size:12px;}
+  .graph-btn:hover{border-color:var(--line);}
+  .graph-scale{min-width:46px; text-align:center; color:var(--muted); font:600 11px/1 var(--mono);}
+  .graph-spacer{flex:1;}
+  .graph-hint{font-size:11px; color:var(--muted); white-space:nowrap;}
+  .graph-viewport{height:470px; min-height:320px; position:relative; overflow:hidden;
+    touch-action:none; cursor:grab; background:
+      radial-gradient(circle at 1px 1px,color-mix(in srgb,var(--line) 65%,transparent) 1px,transparent 1.3px) 0 0/22px 22px,
+      var(--paper);}
+  .graph-viewport.panning{cursor:grabbing;}
+  .graph-viewport svg{display:block; width:100%; height:100%; overflow:visible; user-select:none;}
+  .graph-edge{fill:none; stroke:var(--line); stroke-width:2; vector-effect:non-scaling-stroke;}
+  .graph-arrow{fill:var(--muted);}
+  .graph-edge.branch{stroke:var(--wait);}
+  .graph-edge.side{stroke-dasharray:5 5; opacity:.62;}
+  .graph-node{cursor:move; outline:none;}
+  .graph-node rect{fill:var(--card); stroke:var(--line); stroke-width:1.5; rx:10;
+    vector-effect:non-scaling-stroke; filter:drop-shadow(0 5px 9px rgba(27,53,86,.08));}
+  .graph-node:hover rect,.graph-node:focus rect{stroke:var(--brand); stroke-width:2;}
+  .graph-node.now rect{fill:var(--brand-soft); stroke:var(--brand); stroke-width:2;}
+  .graph-node.done{opacity:.7;}
+  .graph-node.branch rect{stroke:var(--wait);}
+  .graph-node.side{opacity:.72;}
+  .graph-node-label{fill:var(--ink); font:650 13px/1.2 var(--sans); pointer-events:none;}
+  .graph-node-meta{fill:var(--muted); font:700 9px/1 var(--sans); letter-spacing:.04em; pointer-events:none;}
+  .graph-empty{position:absolute; inset:0; display:grid; place-items:center; padding:24px;
+    color:var(--muted); font-size:14px; text-align:center; pointer-events:none;}
+  .graph-empty[hidden]{display:none;}
 
   /* ── journey tree ── */
   .tree details details{margin-left:11px; border-left:1px solid var(--line); padding-left:16px;}
@@ -372,6 +418,11 @@
     .tab{flex:0 0 auto; white-space:nowrap; padding:9px 11px 10px;}
     .view-tabs{margin-top:-2px;}
     .view-tab{padding:7px 10px;}
+    .map-head{align-items:stretch; flex-direction:column; gap:10px;}
+    .map-mode{align-self:flex-start;}
+    .graph-viewport{height:410px; min-height:300px;}
+    .graph-hint{display:none;}
+    .graph-btn{padding-inline:8px;}
     .pane{min-width:0; min-height:300px; padding:18px 16px; border-radius:8px;}
     .pane.pane-plan{padding:0;min-height:0;}
     #planFrame{min-height:0;}
@@ -435,8 +486,34 @@
       <button class="view-tab" id="viewTabStack" role="tab" data-view="stack" aria-controls="stack"><span id="tTabStack"></span> <span class="badge" id="bStack"></span></button>
     </div>
     <div class="view-panel" id="map" role="tabpanel" aria-labelledby="viewTabMap" hidden>
-      <div class="legend" id="tLegendMap"></div>
-      <div class="tree" id="vtree"></div>
+      <div class="map-head">
+        <div class="legend" id="tLegendMap"></div>
+        <div class="map-mode" role="group" id="mapModeGroup">
+          <button class="map-mode-btn" id="mapTreeBtn" type="button"><span id="tMapTree"></span></button>
+          <button class="map-mode-btn" id="mapGraphBtn" type="button"><span id="tMapGraph"></span></button>
+        </div>
+      </div>
+      <div class="journey-mode" id="treeJourney">
+        <div class="tree" id="vtree"></div>
+      </div>
+      <div class="journey-mode journey-graph" id="graphJourney" hidden>
+        <div class="graph-toolbar">
+          <button class="graph-btn" id="graphZoomOut" type="button">−</button>
+          <span class="graph-scale" id="graphScale">100%</span>
+          <button class="graph-btn" id="graphZoomIn" type="button">+</button>
+          <button class="graph-btn" id="graphFit" type="button"><span id="tGraphFit"></span></button>
+          <button class="graph-btn" id="graphReset" type="button"><span id="tGraphReset"></span></button>
+          <span class="graph-spacer"></span>
+          <span class="graph-hint" id="tGraphHint"></span>
+        </div>
+        <div class="graph-viewport" id="graphViewport" tabindex="0">
+          <svg id="graphSvg" role="group">
+            <defs><marker id="graphArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path class="graph-arrow" d="M 0 0 L 10 5 L 0 10 z"></path></marker></defs>
+            <g id="graphWorld"><g id="graphEdges"></g><g id="graphNodes"></g></g>
+          </svg>
+          <div class="graph-empty" id="graphEmpty" hidden></div>
+        </div>
+      </div>
     </div>
     <div class="view-panel" id="stack" role="tabpanel" aria-labelledby="viewTabStack" hidden>
       <div class="legend" id="tLegendStack"></div>
@@ -488,6 +565,10 @@
       tabNeeds: 'Needs you', tabDeadends: 'Dead ends', tabMemo: 'Memo', tabPlan: 'Plan',
       topViews: 'OlchiPanel views', situationViews: 'Situation views', recordViews: 'Record views',
       legendMap: '✓ done · ▶ now · ↩ next · ⑂ fork (active) · dim ⑂ side-quest (parked) · ▾ fold',
+      mapTree: 'Tree', mapGraph: 'Graph', mapModeLabel: 'Journey display',
+      graphFit: 'Fit', graphReset: 'Arrange', graphHint: 'Drag canvas · move nodes · wheel to zoom',
+      graphZoomIn: 'Zoom in', graphZoomOut: 'Zoom out', graphViewport: 'Interactive journey graph',
+      graphEmpty: 'The agent will draw connected steps here.',
       sideQuest: 'side',
       legendStack: 'When the human changes topic, interrupted work lands here with its resume point (top = resume first).',
       legendChanges: 'Everything the agent touched — files, commands, commits — so you never re-read the transcript to find out.',
@@ -552,6 +633,10 @@
       tabNeeds: '요청', tabDeadends: '막힌 길', tabMemo: '메모', tabPlan: '플랜',
       topViews: '올치패널 보기', situationViews: '상황 보기', recordViews: '기록 보기',
       legendMap: '✓ 완료 · ▶ 지금 여기 · ↩ 다음 · ⑂ 분기(진행) · 흐린 ⑂ 샛길(보류) · ▾ 접기',
+      mapTree: '트리', mapGraph: '그래프', mapModeLabel: '여정 표시 방식',
+      graphFit: '맞춤', graphReset: '정렬', graphHint: '빈 곳 이동 · 노드 위치 조정 · 휠 확대',
+      graphZoomIn: '확대', graphZoomOut: '축소', graphViewport: '대화형 여정 그래프',
+      graphEmpty: '에이전트가 연결된 단계를 여기에 그립니다.',
       sideQuest: '샛길',
       legendStack: '대화 주제가 바뀌면 하던 일이 재개점과 함께 여기 쌓입니다 (위 = 먼저 재개).',
       legendChanges: '에이전트가 건드린 모든 것 — 파일·명령·커밋. 트랜스크립트를 다시 뒤질 필요가 없도록.',
@@ -618,6 +703,14 @@
   var total = 0;
   var current = null;
   var openState = {}; // nodeId -> open? (preserved across live refreshes)
+  var mapMode = 'tree';
+  try { mapMode = localStorage.getItem('olchipanel.map.mode') || 'tree'; } catch(e){}
+  if (mapMode !== 'graph') mapMode = 'tree';
+  var graphCamera = { x: 0, y: 0, scale: 1 };
+  var graphModel = null;
+  var graphSession = null;
+  var graphDrag = null;
+  var graphNeedsFit = true;
 
   function el(tag, cls, text){
     var e = document.createElement(tag);
@@ -700,6 +793,19 @@
     document.getElementById('tTabMemo').textContent = T('tabMemo');
     document.getElementById('tTabPlan').textContent = T('tabPlan');
     document.getElementById('tLegendMap').textContent = T('legendMap');
+    document.getElementById('tMapTree').textContent = T('mapTree');
+    document.getElementById('tMapGraph').textContent = T('mapGraph');
+    document.getElementById('mapModeGroup').setAttribute('aria-label', T('mapModeLabel'));
+    document.getElementById('tGraphFit').textContent = T('graphFit');
+    document.getElementById('tGraphReset').textContent = T('graphReset');
+    document.getElementById('tGraphHint').textContent = T('graphHint');
+    document.getElementById('graphZoomIn').setAttribute('aria-label', T('graphZoomIn'));
+    document.getElementById('graphZoomOut').setAttribute('aria-label', T('graphZoomOut'));
+    document.getElementById('graphFit').setAttribute('aria-label', T('graphFit'));
+    document.getElementById('graphReset').setAttribute('aria-label', T('graphReset'));
+    document.getElementById('graphViewport').setAttribute('aria-label', T('graphViewport'));
+    document.getElementById('graphSvg').setAttribute('aria-label', T('graphViewport'));
+    document.getElementById('graphEmpty').textContent = T('graphEmpty');
     document.getElementById('tLegendStack').textContent = T('legendStack');
     document.getElementById('tLegendChanges').textContent = T('legendChanges');
     document.getElementById('tLegendDec').textContent = T('legendDec');
@@ -1130,6 +1236,240 @@
     }
   });
 
+  // ---------- journey graph (dependency-free SVG camera + draggable nodes) ----------
+  function svgEl(tag, attrs, text){
+    var node = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    Object.keys(attrs || {}).forEach(function(k){ node.setAttribute(k, attrs[k]); });
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+  function setMapMode(mode){
+    mapMode = mode === 'graph' ? 'graph' : 'tree';
+    var graphOn = mapMode === 'graph';
+    document.getElementById('treeJourney').hidden = graphOn;
+    document.getElementById('graphJourney').hidden = !graphOn;
+    [['mapTreeBtn', !graphOn], ['mapGraphBtn', graphOn]].forEach(function(pair){
+      var button = document.getElementById(pair[0]);
+      button.classList.toggle('on', pair[1]);
+      button.setAttribute('aria-pressed', pair[1] ? 'true' : 'false');
+    });
+    try { localStorage.setItem('olchipanel.map.mode', mapMode); } catch(e){}
+    if (graphOn) requestAnimationFrame(function(){
+      if (graphNeedsFit) fitGraph(); else applyGraphTransform();
+    });
+  }
+  document.getElementById('mapTreeBtn').addEventListener('click', function(){ setMapMode('tree'); });
+  document.getElementById('mapGraphBtn').addEventListener('click', function(){ setMapMode('graph'); });
+
+  function graphLayoutKey(){ return current ? 'olchipanel.graph.layout.' + current : ''; }
+  function readGraphLayout(){
+    var key = graphLayoutKey();
+    if (!key) return {};
+    try { return JSON.parse(localStorage.getItem(key) || '{}'); } catch(e){ return {}; }
+  }
+  function saveGraphLayout(){
+    var key = graphLayoutKey();
+    if (!key || !graphModel) return;
+    var positions = {};
+    graphModel.nodes.forEach(function(n){ positions[n.id] = { x: Math.round(n.x), y: Math.round(n.y) }; });
+    try { localStorage.setItem(key, JSON.stringify(positions)); } catch(e){}
+  }
+  function autoLayout(root){
+    var nodes = [], edges = [], leaf = 0;
+    function walk(data, depth){
+      var childRecords = (data.children || []).map(function(child){ return walk(child, depth + 1); });
+      var y = childRecords.length
+        ? childRecords.reduce(function(sum, child){ return sum + child.y; }, 0) / childRecords.length
+        : 62 + (leaf++ * 112);
+      var record = { id: String(data.id), data: data, x: 120 + (depth * 250), y: y, el: null };
+      nodes.push(record);
+      childRecords.forEach(function(child){ edges.push({ source: record, target: child, data: child.data, el: null }); });
+      return record;
+    }
+    walk(root, 0);
+    return { nodes: nodes, edges: edges };
+  }
+  function graphLabelLines(value){
+    var chars = Array.from(String(value || ''));
+    if (chars.length <= 22) return [chars.join('')];
+    var first = chars.slice(0, 22).join('');
+    var second = chars.slice(22, 42).join('') + (chars.length > 42 ? '…' : '');
+    return [first, second];
+  }
+  function graphStatusText(data){
+    var labels = lang === 'ko'
+      ? { now: '▶ 지금', next: '↩ 다음', done: '✓ 완료', pause: 'Ⅱ 보류', container: '여정' }
+      : { now: '▶ NOW', next: '↩ NEXT', done: '✓ DONE', pause: 'Ⅱ PAUSED', container: 'JOURNEY' };
+    var text = labels[data.status] || labels.container;
+    if (data.branch) text += data.weight === 'side' ? (lang === 'ko' ? ' · 샛길' : ' · SIDE') : (lang === 'ko' ? ' · 분기' : ' · FORK');
+    return text;
+  }
+  function graphNodeClass(data){
+    return 'graph-node ' + (data.status || 'container') + (data.branch ? ' branch' : '') + (data.weight === 'side' ? ' side' : '');
+  }
+  function setGraphNodePosition(record){
+    if (record.el) record.el.setAttribute('transform', 'translate(' + record.x + ' ' + record.y + ')');
+  }
+  function updateGraphEdges(){
+    if (!graphModel) return;
+    graphModel.edges.forEach(function(edge){
+      var sx = edge.source.x + 98, sy = edge.source.y;
+      var tx = edge.target.x - 98, ty = edge.target.y;
+      var bend = Math.max(54, (tx - sx) * .46);
+      edge.el.setAttribute('d', 'M ' + sx + ' ' + sy + ' C ' + (sx + bend) + ' ' + sy + ', ' + (tx - bend) + ' ' + ty + ', ' + tx + ' ' + ty);
+    });
+  }
+  function graphBounds(){
+    if (!graphModel || !graphModel.nodes.length) return null;
+    var xs = graphModel.nodes.map(function(n){ return n.x; });
+    var ys = graphModel.nodes.map(function(n){ return n.y; });
+    return { left: Math.min.apply(null, xs) - 108, right: Math.max.apply(null, xs) + 108,
+      top: Math.min.apply(null, ys) - 48, bottom: Math.max.apply(null, ys) + 48 };
+  }
+  function applyGraphTransform(){
+    document.getElementById('graphWorld').setAttribute('transform',
+      'translate(' + graphCamera.x + ' ' + graphCamera.y + ') scale(' + graphCamera.scale + ')');
+    document.getElementById('graphScale').textContent = Math.round(graphCamera.scale * 100) + '%';
+  }
+  function fitGraph(){
+    var bounds = graphBounds(), viewport = document.getElementById('graphViewport');
+    if (!bounds || !viewport.clientWidth || !viewport.clientHeight) return;
+    var width = Math.max(1, bounds.right - bounds.left), height = Math.max(1, bounds.bottom - bounds.top);
+    graphCamera.scale = Math.max(.28, Math.min(1.25,
+      (viewport.clientWidth - 48) / width, (viewport.clientHeight - 48) / height));
+    graphCamera.x = viewport.clientWidth / 2 - ((bounds.left + bounds.right) / 2) * graphCamera.scale;
+    graphCamera.y = viewport.clientHeight / 2 - ((bounds.top + bounds.bottom) / 2) * graphCamera.scale;
+    graphNeedsFit = false;
+    applyGraphTransform();
+  }
+  function zoomGraph(factor, cx, cy){
+    var viewport = document.getElementById('graphViewport');
+    cx = cx == null ? viewport.clientWidth / 2 : cx;
+    cy = cy == null ? viewport.clientHeight / 2 : cy;
+    var old = graphCamera.scale;
+    var next = Math.max(.25, Math.min(2.4, old * factor));
+    graphCamera.x = cx - ((cx - graphCamera.x) / old) * next;
+    graphCamera.y = cy - ((cy - graphCamera.y) / old) * next;
+    graphCamera.scale = next;
+    graphNeedsFit = false;
+    applyGraphTransform();
+  }
+  function renderJourneyGraph(root){
+    var edgesRoot = document.getElementById('graphEdges'), nodesRoot = document.getElementById('graphNodes');
+    edgesRoot.innerHTML = ''; nodesRoot.innerHTML = '';
+    var empty = document.getElementById('graphEmpty');
+    if (!root) {
+      graphModel = null; empty.hidden = false; graphSession = current; graphNeedsFit = true;
+      return;
+    }
+    empty.hidden = true;
+    var model = autoLayout(root), saved = readGraphLayout(), changedSession = graphSession !== current;
+    model.nodes.forEach(function(record){
+      if (saved[record.id] && Number.isFinite(saved[record.id].x) && Number.isFinite(saved[record.id].y)) {
+        record.x = saved[record.id].x; record.y = saved[record.id].y;
+      }
+    });
+    model.edges.forEach(function(edge){
+      var path = svgEl('path', { 'class': 'graph-edge' + (edge.data.branch ? ' branch' : '') + (edge.data.weight === 'side' ? ' side' : ''),
+        'marker-end': 'url(#graphArrow)' });
+      edge.el = path; edgesRoot.appendChild(path);
+    });
+    model.nodes.forEach(function(record){
+      var data = record.data;
+      var group = svgEl('g', { 'class': graphNodeClass(data), tabindex: '0', role: 'button',
+        'aria-label': graphStatusText(data) + ' · ' + String(data.label || '') });
+      group.appendChild(svgEl('rect', { x: '-98', y: '-34', width: '196', height: '68', rx: '10' }));
+      group.appendChild(svgEl('text', { x: '0', y: '-16', 'text-anchor': 'middle', 'class': 'graph-node-meta', 'aria-hidden': 'true' }, graphStatusText(data)));
+      var label = svgEl('text', { x: '0', 'text-anchor': 'middle', 'class': 'graph-node-label', 'aria-hidden': 'true' });
+      var lines = graphLabelLines(data.label);
+      lines.forEach(function(line, index){
+        label.appendChild(svgEl('tspan', { x: '0', y: lines.length === 1 ? '11' : String(7 + index * 17) }, line));
+      });
+      group.appendChild(label);
+      group.addEventListener('pointerdown', function(e){
+        e.preventDefault(); e.stopPropagation();
+        graphDrag = { type: 'node', pointerId: e.pointerId, record: record,
+          startX: e.clientX, startY: e.clientY, x: record.x, y: record.y };
+        document.getElementById('graphViewport').setPointerCapture(e.pointerId);
+        group.focus();
+      });
+      group.addEventListener('keydown', function(e){
+        var dx = 0, dy = 0, step = e.shiftKey ? 1 : 10;
+        if (e.key === 'ArrowLeft') dx = -step;
+        else if (e.key === 'ArrowRight') dx = step;
+        else if (e.key === 'ArrowUp') dy = -step;
+        else if (e.key === 'ArrowDown') dy = step;
+        else return;
+        e.preventDefault(); e.stopPropagation(); record.x += dx; record.y += dy;
+        setGraphNodePosition(record); updateGraphEdges(); saveGraphLayout();
+      });
+      record.el = group; setGraphNodePosition(record); nodesRoot.appendChild(group);
+    });
+    graphModel = model; graphSession = current;
+    updateGraphEdges();
+    if (changedSession) graphNeedsFit = true;
+    if (mapMode === 'graph' && graphNeedsFit) requestAnimationFrame(fitGraph);
+    else applyGraphTransform();
+  }
+
+  document.getElementById('graphZoomIn').addEventListener('click', function(){ zoomGraph(1.2); });
+  document.getElementById('graphZoomOut').addEventListener('click', function(){ zoomGraph(1 / 1.2); });
+  document.getElementById('graphFit').addEventListener('click', fitGraph);
+  document.getElementById('graphReset').addEventListener('click', function(){
+    var key = graphLayoutKey(); try { if (key) localStorage.removeItem(key); } catch(e){}
+    graphSession = null; graphNeedsFit = true;
+    var selected = sessions.find(function(s){ return s.id === current; });
+    renderJourneyGraph(selected && selected.map && selected.map.tree);
+  });
+  var graphViewport = document.getElementById('graphViewport');
+  graphViewport.addEventListener('wheel', function(e){
+    e.preventDefault();
+    var rect = graphViewport.getBoundingClientRect();
+    zoomGraph(e.deltaY < 0 ? 1.12 : 1 / 1.12, e.clientX - rect.left, e.clientY - rect.top);
+  }, { passive: false });
+  graphViewport.addEventListener('pointerdown', function(e){
+    if (e.button !== 0) return;
+    graphDrag = { type: 'pan', pointerId: e.pointerId, startX: e.clientX, startY: e.clientY,
+      x: graphCamera.x, y: graphCamera.y };
+    graphViewport.setPointerCapture(e.pointerId); graphViewport.classList.add('panning');
+  });
+  graphViewport.addEventListener('pointermove', function(e){
+    if (!graphDrag || graphDrag.pointerId !== e.pointerId) return;
+    if (graphDrag.type === 'pan') {
+      graphCamera.x = graphDrag.x + e.clientX - graphDrag.startX;
+      graphCamera.y = graphDrag.y + e.clientY - graphDrag.startY;
+      graphNeedsFit = false; applyGraphTransform();
+    } else {
+      graphDrag.record.x = graphDrag.x + (e.clientX - graphDrag.startX) / graphCamera.scale;
+      graphDrag.record.y = graphDrag.y + (e.clientY - graphDrag.startY) / graphCamera.scale;
+      setGraphNodePosition(graphDrag.record); updateGraphEdges();
+    }
+  });
+  function finishGraphDrag(e){
+    if (!graphDrag || graphDrag.pointerId !== e.pointerId) return;
+    if (graphDrag.type === 'node') saveGraphLayout();
+    graphDrag = null; graphViewport.classList.remove('panning');
+    try { graphViewport.releasePointerCapture(e.pointerId); } catch(err){}
+  }
+  graphViewport.addEventListener('pointerup', finishGraphDrag);
+  graphViewport.addEventListener('pointercancel', finishGraphDrag);
+  graphViewport.addEventListener('keydown', function(e){
+    if (e.key === '+' || e.key === '=') { e.preventDefault(); zoomGraph(1.2); }
+    else if (e.key === '-') { e.preventDefault(); zoomGraph(1 / 1.2); }
+    else if (e.key === '0') { e.preventDefault(); fitGraph(); }
+    else if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].indexOf(e.key) >= 0) {
+      e.preventDefault(); var step = 32;
+      if (e.key === 'ArrowLeft') graphCamera.x += step;
+      if (e.key === 'ArrowRight') graphCamera.x -= step;
+      if (e.key === 'ArrowUp') graphCamera.y += step;
+      if (e.key === 'ArrowDown') graphCamera.y -= step;
+      graphNeedsFit = false; applyGraphTransform();
+    }
+  });
+  window.addEventListener('resize', function(){
+    if (mapMode === 'graph') requestAnimationFrame(fitGraph);
+  });
+
   // ---------- render ----------
   function setBadge(id, n){ document.getElementById(id).textContent = n > 0 ? String(n) : ''; }
   function render(){
@@ -1157,6 +1497,7 @@
       em.appendChild(el('div','onb-then', T('onbThen')));
       em.appendChild(el('div','onb-help', T('onbHelp')));
       document.getElementById('vtree').appendChild(em);
+      renderJourneyGraph(null);
       return;
     }
     document.getElementById('goalbar').textContent = D.goal || T('noGoal');
@@ -1235,6 +1576,7 @@
       }
       document.getElementById('vtree').appendChild(em2);
     }
+    renderJourneyGraph(D.map && D.map.tree);
 
     // stack — LIFO of interrupted work; top card is what to resume first
     var CIRCLED = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨'];
@@ -1461,6 +1803,7 @@
   }
 
   applyChrome();
+  setMapMode(mapMode);
   document.getElementById('livetxt').textContent = T('connecting');
   var savedTab = 'situation';
   var situationView = 'map', recordsView = 'changes';

@@ -63,3 +63,13 @@ P1(키보드·인라인 편집·narrow/mobile 검수), 필요 시 control-feedba
 - `consumer_checks`: 예전 저장 값(map/stack/changes/dec/deadends)을 새 상위 그룹과 내부 보기로 이관하고, 상위·내부 탭 모두 Arrow/Home/End, focus, selected, hidden 계약을 지킨다.
 - `visual_checks`: 설치 PWA 데스크톱에서 상위 5개와 두 내부 그룹을 직접 전환했고, 390×844 렌더에서 5개 상위 탭이 한 줄에 들어가는 것을 확인했다.
 - `decision`: 적용. 정보 구조만 재배치하며 데이터·API·플랜 전체 폭 계약은 바꾸지 않는다.
+
+## 2026-08-31 여정 그래프 흡수
+
+- `source_fit`: [Gravity UI Graph](https://github.com/gravity-ui/graph)의 노드·간선과 카메라 상호작용을 참고했다. 외부 코드는 복사하지 않고, OlchiPanel의 작은 정적 여정에는 기존 무빌드·무의존 구조를 유지하는 SVG 구현이 더 적합하다고 판단했다.
+- `state_contract`: 에이전트가 기록한 `map.tree`가 상태·구조의 유일한 정본이다. 그래프는 같은 데이터를 그리는 보기이며, 사람이 조정한 노드 위치만 세션별 `localStorage`에 저장한다.
+- `interaction`: 지도 안에서 트리/그래프를 전환한다. 빈 곳 드래그 이동, 포인터 중심 휠 확대, 맞춤, 자동 정렬, 노드 드래그와 키보드 화살표 이동을 제공한다.
+- `responsive`: 뷰포트 크기가 바뀌면 그래프를 다시 맞춘다. 1440×1000과 390×844에서 문서 및 그래프 viewport의 `scrollWidth === clientWidth`를 확인했다.
+- `accessibility`: 그래프 viewport와 각 노드는 키보드로 접근 가능하고, 노드는 상태·분기·레이블을 합친 이름을 노출한다. 데이터가 있을 때 빈 상태 안내는 렌더와 접근성 트리 모두에서 숨긴다.
+- `visual_checks`: 밝은/어두운 테마, 9개 노드·8개 연결, 확대 64→77%, 노드 이동의 로컬 저장, 정렬 시 레이아웃 복구를 실제 브라우저에서 확인했다. 증거=`output/playwright/journey-graph-desktop.png`, `journey-graph-mobile.png`, `journey-graph-dark.png`.
+- `decision`: 적용. 상단 탭은 늘리지 않고 상황→지도 내부 보기로 둔다. 완전한 다이어그램 편집기나 상태 변경 기능은 이번 범위에 포함하지 않는다.

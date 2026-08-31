@@ -75,6 +75,17 @@ assert.match(html, /data-view-group="records"[\s\S]*data-view="changes"[\s\S]*da
 assert.match(html, /var legacyTabs = \{[\s\S]*map: \['situation', 'map'\][\s\S]*changes: \['records', 'changes'\]/, 'saved legacy tabs must migrate without losing the selected view');
 assert.match(html, /document\.querySelectorAll\('\.top-tabs > \.tab'\)/, 'primary-tab behavior must not capture nested view tabs');
 assert.match(html, /document\.querySelectorAll\('\[data-view-group\]'\)/, 'nested view groups must own their keyboard behavior');
+assert.match(html, /id="mapTreeBtn"[\s\S]*id="mapGraphBtn"/, 'journey map must offer tree and graph views without adding another top-level tab');
+assert.match(html, /id="graphViewport"[^>]+tabindex="0"/, 'interactive journey graph must be keyboard reachable');
+assert.match(html, /id="graphSvg" role="group"/, 'journey SVG must expose its interactive node descendants as a group');
+assert.match(html, /\.graph-empty\[hidden\]\{display:none;\}/, 'graph empty state must stay hidden when connected steps exist');
+assert.match(html, /function autoLayout\(root\)/, 'journey tree data must produce deterministic graph nodes and edges');
+assert.match(html, /function fitGraph\(\)/, 'journey graph must fit its camera to the available panel');
+assert.match(html, /graphDrag = \{ type: 'node'/, 'journey nodes must support local position adjustment');
+assert.match(html, /localStorage\.setItem\(key, JSON\.stringify\(positions\)\)/, 'graph positions must persist locally without mutating agent state');
+assert.match(html, /graphViewport\.addEventListener\('wheel'/, 'journey graph must support pointer-centered zoom');
+assert.match(html, /window\.addEventListener\('resize',[\s\S]*requestAnimationFrame\(fitGraph\)/, 'journey graph must refit when its responsive viewport changes');
+assert.doesNotMatch(html, /@gravity-ui\/graph|react|GraphCanvas/, 'graph absorption must preserve OlchiPanel zero-dependency architecture');
 assert.match(html, /body:not\(\.rail-closed\) #railTabs/, 'mobile rail must open as a drawer instead of squeezing content');
 assert.match(html, /body\.rail-closed #railTabs > \.cap/, 'collapsed empty rail must not render vertical helper text');
 assert.match(html, /root\.appendChild\(el\('div', 'rail-divider'\)\);[\s\S]*if \(idle\.length\)/, 'stable divider must be inserted before the folded idle area');

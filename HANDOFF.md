@@ -21,6 +21,7 @@ STATE.md 참조. **다시 하지 말 것**: ①패널 뷰어 반복 재기동으
 
 - 보조 worktree 4개 제거 및 통합 브랜치 `master` 승격 완료. 원격 push만 권한 대기.
 - 상단 탭은 상황·플랜·요청·기록·메모 5개가 정본이다. 상황 내부=지도·스택, 기록 내부=변경·결정·막힌 길이며 예전 저장 탭 값은 자동 이관한다.
+- 지도 내부는 트리/그래프 두 보기다. 둘 다 `map.tree`가 정본이며 그래프 노드 위치만 `olchipanel.graph.layout.<session>` 로컬 설정에 저장한다. 노드 배치를 작업 상태로 역반영하지 않는다.
 - 제출 일정 정본=`01_plan/AI-CHAMPIONSHIP-2026-SUBMISSION-PLAN.md`. 기능 동결=9/15, 1차 최종 제출=9/17, 참가 접수=9/18, 공식 제출 마감=9/20.
 
 ## Next Actions
@@ -38,5 +39,6 @@ STATE.md 참조. **다시 하지 말 것**: ①패널 뷰어 반복 재기동으
 ## Verification Commands
 
 - `npm test` (= `node test/smoke.js`)
+- `node test/ui-shell.test.js`
 - `python C:/OlchiProjects/tools/project_portfolio.py validate --root C:/OlchiProjects`
 - `python tools/continuity_check.py`
