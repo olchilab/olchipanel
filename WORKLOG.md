@@ -4,3 +4,4 @@
 - 2026-07-28 16:55 KST: 연속성 계약 파일 신설(STATE/HANDOFF/WORKLOG/DECISIONS/LEARNINGS + tools/continuity_check.py), `.olchi/portfolio.json` continuity 3칸 충족. 집행=Master_D_Fable.
 - 2026-08-29 KST: 플랜의 중간 가로 스크롤 제거 뒤 5열을 좁은 `max-width`에 압축한 자기검수를 오답으로 판정. 플랜 탭만 OlchiPanel 전체 가용 폭을 사용하도록 보정하고, full-width 전환·무가로넘침 정적 회귀와 1920px 실제 렌더를 검수 기준으로 승격. 증거=`test/ui-shell.test.js`, `output/playwright/plan-consolidated-fullwidth.png`.
 - 2026-08-29 12:54 KST: 상단 8개 탭을 상황·플랜·요청·기록·메모 5개 작업군으로 통합. 지도·스택은 상황 내부, 변경·결정·막힌 길은 기록 내부 보기로 낮추고 기존 저장 탭 이관·키보드·ARIA 회귀를 추가했다. 증거=`test/ui-shell.test.js`, `output/audit/02-five-tabs-records.png`, `output/audit/03-five-tabs-situation.png`, `output/audit/04-five-tabs-mobile.png`.
+- 2026-08-31 KST: Wanted AI Championship 2026 공식 조건(참가 9/18, 제출 9/20, 배포 링크 필수)을 확인하고 9/15 기능 동결·9/17 1차 제출 계획을 수립. Windows/macOS/Linux × Claude/Codex/Cursor/Antigravity의 설치·첫 성공 계약, 공개 데모, 블라인드 설치 게이트를 P0로 확정. 증거=`01_plan/AI-CHAMPIONSHIP-2026-SUBMISSION-PLAN.md`.

@@ -19,17 +19,17 @@
     "operating_state": "blocked",
     "attention_state": "foreground",
     "health": "at_risk",
-    "status_summary": "0.8.2 통합 master의 주 폴더 단일화·플랜 전체 폭·단일창·원본 아이콘·상단 5개 작업군 검증은 완료됐고, 원격 배포만 GitHub 쓰기 권한에 막혔다.",
-    "updated_at": "2026-08-29T12:54:00+09:00",
-    "next_update_at": "2026-09-05T12:54:00+09:00",
-    "next_action": "Olchi-Mark에 olchilab/olchipanel 쓰기 권한을 부여하거나 쓰기 가능한 저장소 한정 인증으로 push를 재개한다.",
+    "status_summary": "Wanted AI Championship 2026의 9/20 제출 마감에 맞춰 환경 계약과 9/15 기능 동결·9/17 1차 제출 계획을 수립했고, 설치·진단·크로스플랫폼 P0 착수를 앞두고 있다.",
+    "updated_at": "2026-08-31T00:00:00+09:00",
+    "next_update_at": "2026-09-03T18:00:00+09:00",
+    "next_action": "참가 접수 형태와 GitHub 쓰기 권한을 확정하면서 olchipanel doctor, OS별 설치 안내, Antigravity 설정, 세 OS 전체 테스트를 시작한다.",
     "next_owner": "Master_D_Fable",
     "blocker": {
       "summary": "GitHub HTTPS와 SSH 모두 Olchi-Mark의 olchilab/olchipanel 쓰기 권한 부족으로 push 거부",
       "resolution_owner": "Mark",
-      "successor": "통합 master를 원격 PR 브랜치로 push하고 release-please 배포 재개",
+      "successor": "9/3 전 통합 master를 원격 main 대상 PR로 올리고 release-please 배포 경로를 복구",
       "wake_source": "Mark가 저장소 쓰기 권한 또는 저장소 한정 쓰기 인증 확보를 확인",
-      "deadline": "2026-09-05T12:34:00+09:00"
+      "deadline": "2026-09-03T18:00:00+09:00"
     },
     "pause": null
   },

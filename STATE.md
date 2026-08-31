@@ -2,11 +2,11 @@
 
 ## Current Goal
 
-OlchiPanel 단일 정본에서 상단 정보 구조를 5개 작업군으로 단순화하고 검증 상태를 유지한다.
+Wanted AI Championship 2026 제출본을 2026-09-17까지 먼저 제출하고, Windows·macOS·Linux와 Claude·Codex·Cursor·Antigravity의 검증된 설치·첫 성공 경로를 만든다.
 
 ## Stage
 
-로컬 통합본 0.8.2의 주 폴더 단일화·플랜 폭·5개 상단 탭 검증 완료. GitHub 쓰기 권한 대기.
+제출 계획과 환경 계약 수립 완료. 9/1부터 설치·진단·크로스플랫폼 P0를 시작하며 GitHub 쓰기 권한은 계속 대기한다.
 
 ## Completed
 
@@ -21,12 +21,15 @@ OlchiPanel 단일 정본에서 상단 정보 구조를 5개 작업군으로 단�
 
 ## In Progress
 
-- 로컬 배포 후보 검수는 마감했고, 원격 배포만 인증 권한에 막혀 있다.
+- 9/15 기능 동결, 9/17 1차 제출, 9/20 공식 마감을 기준으로 `01_plan/AI-CHAMPIONSHIP-2026-SUBMISSION-PLAN.md`를 실행한다.
+- 원격 배포는 인증 권한에 막혀 있지만 로컬 설치·진단·테스트·공개 데모 준비는 먼저 진행할 수 있다.
 
 ## Next Branches
 
-- `Olchi-Mark`에 `olchilab/olchipanel` 쓰기 권한을 부여하거나 쓰기 가능한 계정으로 이 저장소에만 인증한 뒤 통합본 push·release·npm 배포.
-- 배포 뒤 친구 설치 경로(운영체제·Claude/Codex/Antigravity 구분) 재검증.
+- Mark가 개인/팀 참가 형태를 정하고 9/18 전에 참가 접수를 완료한다.
+- 9/3 전 GitHub 쓰기 권한과 로컬 `master`→원격 `main` 반영 경로를 닫는다.
+- `olchipanel doctor`, OS×에이전트 선택형 설치 안내, Antigravity 설정, 세 OS 전체 테스트를 P0로 구현한다.
+- 설치 없는 공개 데모와 제출 자산을 9/13까지 완성하고 9/14 블라인드 설치를 진행한다.
 
 ## Approval Status
 
@@ -34,4 +37,4 @@ OlchiPanel 단일 정본에서 상단 정보 구조를 5개 작업군으로 단�
 
 ## Last Updated
 
-2026-08-29 12:54 KST
+2026-08-31 KST
