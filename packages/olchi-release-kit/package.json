@@ -1,0 +1,11 @@
+{
+  "name": "@olchilab/release-kit",
+  "version": "0.1.0",
+  "description": "Reusable release verification and Electron update lifecycle for Olchi apps",
+  "main": "index.cjs",
+  "bin": { "olchi-release": "cli.cjs" },
+  "files": ["*.cjs", "README.md"],
+  "license": "AGPL-3.0-or-later",
+  "dependencies": { "js-yaml": "4.3.2" },
+  "engines": { "node": ">=18" }
+}

@@ -1,0 +1,5 @@
+{
+  "schema": "olchi-release.v1",
+  "productId": "olchipanel",
+  "publish": { "provider": "github", "owner": "olchilab", "repo": "olchipanel" }
+}

@@ -1,6 +1,7 @@
 {
   "name": "olchipanel",
   "version": "0.8.2",
+  "productVersion": "0.8.2",
   "description": "A living situation board your AI agent draws for you — goal, journey map, branches, interrupts — live, agent-agnostic, via MCP.",
   "bin": {
     "olchipanel": "bin/olchipanel.js"
@@ -8,7 +9,20 @@
   "main": "./bin/olchipanel.js",
   "type": "commonjs",
   "scripts": {
-    "test": "node test/smoke.js && node test/beta-feedback.js && node test/single-instance.js && node test/ui-shell.test.js && node test/windows-icon-launch.js && node test/plan.test.js && node test/plan_api.test.js && node test/plan_mcp.test.js"
+    "build:scope": "node tools/build-scope.cjs",
+    "test:windows-setup": "node --test test/windows-mcp-setup.test.cjs",
+    "test:packaged-mcp": "node test/packaged-mcp.test.cjs",
+    "e": "electron desktop/main.cjs",
+    "e2": "electron desktop/e2.cjs",
+    "e3": "electron desktop/e3.cjs",
+    "test": "node test/project-setup.test.js && node test/versioning.test.js && node test/smoke.js && node test/session-identity.test.js && node test/multi-agent.test.js && node test/beta-feedback.js && node test/tracking-skill.test.js && node test/plan-skill.test.js && node test/single-instance.js && node test/doctor.test.js && node test/ui-shell.test.js && node test/electron-shell.test.js && node test/windows-icon-launch.js && node test/memo.test.js && node test/plan.test.js && node test/plan_api.test.js && node test/plan_mcp.test.js",
+    "test:electron": "node test/electron-shell.test.js",
+    "test:project-setup": "node test/project-setup.test.js",
+    "start": "electron desktop/main.cjs",
+    "desktop:build": "electron-builder --config desktop/electron-builder.cjs --win nsis --x64 --publish never",
+    "release:prepare": "node packages/olchi-release-kit/cli.cjs prepare",
+    "release:verify": "node packages/olchi-release-kit/cli.cjs verify",
+    "test:release": "node --test test/release-kit.test.cjs"
   },
   "engines": {
     "node": ">=18"
@@ -31,11 +45,32 @@
   "bugs": "https://github.com/olchilab/olchipanel/issues",
   "author": "olchilab <orpa@olchilab.com>",
   "license": "AGPL-3.0-or-later",
+  "devDependencies": {
+    "electron": "44.1.0",
+    "electron-builder": "26.15.3"
+  },
   "files": [
     "bin",
     "src",
     "public",
+    "skills",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "desktop",
+    "packages/olchi-release-kit/*.cjs",
+    "packages/olchi-release-kit/package.json",
+    "packages/olchi-release-kit/README.md",
+    "release.config.json"
+  ],
+  "bundledDependencies": [
+    "@olchilab/release-kit"
+  ],
+  "dependencies": {
+    "@olchilab/release-kit": "file:packages/olchi-release-kit",
+    "electron-updater": "6.8.9",
+    "smol-toml": "1.8.0"
+  },
+  "bundleDependencies": [
+    "@olchilab/release-kit"
   ]
 }
