@@ -4,6 +4,7 @@
 'use strict';
 const readline = require('readline');
 const state = require('./state');
+const planAuthorSchema = require('../skills/olchipanel-plan-author/references/olchipanel-plan-author.v1.schema.json');
 
 const PROTOCOL_VERSION = '2024-11-05';
 const VERSION = require('../package.json').version; // single source — a hardcoded copy drifted (issue #3)
@@ -13,7 +14,7 @@ Do not call an OlchiPanel tool merely because this MCP server is connected. Wait
 - If a previous panel exists for this project (you'll be told below), call resume_project FIRST after opt-in — it hands you the whole prior situation (goal, journey, decisions, dead ends, open asks) like an inherited memory, and archives the old panel.
 - If you connect mid-task with no previous panel, backfill: reconstruct the journey so far from the conversation (steps already done get status "done"), then continue live. A panel that starts at step 5 should still show steps 1-4.
 - Name this session after the conversation's title/topic: if the human names it (e.g. "call this one Master"), use exactly that; otherwise derive a short name from the task. The name must FOLLOW the conversation — when the human renames the topic or the mission visibly shifts, call name_session again so the panel always carries the current name.
-- Call set_goal once you understand the task (one sentence, the north star).
+- Call set_goal for the current objective (one line, at most 20 characters). Connection LEDs and response spinners are runtime signals; never fake journey status to drive them.
 - Build the journey map with add_step as your plan takes shape (batch a whole plan in one call via steps:[...]); statuses: now (exactly one), next, done, pause. Moving "now" into a child leaves the parent as a plain container, not done.
 - A stray idea appears mid-task: weigh it before you draw it, or the map fills with noise.
   · Will you actually STOP or SPLIT the current work to explore it now? → add_step(branch=true, weight="fork") with a note on WHY. It shows as an active fork; parallel workers each update their own branch with set_status.
@@ -28,7 +29,7 @@ Do not call an OlchiPanel tool merely because this MCP server is connected. Wait
 Update immediately when reality changes — a stale panel is worse than none.`;
 
 // Compact because some clients repeat server instructions beside every tool.
-const INSTRUCTIONS = `OlchiPanel is opt-in. Do not call an OlchiPanel tool merely because the MCP is connected; wait until the HUMAN explicitly asks to use, open, or track work in OlchiPanel. After opt-in, name the session, set the goal, map real steps, and record meaningful changes, decisions, dead ends, and requests. If initialization says a previous panel exists, call resume_project first. Follow each tool's own description and schema.`;
+const INSTRUCTIONS = `Do not call an OlchiPanel tool until the HUMAN explicitly asks to connect or track. Startup creates no panel. On opt-in, announce project instruction/skill setup and call start_project FIRST; read its local skill. Then confirm prior handoff, name session, set 20-char goal. Before final replies record meaningful progress, decisions, blockers, results and next actions. Do not mirror chat, reasoning or unchanged state. Honor read-only limits.`;
 
 const STEP_STATUSES = ['done', 'now', 'next', 'pause', 'container'];
 const STEP_PROPERTIES = {
@@ -44,8 +45,13 @@ const STEP_PROPERTIES = {
 // ---------- tool definitions ----------
 const TOOLS = [
   {
+    name: 'start_project',
+    description: 'Only after the human asks to start/connect/track this project: announce that project instructions and skills will be registered, then call this first. Appends guidance to AGENTS.md and CLAUDE.md and installs project-local olchipanel-track skills for Codex and Claude. Preserves existing content; conflicts fail before panel activation. Never call merely because MCP connected. Read returned local skill paths after success.',
+    inputSchema: { type: 'object', properties: {}, additionalProperties: false },
+  },
+  {
     name: 'resume_project',
-    description: 'After the human opts in to OlchiPanel, inherit the previous panel of THIS project (same working directory): its goal, journey map, decisions, dead ends, changes and open asks become yours, and the old panel is archived. Returns the inherited situation as text — read it as your predecessor\'s handoff memo. Call this first when a previous panel exists; then update statuses to match present reality.',
+    description: 'After human opt-in and start_project setup, inherit the previous panel of THIS project (same working directory): its goal, journey map, decisions, dead ends, changes and open asks become yours, and the old panel is archived. Confirm the intended handoff first. Returns historical context, not a new task assignment; update statuses to present reality.',
     inputSchema: { type: 'object', properties: {} },
   },
   {
@@ -59,16 +65,16 @@ const TOOLS = [
   },
   {
     name: 'set_goal',
-    description: 'Set the north-star goal shown pinned at the top of the panel. Call once the task is understood; update if the mission itself changes. One sentence.',
+    description: 'Set the current work objective pinned at the top. Refresh when the objective changes. Maximum 20 characters including spaces; summarize rather than truncate.',
     inputSchema: {
       type: 'object',
-      properties: { goal: { type: 'string', description: 'One-sentence goal, human-readable.' } },
+      properties: { goal: { type: 'string', minLength: 1, maxLength: 20, description: 'Current objective, at most 20 Unicode characters including spaces, one line.' } },
       required: ['goal'],
     },
   },
   {
     name: 'add_step',
-    description: 'Add a step to the journey map (a tree; root = the overall journey). Steps nest under parent_id. Set branch=true when a stray idea splits the path, and use weight to size it — this is how the map stays signal, not noise: "fork" = you are actually stopping/splitting current work to explore now (drawn active); "side" = worth revisiting but not now (parked, auto-folded). A passing thought you could forget should not be a step at all — put at most one line in the parent step\'s note. Branch notes must say WHY the branch happened.',
+    description: 'Add a step to the work map (a tree; root = the overall work). In Workflow view, root children connect in recorded order as the main route, so batch planned phases in intended order. Nest substeps under parent_id; use branch=true or pause for a real detour. weight="fork" is active; weight="side" is parked. A passing thought should not become a step. Branch notes must say WHY the branch happened. Mark the actual current step "now"; this is a work projection, not an execution trace.',
     inputSchema: {
       type: 'object',
       properties: Object.assign({}, STEP_PROPERTIES, {
@@ -172,6 +178,11 @@ const TOOLS = [
     inputSchema: { type: 'object', properties: {} },
   },
   {
+    name: 'note_read',
+    description: 'Read the shared Note shown in OlchiPanel. This is read-only and returns the same pages for every session.',
+    inputSchema: { type: 'object', properties: {} },
+  },
+  {
     name: 'plan_open',
     description: 'Open (or create) a shared plan board for this session, so the human can watch tasks on the /plan page. Returns the plan id. Call once; later plan_add/plan_set target it.',
     inputSchema: {
@@ -211,11 +222,52 @@ const TOOLS = [
     },
   },
   {
-    name: 'plan_list',
-    description: 'List tasks on this session\'s open plan (optionally filtered by status) to decide what to do next.',
+    name: 'plan_apply',
+    description: 'Validate and apply one complete olchipanel.plan-author.v1 document. Creates a new independent plan, preserves the previous plan, and attaches the new plan to this session.',
+    inputSchema: planAuthorSchema,
+  },
+  {
+    name: 'plan_next',
+    description: 'Read the execution frontier of the attached plan: active work, dependency-ready work, and blocked work. Use this before starting or resuming plan execution.',
+    inputSchema: { type: 'object', additionalProperties: false, properties: {} },
+  },
+  {
+    name: 'plan_step',
+    description: 'Advance one plan task through the strict agent workflow. start checks dependencies and claims the task; pause releases it; complete atomically records fresh evidence and marks it done.',
     inputSchema: {
       type: 'object',
-      properties: { status: { type: 'string', enum: ['backlog', 'todo', 'in_progress', 'done', 'canceled'] } },
+      additionalProperties: false,
+      properties: {
+        id: { type: 'string', minLength: 1, description: 'Local task id returned by plan_next.' },
+        action: { type: 'string', enum: ['start', 'pause', 'complete'] },
+        note: { type: 'string', maxLength: 1000, description: 'Only decisive execution context, blocker, or pause reason.' },
+        evidence: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['key', 'summary'],
+          properties: {
+            key: { type: 'string', pattern: '^[A-Za-z0-9][A-Za-z0-9._:-]{0,79}$', description: 'Stable idempotency key for this verification result.' },
+            summary: { type: 'string', minLength: 1, maxLength: 500, description: 'What was freshly verified.' },
+            ref: { type: 'string', maxLength: 1000, description: 'Optional command, file, URL, artifact, or result pointer.' },
+          },
+        },
+      },
+      required: ['id', 'action'],
+      allOf: [
+        { if: { properties: { action: { const: 'complete' } }, required: ['action'] }, then: { required: ['evidence'] } },
+      ],
+    },
+  },
+  {
+    name: 'plan_list',
+    description: 'List tasks on this session\'s open plan (optionally filtered by status). Use detail=true only when structured brief, completion, evidence, or dependency fields are needed.',
+    inputSchema: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        status: { type: 'string', enum: ['backlog', 'todo', 'in_progress', 'done', 'canceled'] },
+        detail: { type: 'boolean', description: 'Return the structured plan as JSON. Default false.' },
+      },
     },
   },
 ];
@@ -223,6 +275,13 @@ const TOOLS = [
 // ---------- tool implementations ----------
 function makeToolRunner(session, getViewerUrl) {
   const save = () => state.writeSession(session);
+  // The app may attach an imported/shared plan to this live session. Refresh
+  // that one externally writable field before Plan calls so the agent can
+  // continue immediately without restarting its MCP transport.
+  const refreshPlanBinding = () => {
+    const disk = state.readAllSessions().find((item) => item.id === session.id);
+    if (disk && disk.plan_id) session.plan_id = disk.plan_id;
+  };
 
   // handoff memo: render a panel's situation as text the successor agent can absorb
   function handoffMemo(p) {
@@ -247,6 +306,7 @@ function makeToolRunner(session, getViewerUrl) {
   }
 
   return {
+    start_project() { return JSON.stringify(require('./project-setup').setupProject(session.cwd), null, 2); },
     resume_project() {
       const prev = state.findPrevious(state.panelKey(session), session.id);
       if (!prev) return 'No previous panel exists for this project — starting fresh is correct.';
@@ -259,6 +319,7 @@ function makeToolRunner(session, getViewerUrl) {
       session.changes = prev.changes || [];
       session.deadends = prev.deadends || [];
       session.pending = prev.pending || [];
+      if (prev.plan_id && require('./plan').getPlan(prev.plan_id)) session.plan_id = prev.plan_id;
       session.resumed_from = prev.id;
       save();
       // archive every other panel of this project — the board shows one living panel per project
@@ -280,7 +341,10 @@ function makeToolRunner(session, getViewerUrl) {
       return `Session named: ${session.name}`;
     },
     set_goal({ goal }) {
-      session.goal = String(goal);
+      if (typeof goal !== 'string' || !goal.trim() || /[\r\n]/.test(goal) || Array.from(goal).length > 20) {
+        throw new Error('Goal must be one line of 1–20 characters including spaces. Summarize the current objective.');
+      }
+      session.goal = goal;
       save();
       return `Goal set: ${session.goal}`;
     },
@@ -298,7 +362,7 @@ function makeToolRunner(session, getViewerUrl) {
         if (weight === 'fork' || weight === 'side') node.weight = weight;
         if (node.weight === 'side') node.collapsed = true; // side-quests park folded
         if (note) node.note = String(note);
-        if (!session.map.tree) {
+        if (!session.map.tree || (session.map.tree.bootstrap === true && !parent_id)) {
           if (parent_id) throw new Error('Tree is empty — first add_step must be the root (omit parent_id).');
           session.map.tree = node;
         } else {
@@ -307,6 +371,7 @@ function makeToolRunner(session, getViewerUrl) {
             ? state.findNode(session.map.tree, String(parent_id))
             : session.map.tree;
           if (!parent) throw new Error(`parent_id "${parent_id}" not found in the journey tree.`);
+          if (parent.bootstrap === true) { delete parent.bootstrap; parent.status = 'container'; }
           (parent.children = parent.children || []).push(node);
         }
         if (status === 'now') {
@@ -361,8 +426,13 @@ function makeToolRunner(session, getViewerUrl) {
       return `Needs-you list set (${session.pending.length} items).`;
     },
     get_panel() {
+      refreshPlanBinding();
       const viewer = (typeof getViewerUrl === 'function' && getViewerUrl()) || 'viewer not running';
       return JSON.stringify({ viewer, state: session }, null, 2);
+    },
+    note_read() {
+      const notebook = require('./memo').read(state.ROOT, 'common').memo;
+      return JSON.stringify({ schema: notebook.schema, selected: notebook.selected, notes: notebook.notes }, null, 2);
     },
     // ---- plan board tools: the agent drives a Linear/Jira-style plan the human watches ----
     plan_open({ title, id } = {}) {
@@ -380,6 +450,7 @@ function makeToolRunner(session, getViewerUrl) {
     },
     plan_add({ title, status, priority, parent } = {}) {
       const plan = require('./plan');
+      refreshPlanBinding();
       if (!session.plan_id) this.plan_open({});
       const cur = plan.getPlan(session.plan_id);
       const { item, version } = plan.plan_mutate(session.plan_id, 'add',
@@ -388,6 +459,7 @@ function makeToolRunner(session, getViewerUrl) {
     },
     plan_set({ id, status, priority, note } = {}) {
       const plan = require('./plan');
+      refreshPlanBinding();
       if (!session.plan_id) throw new Error('No plan open — call plan_open first.');
       const patch = {};
       if (status !== undefined) patch.status = status;
@@ -397,13 +469,52 @@ function makeToolRunner(session, getViewerUrl) {
       const { version } = plan.plan_mutate(session.plan_id, 'update', { id, patch }, cur.version);
       return `Task ${id} updated (plan v${version}).`;
     },
-    plan_list({ status } = {}) {
+    plan_apply(document = {}) {
       const plan = require('./plan');
+      const imported = plan.importPlan(document);
+      session.plan_id = imported.id;
+      save();
+      return JSON.stringify({
+        schema: 'olchipanel.plan-apply-result.v1',
+        id: imported.id,
+        title: imported.title,
+        version: imported.version,
+        items: imported.items.length,
+        attached: true,
+      }, null, 2);
+    },
+    plan_next() {
+      const plan = require('./plan');
+      refreshPlanBinding();
+      if (!session.plan_id) return 'No plan open — attach or apply a plan first.';
+      return JSON.stringify(plan.getPlanFrontier(session.plan_id, session.id), null, 2);
+    },
+    plan_step({ id, action, evidence, note } = {}) {
+      const plan = require('./plan');
+      refreshPlanBinding();
+      if (!session.plan_id) throw new Error('No plan open — attach or apply a plan first.');
+      const cur = plan.getPlan(session.plan_id);
+      const result = plan.plan_mutate(session.plan_id, 'step', {
+        id, action, evidence, note, session: session.id,
+      }, cur.version);
+      return JSON.stringify({
+        schema: 'olchipanel.plan-step-result.v1',
+        id: result.item.id,
+        status: result.item.status,
+        version: result.version,
+        changed: result.changed,
+        evidenceCount: Array.isArray(result.item.evidenceLog) ? result.item.evidenceLog.length : 0,
+      }, null, 2);
+    },
+    plan_list({ status, detail } = {}) {
+      const plan = require('./plan');
+      refreshPlanBinding();
       if (!session.plan_id) return 'No plan open — call plan_open first.';
       const p = plan.getPlan(session.plan_id);
       if (!p) return 'Plan not found.';
       let items = p.items;
       if (status) items = items.filter((i) => i.status === status);
+      if (detail) return JSON.stringify(Object.assign({}, p, { items }), null, 2);
       if (!items.length) return status ? `No ${status} tasks.` : 'No tasks yet.';
       return items.map((i) => `${i.id} [${i.status}] P${i.priority} ${i.title}${i.session === session.id ? ' (mine)' : ''}`).join('\n');
     },
@@ -415,6 +526,7 @@ function serve({ getViewerUrl, ensureViewer }) {
   let session = null;
   let runner = null;
   let registered = false;
+  let activated = false;
 
   const rl = readline.createInterface({ input: process.stdin, terminal: false });
 
@@ -434,15 +546,21 @@ function serve({ getViewerUrl, ensureViewer }) {
     try {
       if (method === 'initialize') {
         const clientName = params?.clientInfo?.name || 'unknown-agent';
-        session = state.newSession(clientName);
-        runner = makeToolRunner(session, getViewerUrl);
+        // MCP clients may re-initialize the same stdio transport after a
+        // reconnect. That is still one human-visible agent session: replacing
+        // the object here orphaned the earlier state file and made duplicate
+        // sidebar rows. A new process still receives its own session normally.
+        if (!session) {
+          session = state.newSession(clientName);
+          runner = makeToolRunner(session, getViewerUrl);
+        }
         // dynamic handoff hint: tell the agent up front that this project has a past
         let instructions = INSTRUCTIONS;
         try {
           const prev = state.findPrevious(state.panelKey(session), session.id);
           if (prev) {
             const label = prev.name || (prev.goal || '').slice(0, 60) || prev.id;
-            instructions += `\n\n>>> A previous panel EXISTS for this project: "${label}" (last updated ${prev.updated}). If the human opts in to OlchiPanel, call resume_project FIRST to inherit it as your memory.`;
+            instructions += `\n\n>>> A previous panel EXISTS for this project: "${label}" (last updated ${prev.updated}). After human opt-in and start_project setup, confirm the intended handoff before resume_project.`;
           }
         } catch (e) { /* hint is best-effort */ }
         reply(id, {
@@ -463,16 +581,19 @@ function serve({ getViewerUrl, ensureViewer }) {
         const fn = runner[name];
         if (!fn) return replyErr(id, -32602, `Unknown tool: ${name}`);
         try {
-          // MCP clients initialize every configured server at session start. Do
-          // not turn that handshake into a visible panel or a background viewer.
-          // The first explicit OlchiPanel tool call is the opt-in boundary.
-          if (!registered) {
+          // Setup must succeed before a failed registration can leave a panel.
+          const setupResult = name === 'start_project' ? fn(params?.arguments || {}) : null;
+          // Transport initialization is read-only. The agent must wait for
+          // human opt-in before calling a panel tool and registering a panel.
+          if (!activated) {
             try { state.cleanup(); } catch (e) {} // housekeeping starts only after opt-in
+            session.map.tree = { id: '__session_connected', label: '세션 연결됨', status: 'done', bootstrap: true };
             state.writeSession(session);
             registered = true;
+            activated = true;
             if (typeof ensureViewer === 'function') ensureViewer();
           }
-          const text = fn(params?.arguments || {});
+          const text = setupResult === null ? fn(params?.arguments || {}) : setupResult;
           reply(id, { content: [{ type: 'text', text: String(text) }] });
         } catch (e) {
           reply(id, { content: [{ type: 'text', text: `Error: ${e.message}` }], isError: true });
@@ -486,7 +607,7 @@ function serve({ getViewerUrl, ensureViewer }) {
   });
 
   const markDead = () => {
-    if (!session) return;
+    if (!session || !registered) return;
     try {
       if (!state.isTouched(session)) { state.deleteSession(session.id); return; } // bare probe — leave no trace
       session.alive = false; state.writeSession(session);

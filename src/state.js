@@ -1,5 +1,5 @@
 // state.js — shared session state on disk. Zero deps.
-// Every opted-in MCP session writes its own state file atomically.
+// Every connected MCP session writes its own state file atomically.
 // The viewer (whoever holds the port) watches the dir and pushes SSE to browsers.
 'use strict';
 const fs = require('fs');
@@ -55,8 +55,7 @@ function writeSession(state) {
 }
 
 function readAllSessions() {
-  // Reads must stay read-only: a globally configured MCP client performs its
-  // handshake automatically, before the human opts in to OlchiPanel.
+  // Reads themselves stay read-only; registration is owned by the handshake.
   if (!fs.existsSync(SESSIONS)) return [];
   const out = [];
   for (const f of fs.readdirSync(SESSIONS)) {
@@ -88,7 +87,7 @@ function findPrevious(key, excludeId) {
 
 // "touched" = the agent actually used the panel (vs a bare handshake probe)
 function isTouched(s) {
-  return !!(s.goal || (s.map && s.map.tree) || (s.stack || []).length ||
+  return !!(s.goal || (s.map && s.map.tree && (s.map.tree.bootstrap !== true || (s.map.tree.children || []).length)) || (s.stack || []).length ||
     (s.decisions || []).length || (s.changes || []).length ||
     (s.deadends || []).length || (s.pending || []).length);
 }

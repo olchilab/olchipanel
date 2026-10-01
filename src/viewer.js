@@ -11,6 +11,8 @@ const path = require('path');
 const os = require('os');
 const { spawn } = require('child_process');
 const state = require('./state');
+const doctor = require('./doctor');
+const desktopLaunch = require('./desktop-launch');
 
 const VERSION = require('../package.json').version;
 
@@ -39,6 +41,7 @@ function checkUpdate() {
 const BASE_PORT = Number(process.env.OLCHIPANEL_PORT || 6711);
 const PUBLIC = path.join(__dirname, '..', 'public');
 const VIEWER_FILE = path.join(state.ROOT, 'viewer.json');
+const WINDOW_FILE = path.join(state.ROOT, 'window.json');
 const ICON_ASSETS = {
   '/olchi.png': ['olchi.png', 'image/png'],
   '/icon.svg': ['olchi.png', 'image/png'], // compatibility for older cached manifests
@@ -57,6 +60,7 @@ const ICON_ASSETS = {
   '/icons/olchi-favicon-v2.ico': ['icons/olchi-favicon-v2.ico', 'image/x-icon'],
   '/icons/olchi-favicon-v3.ico': ['icons/olchi-favicon-v3.ico', 'image/x-icon'],
   '/icons/olchi-favicon-v4.ico': ['icons/olchi-favicon-v4.ico', 'image/x-icon'],
+  '/icons/olchi-favicon-dark-v1.ico': ['icons/olchi-favicon-dark-v1.ico', 'image/x-icon'],
 };
 
 function currentViewerUrl() {
@@ -93,10 +97,11 @@ function pingRetry(url, tries, cb) {
 // In MCP mode it's opt-in via env (so CI/headless never pops a window):
 // OLCHIPANEL_OPEN = 1|true|app -> open ; 0|false|tab handled below.
 function shouldOpen(opts) {
+  if (opts && opts.suppressOpen) return false;
   const v = String(process.env.OLCHIPANEL_OPEN || '').toLowerCase();
   if (['0', 'false', 'no', 'off'].includes(v)) return false;
   if (opts && opts.open) return true;
-  return ['1', 'true', 'yes', 'on', 'app', 'tab'].includes(v);
+  return ['1', 'true', 'yes', 'on', 'app', 'tab', 'desktop'].includes(v);
 }
 
 // CSRF guard for the localhost write endpoints: browsers attach an Origin header
@@ -115,19 +120,6 @@ function sameOriginOk(req) {
   if (!origin) return true; // curl / same-origin GET-form-free fetches
   try { return new URL(origin).hostname === '127.0.0.1' || new URL(origin).hostname === 'localhost'; }
   catch (e) { return false; }
-}
-
-// Memo file for a request: ?id=<session> → memo-<safe>.txt (per panel),
-// no id → memo.txt (board-wide). id is sanitized to a safe filename.
-function memoFile(rawUrl) {
-  let id = '';
-  const q = rawUrl.indexOf('?');
-  if (q >= 0) {
-    const m = /(?:^|&)id=([^&]*)/.exec(rawUrl.slice(q + 1));
-    if (m) id = decodeURIComponent(m[1]);
-  }
-  const safe = String(id).replace(/[^A-Za-z0-9._-]/g, '_').slice(0, 80);
-  return path.join(state.ROOT, safe ? `memo-${safe}.txt` : 'memo.txt');
 }
 
 // A session's cwd is machine-truth from the agent, but it can be tilde-prefixed,
@@ -236,6 +228,7 @@ function findInstalledWindowsAppShortcut(env) {
 }
 
 function openBrowser(url, opts) {
+  if (desktopLaunch.prefersDesktop()) return desktopLaunch.openDesktop(url);
   const mode = String(process.env.OLCHIPANEL_OPEN || '').toLowerCase();
   const plat = process.platform;
   const detached = { detached: true, stdio: 'ignore', windowsHide: true };
@@ -301,6 +294,13 @@ function openBrowser(url, opts) {
 // a short pending claim also collapses simultaneous `open` commands before the
 // first browser has connected. Network failures fail closed to avoid duplicates.
 function openBrowserOnce(url, opts, cb) {
+  // Electron owns its single-instance lock and focuses the existing app.
+  // A legacy browser lease must not divert a desktop-only request.
+  if (desktopLaunch.prefersDesktop()) {
+    const opened = desktopLaunch.openDesktop(url);
+    if (cb) cb(opened);
+    return;
+  }
   let finished = false;
   const finish = (opened) => {
     if (finished) return;
@@ -363,6 +363,10 @@ function start(opts) {
   opts = opts || {};
   try { state.cleanup(); } catch (e) {} // archive dead+stale sessions so the board stays clean
 
+  // Native shells already target the canonical loopback port. Let them bind or
+  // adopt that port directly instead of waiting on a stale discovery record.
+  if (opts.ignoreDiscovery) return bindNew(opts);
+
   // Discovery-first single-instance: if viewer.json already names a viewer that
   // still answers (retried, to survive a startup race or a busy beat), ADOPT it
   // and spawn nothing — regardless of which port it's on. This is what keeps the
@@ -389,19 +393,90 @@ function start(opts) {
 function bindNew(opts) {
   opts = opts || {};
   const clients = new Set();
+  const clientTokens = new Map();
   let windowClaimUntil = 0;
   let lastWindowSeenAt = 0;
   const WINDOW_CLAIM_MS = 7000;
   const WINDOW_RECONNECT_GRACE_MS = 1500;
+  const WINDOW_LEASE_MS = Math.max(1000, Number(opts.windowLeaseMs || 12000));
+  let windowOwner = readWindowOwner();
+
+  // SSE is a transport and may reconnect briefly. A small persisted lease is
+  // the window identity: it survives that gap and even a viewer restart, so a
+  // second agent cannot mistake a reconnecting app for "no panel window".
+  function validWindowToken(value) {
+    return /^[A-Za-z0-9._-]{8,128}$/.test(String(value || ''));
+  }
+
+  function readWindowOwner() {
+    try {
+      const owner = JSON.parse(fs.readFileSync(WINDOW_FILE, 'utf8'));
+      if (validWindowToken(owner.token) && Number(owner.expiresAt) > Date.now()) return owner;
+    } catch (e) {}
+    return null;
+  }
+
+  function writeWindowOwner(owner) {
+    try {
+      state.ensureDirs();
+      const tmp = WINDOW_FILE + '.tmp';
+      fs.writeFileSync(tmp, JSON.stringify(owner), 'utf8');
+      fs.renameSync(tmp, WINDOW_FILE);
+    } catch (e) { /* the in-memory lease still prevents duplicates */ }
+  }
+
+  function activeWindowOwner(now) {
+    now = now || Date.now();
+    if (windowOwner && Number(windowOwner.expiresAt) > now) return windowOwner;
+    windowOwner = null;
+    return null;
+  }
+
+  function registerWindow(token) {
+    if (!validWindowToken(token)) throw Object.assign(new Error('bad_window_token'), { code: 'bad_window_token' });
+    const now = Date.now();
+    const owner = activeWindowOwner(now);
+    if (owner && owner.token !== token) {
+      return { primary: false, occupied: true, expiresAt: owner.expiresAt };
+    }
+    windowOwner = { token, expiresAt: now + WINDOW_LEASE_MS };
+    windowClaimUntil = 0;
+    lastWindowSeenAt = now;
+    writeWindowOwner(windowOwner);
+    return { primary: true, occupied: true, expiresAt: windowOwner.expiresAt };
+  }
+
+  function heartbeatWindow(token) {
+    const owner = activeWindowOwner();
+    if (!owner || owner.token !== token) return { primary: false, occupied: !!owner };
+    windowOwner.expiresAt = Date.now() + WINDOW_LEASE_MS;
+    lastWindowSeenAt = Date.now();
+    writeWindowOwner(windowOwner);
+    return { primary: true, occupied: true, expiresAt: windowOwner.expiresAt };
+  }
+
+  function releaseWindow(token) {
+    const owner = activeWindowOwner();
+    if (!owner || owner.token !== token) return { released: false };
+    windowOwner = null;
+    windowClaimUntil = 0;
+    try { fs.unlinkSync(WINDOW_FILE); } catch (e) {}
+    return { released: true };
+  }
+
+  function windowOccupied(now) {
+    now = now || Date.now();
+    return clients.size > 0 || !!activeWindowOwner(now) ||
+      (lastWindowSeenAt > 0 && now - lastWindowSeenAt < WINDOW_RECONNECT_GRACE_MS) ||
+      now < windowClaimUntil;
+  }
 
   function claimWindow() {
     const now = Date.now();
-    const connected = clients.size > 0;
-    const reconnecting = lastWindowSeenAt > 0 && now - lastWindowSeenAt < WINDOW_RECONNECT_GRACE_MS;
-    const pending = now < windowClaimUntil;
-    const open = !(connected || reconnecting || pending);
+    const occupied = windowOccupied(now);
+    const open = !occupied;
     if (open) windowClaimUntil = now + WINDOW_CLAIM_MS;
-    return { open, occupied: connected || reconnecting || pending };
+    return { open, occupied };
   }
 
   const server = http.createServer((req, res) => {
@@ -412,13 +487,21 @@ function bindNew(opts) {
       // no-store: the page must always reflect the shipped UI, never a stale cache
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
       res.end(fs.readFileSync(path.join(PUBLIC, 'index.html')));
+    } else if (/^\/scope\/(index\.html|scope\.js|scope\.css|controls\.css)$/.test(url)) {
+      const asset=path.basename(url),type=asset.endsWith('.html')?'text/html':asset.endsWith('.css')?'text/css':'text/javascript';
+      res.writeHead(200,{'Content-Type':type+'; charset=utf-8','Cache-Control':'no-store'});
+      res.end(fs.readFileSync(path.join(PUBLIC,'scope',asset)));
+    } else if (url === '/api/analysis/capture' && req.method === 'POST') {
+      if (!sameOriginOk(req)) { res.writeHead(403); return res.end('{"ok":false,"error":"forbidden"}'); }
+      readJson(req,res,b=>require('./analysis-capture').capture(b));
     } else if (url === '/manifest.webmanifest') {
-      // installable PWA: a standalone window whose titlebar melts into the app
+      // Use a stable standalone titlebar. window-controls-overlay exposes a
+      // browser-owned hide/show control and creates two layouts for one app.
       res.writeHead(200, { 'Content-Type': 'application/manifest+json; charset=utf-8', 'Cache-Control': 'no-store' });
       res.end(JSON.stringify({
         name: 'OlchiPanel', short_name: 'OlchiPanel', start_url: '/',
         display: 'standalone',
-        background_color: '#16161a', theme_color: '#16161a',
+        background_color: '#16161a', theme_color: '#12202f',
         icons: [
           { src: '/icons/olchi-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
           { src: '/icons/olchi-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
@@ -440,29 +523,47 @@ function bindNew(opts) {
       const visible = all.filter(s => !s.archived);
       const MAX = 30;
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
-      res.end(JSON.stringify({ sessions: visible.slice(0, MAX), total: all.length, version: VERSION, latest: latestKnown, pid: process.pid, windowOpen: clients.size > 0 }));
+      res.end(JSON.stringify({ sessions: visible.slice(0, MAX), total: all.length, version: VERSION, latest: latestKnown, pid: process.pid, windowOpen: windowOccupied() }));
+    } else if (url === '/api/doctor' && req.method === 'GET') {
+      // Read-only first-success diagnostics. Never writes or repairs agent
+      // configuration; the UI uses this to explain the exact next action.
+      doctor.inspect({ cwd: process.cwd(), olchiHome: state.ROOT }).then((report) => {
+        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
+        res.end(JSON.stringify(report));
+      }).catch((error) => {
+        res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
+        res.end(JSON.stringify({ schema: 'olchipanel.doctor.v1', ready: false, error: String(error.message || error) }));
+      });
     } else if (url === '/api/window/claim' && req.method === 'POST') {
       if (!sameOriginOk(req)) { res.writeHead(403); return res.end('{"ok":false,"error":"forbidden"}'); }
       const result = claimWindow();
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
       res.end(JSON.stringify({ ok: true, open: result.open, occupied: result.occupied }));
+    } else if (url === '/api/window/register' && req.method === 'POST') {
+      if (!sameOriginOk(req)) { res.writeHead(403); return res.end('{"ok":false,"error":"forbidden"}'); }
+      readJson(req, res, (body) => registerWindow(body.token));
+    } else if (url === '/api/window/heartbeat' && req.method === 'POST') {
+      if (!sameOriginOk(req)) { res.writeHead(403); return res.end('{"ok":false,"error":"forbidden"}'); }
+      readJson(req, res, (body) => heartbeatWindow(body.token));
+    } else if (url === '/api/window/release' && req.method === 'POST') {
+      if (!sameOriginOk(req)) { res.writeHead(403); return res.end('{"ok":false,"error":"forbidden"}'); }
+      readJson(req, res, (body) => releaseWindow(body.token));
     } else if (rawUrl.split('?')[0] === '/api/memo' && req.method === 'GET') {
-      // human's scratchpad — one per panel (id), plus a board-wide one (no id).
-      // Agents never read or write these files; this is the human's corner.
-      let text = '';
-      try { text = fs.readFileSync(memoFile(rawUrl), 'utf8'); } catch (e) {}
+      // Structured project notes. The old text file remains a read-only
+      // migration source; MCP agents can read the common notebook but only the UI writes it.
+      const data = require('./memo').read(state.ROOT, query(rawUrl, 'id') || '');
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
-      res.end(JSON.stringify({ text }));
+      res.end(JSON.stringify(data));
     } else if (rawUrl.split('?')[0] === '/api/memo' && req.method === 'POST') {
       if (!sameOriginOk(req)) { res.writeHead(403); return res.end('{"ok":false,"error":"forbidden"}'); }
       let body = '';
       req.on('data', d => { body += d; if (body.length > 262144) req.destroy(); });
       req.on('end', () => {
         try {
-          const { text } = JSON.parse(body || '{}');
-          fs.writeFileSync(memoFile(rawUrl), String(text == null ? '' : text).slice(0, 65536), 'utf8');
+          const parsed = JSON.parse(body || '{}');
+          const saved = require('./memo').write(state.ROOT, query(rawUrl, 'id') || '', parsed.memo);
           res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end('{"ok":true}');
+          res.end(JSON.stringify({ ok: true, memo: saved }));
         } catch (e) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
           res.end('{"ok":false,"error":"bad_request"}');
@@ -532,12 +633,19 @@ function bindNew(opts) {
     } else if (url === '/api/plans' && req.method === 'GET') {
       const plan = require('./plan');
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
-      res.end(JSON.stringify(plan.listPlans()));
+      const sessionId = query(rawUrl, 'session');
+      const scoped = new URL(rawUrl, 'http://localhost').searchParams.has('session');
+      const session = scoped && state.readAllSessions().find((s) => s.id === sessionId);
+      res.end(JSON.stringify(plan.listPlans().filter((p) => !scoped || (session && p.id === session.plan_id))));
     } else if (url === '/api/plans' && req.method === 'POST') {
       if (!sameOriginOk(req)) { res.writeHead(403); return res.end('{"ok":false,"error":"forbidden"}'); }
       readJson(req, res, (b) => {
         const plan = require('./plan');
+        const sessionId = String(b.session || '').trim();
+        const target = sessionId ? state.readAllSessions().find((s) => s.id === sessionId) : null;
+        if (sessionId && !target) { const e = new Error('session not found'); e.code = 'no_session'; throw e; }
         const p = plan.createPlan(b.title);
+        if (target) { target.plan_id = p.id; state.writeSession(target); }
         return { id: p.id, version: p.version };
       });
     } else if (rawUrl.split('?')[0] === '/api/plan' && req.method === 'GET') {
@@ -547,6 +655,41 @@ function bindNew(opts) {
       if (!p) { res.writeHead(404, { 'Content-Type': 'application/json' }); return res.end('{"ok":false,"error":"not_found"}'); }
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
       res.end(JSON.stringify(p));
+    } else if (rawUrl.split('?')[0] === '/api/plan/export' && req.method === 'GET') {
+      try {
+        const bundle = require('./plan').exportPlan(query(rawUrl, 'id'));
+        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
+        res.end(JSON.stringify(bundle));
+      } catch (e) {
+        res.writeHead(e && e.code === 'no_plan' ? 404 : 400, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ ok: false, error: e && e.code || 'bad_request' }));
+      }
+    } else if (rawUrl.split('?')[0] === '/api/plan/import' && req.method === 'POST') {
+      if (!sameOriginOk(req)) { res.writeHead(403); return res.end('{"ok":false,"error":"forbidden"}'); }
+      readJson(req, res, (b) => {
+        const sessionId = String(b.session || '').trim();
+        const target = sessionId ? state.readAllSessions().find((s) => s.id === sessionId) : null;
+        if (sessionId && !target) { const e = new Error('session not found'); e.code = 'no_session'; throw e; }
+        const imported = require('./plan').importPlan(b.bundle);
+        if (target) { target.plan_id = imported.id; state.writeSession(target); }
+        return { id: imported.id, title: imported.title, version: imported.version,
+          items: imported.items.length, attached: !!target };
+      });
+    } else if (rawUrl.split('?')[0] === '/api/plan/session' && req.method === 'POST') {
+      if (!sameOriginOk(req)) { res.writeHead(403); return res.end('{"ok":false,"error":"forbidden"}'); }
+      readJson(req, res, (b) => {
+        const plans = require('./plan');
+        const source = plans.getPlan(b.plan);
+        if (!source) { const e = new Error('plan not found'); e.code = 'no_plan'; throw e; }
+        const target = state.readAllSessions().find((s) => s.id === b.session);
+        if (!target) { const e = new Error('session not found'); e.code = 'no_session'; throw e; }
+        if (b.mode !== 'continue' && b.mode !== 'copy') { const e = new Error('invalid mode'); e.code = 'bad_mode'; throw e; }
+        const selected = b.mode === 'copy' ? plans.copyPlan(source.id) : source;
+        target.plan_id = selected.id;
+        state.writeSession(target);
+        return { id: selected.id, title: selected.title, version: selected.version,
+          items: selected.items.length, mode: b.mode, attached: true };
+      });
     } else if (rawUrl.split('?')[0] === '/api/plan/item' && req.method === 'POST') {
       if (!sameOriginOk(req)) { res.writeHead(403); return res.end('{"ok":false,"error":"forbidden"}'); }
       readJson(req, res, (b) => require('./plan').plan_mutate(query(rawUrl, 'plan'), 'add', b, b.baseVersion));
@@ -564,8 +707,10 @@ function bindNew(opts) {
       });
       res.write(': connected\n\n');
       clients.add(res);
+      const token = query(rawUrl, 'window');
+      if (validWindowToken(token)) clientTokens.set(res, token);
       lastWindowSeenAt = Date.now();
-      req.on('close', () => { clients.delete(res); lastWindowSeenAt = Date.now(); });
+      req.on('close', () => { clients.delete(res); clientTokens.delete(res); lastWindowSeenAt = Date.now(); });
     } else {
       res.writeHead(404); res.end('not found');
     }
@@ -629,6 +774,7 @@ function bindNew(opts) {
   });
   server.on('listening', () => {
     const url = `http://127.0.0.1:${server.address().port}`;
+    if (typeof opts.onListening === 'function') opts.onListening(server, url);
     try {
       fs.writeFileSync(VIEWER_FILE, JSON.stringify({ url, pid: process.pid, at: new Date().toISOString() }), 'utf8');
     } catch (e) {}
