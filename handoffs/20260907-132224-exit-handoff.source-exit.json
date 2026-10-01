@@ -1,0 +1,12 @@
+{
+  "schema": "orca-safe-handoff-source-exit.v1",
+  "status": "failed",
+  "source_terminal": "term_e625e43c-7fd3-4152-975f-a7a9d75f2cc0",
+  "worktree_id": "31253219-2dd5-4f05-bfb4-bb56d3217958::C:/OlchiProjects/olchipanel",
+  "source_close_requested": true,
+  "source_exit_verified": true,
+  "verified_at": "2026-09-07T04:24:19.750020+00:00",
+  "successor_agent_unique": true,
+  "successor_ui_active": false,
+  "failed_stage": "post-exit-successor-ui"
+}
