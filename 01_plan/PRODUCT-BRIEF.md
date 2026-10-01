@@ -1,5 +1,17 @@
 # 올치패널 (OlchiPanel) — 제품 브리프 v0
 
+- 후속 검토 목록: [추후 아이디어](FUTURE-IDEAS.md). 패널 내 AI 채팅·친구 채팅은 아이디어만 인수하며 현재 제출 데모 구현 범위에서 제외한다.
+
+## 2026-09-11 현재 범위 — Windows 첫 설치
+
+사용자 요청에 따라 Windows x64만 먼저 진행한다. 설치 후 첫 앱 실행에서 Codex·Claude Code 선택 → 변경 대상 확인·동의 → MCP 사용자 설정 등록 → 에이전트 재시작·명시적 프로젝트 시작으로 이어진다. 설치된 Electron 엔진을 MCP에 사용한다. 기존 설정 백업·충돌 보존·취소·재진입을 포함한다. 상세: `desktop/WINDOWS-FIRST-RUN.md`.
+
+현재 로컬 구현과 격리된 설정 저장·패키지 MCP 검증 범위다. 새 PC 설치 및 실제 클라이언트 연결, 서명·배포·업데이트는 별도이며 현재 배포 의도는 없다. 아래 과거 GitHub 쓰기 권한 문제는 해결 확인 없이 보존하며 현재 Windows 구현의 blocker로 사용하지 않는다.
+
+## 2026-09-08 배포 체크포인트
+
+E2 Studio를 정본으로 채택했다. 공용 packages/olchi-release-kit과 OlchiPanel Electron 자동 확인/다운로드·정상 종료 적용, NSIS 설치 파일 빌드를 로컬 구현했다. 제품 버전은 0.8.2 유지. 원격 배포 피드 확인은 현재 실패 상태이며 외부 게시·서명·깨끗한 Windows의 버전 간 업데이트 시험은 미완료다. 다음 행동과 완료 조건은 desktop/RELEASE-RUNBOOK.md. 기존 저장소 쓰기 권한 blocker 해결은 확인하지 않았다.
+
 - 발주: Mark 2026-07-22 "배포로 가자·빨리 고도화·홍보도 여러 방면으로" · owner: Master_D_Fable · 상태: draft
 - 집: `C:\OlchiProjects\pairpanel-oss`(독립 레포) · 배포=**L5(Mark 집행)**, 준비·고도화·홍보안까지가 내 몫.
 
@@ -42,3 +54,7 @@
 1. MCP 통합경로 프로토타입(도구 셋+standalone 뷰) — 승부처부터.
 2. 분기-viz 최소구현(2갈래 병렬 상태 트리 라이브).
 3. 둘로 30초 데모 → Mark 판정 → 고도화/배포.
+
+## 2026-09-20 앱 실행·메뉴·라벨 후속 교정
+
+PC desktop-only preference와 Electron launcher를 반영하고 관련 지침/설치된 스킬을 맞췄다. 사이드바32px, 상황/기록 글자16px·세로여백 축소, 공통노트 Backquote. 라벨은 카드 제목 바로 아래의 채움 배지, 우선순위 점8px 정렬. 실제 Electron 밝음/어두움·단축키·입력 보호·라벨 선택/재열기 검수 및 표적 테스트 통과. 라벨 쓰기는 격리 메모리 fixture로 검수했다. 증거 `output/app-only-sidebar/REVIEW.md`, `checks.json`, PNG. 전체 테마 겹테두리는 제안 단계. 제품0.8.2, 제출 완료 및 공개v84 유지. 다음은 Mark 시각 검토. MCP 소유 viewer는 보존하며 앱만 재시작; 기존 MCP launcher 모듈은 다음 정상 시작에 갱신된다.
