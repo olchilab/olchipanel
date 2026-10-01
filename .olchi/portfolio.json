@@ -37,7 +37,7 @@
     "plan_ref": "01_plan/PRODUCT-BRIEF.md",
     "jira_ref": null,
     "appetite": "파일럿 피드백을 작은 릴리스로 반영하되 배포·홍보는 Mark 승인 경계",
-    "definition_of_done_ref": "VERDICT.md",
+    "definition_of_done_ref": "docs/VERDICT.md",
     "approval_grade": "L5",
     "external_effects": "approved"
   },
