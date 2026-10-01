@@ -3,6 +3,32 @@
   "project_id": "olchipanel",
   "runtimes": [
     {
+      "id": "championship-preview",
+      "status": "active",
+      "mode": "on_demand",
+      "owner": "project-agent",
+      "source_path": "tools/preview-championship-demo.cjs",
+      "exposure": "local",
+      "bind_host": "127.0.0.1",
+      "port_policy": {
+        "mode": "dynamic"
+      },
+      "start_command": [
+        "node",
+        "tools/preview-championship-demo.cjs"
+      ],
+      "stop_method": "Ctrl+C in the owning preview terminal",
+      "health_url": null,
+      "discovery_file": "output/championship-demo/preview.json",
+      "discovery_method": "file",
+      "startup": "manual",
+      "expiry": {
+        "mode": "timestamp",
+        "at": "2026-09-21T00:00:00+09:00"
+      },
+      "approval_ref": null
+    },
+    {
       "id": "viewer",
       "status": "active",
       "mode": "on_demand",
@@ -19,7 +45,7 @@
         "bin/olchipanel.js",
         "open"
       ],
-      "stop_method": "Ctrl+C in the owning terminal or `node bin/olchipanel.js stop`",
+      "stop_method": "If owned by the desktop app: tray icon > 종료; otherwise Ctrl+C in the owning terminal or `node bin/olchipanel.js stop`",
       "health_url": "http://127.0.0.1:6711/api/state",
       "discovery_file": "${USERPROFILE}/.olchipanel/viewer.json",
       "discovery_method": "file",
@@ -33,6 +59,22 @@
   ],
   "surfaces": [
     {
+      "id": "championship-demo",
+      "title": "OlchiPanel Championship sample demo",
+      "kind": "web-app",
+      "purpose": "Studio 기반 7단계 데모와 날짜별 방문자·매출 분석, 샘플 노트·플랜 반영의 로컬 검수",
+      "owner": "project-agent",
+      "status": "active",
+      "source_path": "tools/championship/index.html",
+      "data_source": "tools/championship/fixtures.js",
+      "runtime_ref": "championship-preview",
+      "route": "/olchipanel/",
+      "expiry": {
+        "mode": "timestamp",
+        "at": "2026-09-21T00:00:00+09:00"
+      }
+    },
+    {
       "id": "situation-board",
       "title": "OlchiPanel Situation Board",
       "kind": "viewer",
@@ -43,6 +85,68 @@
       "data_source": "${USERPROFILE}/.olchipanel/sessions",
       "runtime_ref": "viewer",
       "route": "/",
+      "expiry": {
+        "mode": "none"
+      }
+    },
+    {
+      "id": "desktop-shell",
+      "title": "OlchiPanel",
+      "kind": "desktop-app",
+      "purpose": "사용자 선택 E2 Studio UI 정본 데스크톱 앱; 창 닫기는 알림 영역 숨김, 아이콘 메뉴 종료는 앱 종료",
+      "owner": "project-agent",
+      "status": "active",
+      "source_path": "desktop/main.cjs",
+      "data_source": "http://127.0.0.1:6711/api/state",
+      "runtime_ref": "viewer",
+      "route": "/",
+      "expiry": {
+        "mode": "none"
+      }
+    },
+    {
+      "id": "desktop-e2-comparison",
+      "title": "OlchiPanel E2 — Studio Console",
+      "kind": "desktop-app",
+      "purpose": "E2 정본 채택으로 비교 종료; E2 명령은 정본 별칭, E3 코드는 보존",
+      "owner": "project-agent",
+      "status": "retired",
+      "source_path": "desktop/e2.cjs",
+      "data_source": "http://127.0.0.1:6711/api/state",
+      "runtime_ref": "viewer",
+      "route": "/",
+      "expiry": {
+        "mode": "condition",
+        "condition": "사용자 비교 검수 종료 지시 때 종료"
+      }
+    },
+    {
+      "id": "desktop-e3-comparison",
+      "title": "OlchiPanel E3 — Editorial Desk",
+      "kind": "desktop-app",
+      "purpose": "E2 정본 채택으로 비교 종료; E2 명령은 정본 별칭, E3 코드는 보존",
+      "owner": "project-agent",
+      "status": "retired",
+      "source_path": "desktop/e3.cjs",
+      "data_source": "http://127.0.0.1:6711/api/state",
+      "runtime_ref": "viewer",
+      "route": "/",
+      "expiry": {
+        "mode": "condition",
+        "condition": "사용자 비교 검수 종료 지시 때 종료"
+      }
+    },
+    {
+      "id": "data-analysis",
+      "title": "OlchiPanel 자료 분석",
+      "kind": "web-app",
+      "purpose": "앱과 데모가 공유하는 날짜별 방문자 매출 샘플 분석과 명시적 노트 플랜 반영",
+      "owner": "project-agent",
+      "status": "active",
+      "source_path": "src/scope/main.jsx",
+      "data_source": "src/scope/model.js",
+      "runtime_ref": "viewer",
+      "route": "/scope/index.html",
       "expiry": {
         "mode": "none"
       }
