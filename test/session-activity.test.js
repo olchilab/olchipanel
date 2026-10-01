@@ -1,0 +1,12 @@
+const assert=require('node:assert/strict');
+const {sessionActivity:f}=require('../desktop/session-activity.cjs');
+assert.equal(f({alive:false}).kind,'offline');
+for(const responseActivity of [null,{state:'done'},{state:'idle'},{state:'waiting'},{state:'done',interrupted:true}])assert.equal(f({alive:true,responseActivity}).kind,'connected');
+assert.equal(f({alive:true,responseActivity:{state:'working'}}).kind,'working');
+assert.equal(f({alive:false,responseActivity:{state:'working'}}).kind,'offline');
+console.log('connection / response activity PASS');
+const now=Date.now();
+assert.equal(f({alive:true,updated:new Date(now-3599999).toISOString()},now).kind,'connected');
+assert.equal(f({alive:true,updated:new Date(now-3600000).toISOString()},now).kind,'idle');
+assert.equal(f({alive:true,updated:new Date(now-7200000).toISOString(),responseActivity:{state:'working'}},now).kind,'working');
+assert.equal(f({alive:true,updated:new Date(now-7200000).toISOString(),responseActivity:{state:'done',updatedAt:now}},now).kind,'connected');

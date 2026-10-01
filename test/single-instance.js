@@ -15,9 +15,15 @@ process.env.OLCHIPANEL_NO_UPDATE_CHECK = '1';
 const viewer = require('../src/viewer');
 const server = viewer.start();
 
-function request(url, method, headers) {
+function request(url, method, headers, body) {
   return new Promise((resolve, reject) => {
-    const req = http.request(url, { method: method || 'GET', headers: headers || {} }, (res) => {
+    const payload = body === undefined ? '' : JSON.stringify(body);
+    const requestHeaders = Object.assign({}, headers || {});
+    if (payload) {
+      requestHeaders['Content-Type'] = 'application/json';
+      requestHeaders['Content-Length'] = Buffer.byteLength(payload);
+    }
+    const req = http.request(url, { method: method || 'GET', headers: requestHeaders }, (res) => {
       let body = '';
       res.on('data', d => { body += d; });
       res.on('end', () => {
@@ -26,6 +32,7 @@ function request(url, method, headers) {
       });
     });
     req.on('error', reject);
+    if (payload) req.write(payload);
     req.end();
   });
 }
@@ -62,14 +69,33 @@ async function run() {
   assert.strictEqual(raced.body.open, false, 'a simultaneous open command must not launch another window');
   const forbidden = await request(url + '/api/window/claim', 'POST', { Origin: 'https://example.com' });
   assert.strictEqual(forbidden.status, 403, 'cross-origin pages must not claim a localhost window');
+
+  const tokenA = 'window-primary-1234';
+  const tokenB = 'window-duplicate-5678';
+  const registered = await request(url + '/api/window/register', 'POST', {}, { token: tokenA });
+  assert.strictEqual(registered.body.primary, true, 'the claimed app window must become the primary lease owner');
+  assert.strictEqual(fs.existsSync(path.join(home, 'window.json')), true, 'the window lease must survive a viewer restart');
+  const duplicate = await request(url + '/api/window/register', 'POST', {}, { token: tokenB });
+  assert.strictEqual(duplicate.body.primary, false, 'a second app window must not replace a live owner');
+  const beat = await request(url + '/api/window/heartbeat', 'POST', {}, { token: tokenA });
+  assert.strictEqual(beat.body.primary, true, 'the owner must be able to renew its window lease');
+  const wrongRelease = await request(url + '/api/window/release', 'POST', {}, { token: tokenB });
+  assert.strictEqual(wrongRelease.body.released, false, 'a duplicate window must not release the primary lease');
   const cli = await runOpenCommand();
   assert.match(cli, /olchipanel already open/, 'the public open command must report and preserve the existing window');
+  const concurrent = await Promise.all([runOpenCommand(), runOpenCommand(), runOpenCommand(), runOpenCommand()]);
+  concurrent.forEach((output) => assert.match(output, /olchipanel already open/,
+    'every concurrent agent open request must reuse the primary window'));
 
   const events = await connectEvents(url);
   const state = await request(url + '/api/state');
   const connected = await request(url + '/api/window/claim', 'POST');
   assert.strictEqual(state.body.windowOpen, true, 'the viewer must detect the connected panel window');
   assert.strictEqual(connected.body.open, false, 'an already connected panel must block another window');
+
+  const released = await request(url + '/api/window/release', 'POST', {}, { token: tokenA });
+  assert.strictEqual(released.body.released, true, 'the primary app window must release its own lease');
+  assert.strictEqual(fs.existsSync(path.join(home, 'window.json')), false, 'an explicit close must clear the persisted lease');
 
   events.req.destroy();
   events.res.destroy();
