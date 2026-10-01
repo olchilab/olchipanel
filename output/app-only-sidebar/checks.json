@@ -1,0 +1,67 @@
+{
+  "checks": [
+    "Backquote opens common notes",
+    "0 no longer navigates",
+    "Text input receives literal backtick",
+    "Backquote forwarded from plan iframe",
+    "IME protected",
+    "Composer prevents navigation",
+    "Label selection saved and reopened using in-memory fixture; no real writes",
+    "All label white-text contrast >= 4.5",
+    "Reload retains theme, compact menus and Backquote keycap"
+  ],
+  "palette": [
+    {
+      "name": "급함",
+      "contrast": 5.703739211965179
+    },
+    {
+      "name": "중요",
+      "contrast": 6.959901796829897
+    },
+    {
+      "name": "아이디어",
+      "contrast": 6.585619579301778
+    },
+    {
+      "name": "검토",
+      "contrast": 5.026639468609983
+    },
+    {
+      "name": "대기",
+      "contrast": 5.202787288171926
+    }
+  ],
+  "menu": [
+    {
+      "id": "tabSituation",
+      "height": 32,
+      "key": "1"
+    },
+    {
+      "id": "tabPlan",
+      "height": 32,
+      "key": "2"
+    },
+    {
+      "id": "tabScope",
+      "height": 32,
+      "key": "3"
+    },
+    {
+      "id": "tabNeeds",
+      "height": 32,
+      "key": "4"
+    },
+    {
+      "id": "tabRecords",
+      "height": 32,
+      "key": "5"
+    },
+    {
+      "id": "tabMemo",
+      "height": 32,
+      "key": "`"
+    }
+  ]
+}

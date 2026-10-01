@@ -1,0 +1,24 @@
+const {chromium}=require('C:/Users/topli/AppData/Local/npm-cache/_npx/fd3bca3c548369c0/node_modules/playwright-core');
+const assert=require('node:assert/strict'),fs=require('node:fs');
+(async()=>{const b=await chromium.connectOverCDP('http://127.0.0.1:9337');const p=b.contexts()[0].pages()[0];await p.reload();const checks=[];const ok=(name)=>checks.push(name);
+const active=()=>p.locator('.app-view-tab.on').getAttribute('id');
+await p.locator('#tabSituation').click();await p.keyboard.press('Backquote');assert.equal(await active(),'tabMemo');ok('Backquote opens common notes');
+await p.locator('#tabSituation').click();await p.keyboard.press('0');assert.equal(await active(),'tabSituation');ok('0 no longer navigates');
+await p.evaluate(()=>{const x=document.createElement('input');x.id='qa-input';document.body.append(x);x.focus();});await p.keyboard.press('Backquote');assert.equal(await active(),'tabSituation');assert.equal(await p.locator('#qa-input').inputValue(),'`');await p.locator('#qa-input').evaluate(x=>x.remove());ok('Text input receives literal backtick');
+await p.locator('#tabPlan').click();const f=await (await p.locator('#planFrame').elementHandle()).contentFrame();await f.waitForSelector('#board');await f.evaluate(()=>{document.querySelectorAll('dialog[open]').forEach(d=>d.close());document.body.tabIndex=-1;document.body.focus();});await p.keyboard.press('Backquote');assert.equal(await active(),'tabMemo');ok('Backquote forwarded from plan iframe');
+await p.locator('#tabSituation').click();await p.evaluate(()=>document.dispatchEvent(new KeyboardEvent('keydown',{code:'Backquote',key:'Process',isComposing:true,bubbles:true})));assert.equal(await active(),'tabSituation');ok('IME protected');
+await p.locator('#tabPlan').click();await f.evaluate(()=>{
+ window.qaOriginalApi=api;window.qaWrites=0;
+ plan={id:'qa-ephemeral',title:'라벨 시각 검수',version:1,items:LABELS.map((l,i)=>({id:'qa-'+i,title:l.name+' 작업 확인',status:i<2?'todo':i<4?'in_progress':'done',order:i,priority:i,note:'완료 조건과 다음 작업을 확인합니다. 긴 설명에서도 라벨은 제목 바로 아래에 유지됩니다.',labels:[l.id]}))};
+ window.qaFixture=plan;document.querySelector('#planSel').innerHTML='<option value="qa-ephemeral">라벨 시각 검수</option>';
+ api=async(method,path,body)=>{if(method==='PATCH'){window.qaWrites++;Object.assign(window.qaFixture.items[0],body.patch);window.qaFixture.version++;return {};}if(method==='GET'&&path.startsWith('/api/plan?id='))return window.qaFixture;throw Error('QA blocked unexpected API');};render();
+});
+await p.screenshot({path:'output/app-only-sidebar/labels-board-light.png'});
+await f.locator('.card[data-id="qa-0"] .t').click();await f.locator('#composerLabels label').nth(2).click();assert.equal(await f.locator('#composerLabels input:checked').count(),2);
+await p.keyboard.press('Backquote');assert.equal(await active(),'tabPlan');ok('Composer prevents navigation');
+await p.screenshot({path:'output/app-only-sidebar/labels-editor-light.png'});
+await f.locator('#composerSave').click();await f.locator('#cardComposer').waitFor({state:'hidden'});assert.equal(await f.locator('.card[data-id="qa-0"] .lbl').count(),2);await f.locator('.card[data-id="qa-0"] .t').click();assert.equal(await f.locator('#composerLabels input:checked').count(),2);ok('Label selection saved and reopened using in-memory fixture; no real writes');
+const palette=await f.evaluate(()=>LABELS.map(l=>{const v=l.color.slice(1).match(/../g).map(c=>{const n=parseInt(c,16)/255;return n<=.04045?n/12.92:Math.pow((n+.055)/1.055,2.4)});return {name:l.name,contrast:1.05/(v[0]*.2126+v[1]*.7152+v[2]*.0722+.05)};}));palette.forEach(x=>assert(x.contrast>=4.5));ok('All label white-text contrast >= 4.5');
+await f.locator('#composerCancel').click();await p.locator('#themeBtn').click();await p.waitForTimeout(500);await p.screenshot({path:'output/app-only-sidebar/labels-board-dark.png'});await f.locator('.card[data-id="qa-0"] .t').click();await p.screenshot({path:'output/app-only-sidebar/labels-editor-dark.png'});await f.locator('#composerCancel').click();await p.locator('#themeBtn').click();
+await f.evaluate(()=>{api=window.qaOriginalApi;});await p.reload();await p.locator('#tabSituation').waitFor();await p.locator('#tabSituation').click();const menu=await p.locator('.rail-view-tab').evaluateAll(xs=>xs.map(x=>({id:x.id,height:x.getBoundingClientRect().height,key:x.dataset.shortcut})));assert(menu.every(x=>x.height===32));assert.equal(menu.at(-1).key,'`');ok('Reload retains theme, compact menus and Backquote keycap');
+fs.writeFileSync('output/app-only-sidebar/checks.json',JSON.stringify({checks,palette,menu},null,2));console.log(JSON.stringify({checks,palette},null,2));await b.close();})();

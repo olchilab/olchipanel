@@ -1,0 +1,13 @@
+{
+  "createdAt": "2026-09-19T12:35:41+09:00",
+  "source": "ImageGen",
+  "file": "graph-box-arrows-r1.png",
+  "sha256": "102a2a30d332d5c52a812cc2c482cac063cc3a1899b885521dd888646839b2bb",
+  "status": "approved_and_implemented",
+  "implemented": true,
+  "published": false,
+  "implementation": [
+    "public/index.html",
+    "public/themes/studio.css"
+  ]
+}

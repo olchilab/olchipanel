@@ -1,0 +1,25 @@
+{
+  "height": 41.59375,
+  "padding": "0px 0px 4px",
+  "margin": "-3px 0px 8px",
+  "tabs": [
+    {
+      "font": "16px",
+      "height": 35.59375,
+      "padding": "6px 13px",
+      "outline": "none"
+    },
+    {
+      "font": "16px",
+      "height": 35.59375,
+      "padding": "6px 13px",
+      "outline": "none"
+    },
+    {
+      "font": "16px",
+      "height": 36.59375,
+      "padding": "6px 13px",
+      "outline": "none"
+    }
+  ]
+}

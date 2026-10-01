@@ -1,0 +1,46 @@
+{
+  "schema": "visual-ui-review.report.v0",
+  "target": {
+    "type": "current_browser",
+    "value": "OlchiPanel E Electron 44.1.0 / http://127.0.0.1:6711",
+    "checked_at": "2026-09-02T01:42:00+09:00"
+  },
+  "status": "pass",
+  "summary": "Windows 200% 배율의 실제 Electron 창에서 공통 셸과 플랜 5열이 잘림 없이 보이고 E 단일창 수명주기가 유지된다.",
+  "evidence": {
+    "screenshots": [
+      "C:/OlchiProjects/olchipanel/output/electron/olchipanel-e-home-200pct.png",
+      "C:/OlchiProjects/olchipanel/output/electron/olchipanel-e-plan-200pct.png"
+    ],
+    "viewports": [
+      {
+        "name": "Windows 200% default E window",
+        "width": 1440,
+        "height": 960,
+        "verified": true
+      }
+    ],
+    "metrics": {
+      "physical_window_width": 2880,
+      "physical_window_height": 1920,
+      "device_scale_factor": 2,
+      "electron_root_count": 1,
+      "viewer_listener_count": 1,
+      "olchipanel_chrome_pwa_count": 0,
+      "plan_visible_columns": 5
+    }
+  },
+  "findings": [],
+  "done_criteria": [
+    "OlchiPanel E 제목과 원본 고양이 아이콘이 네이티브 제목 표시줄에 보인다.",
+    "Electron 메뉴 막대가 기본 화면 높이를 소비하지 않는다.",
+    "200% OS 배율에서 사이드바와 본문이 겹치지 않는다.",
+    "플랜 5열이 sidebar 오른쪽 가용 폭 안에 모두 보인다.",
+    "플랜 탭은 큰 세션 제목 영역을 숨겨 보드 작업 높이를 회수한다.",
+    "두 번째 실행이 새 앱 창이나 새 listener를 만들지 않는다."
+  ],
+  "limitations": [
+    "이번 E 실물 검수는 Windows 200% 배율과 1440x960 DIP 창에 한정했다.",
+    "서명 설치 프로그램, 자동 업데이트, macOS와 Linux는 아직 검수하지 않았다."
+  ]
+}
