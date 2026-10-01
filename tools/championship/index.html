@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ko" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OlchiPanel — AI 에이전트 작업 상황판</title>
+<meta name="description" content="AI가 지금 하는 일, 내가 결정할 일, 다음에 이어갈 맥락을 한눈에. OlchiPanel 앱판을 바탕으로 한 샘플 체험입니다.">
+<link rel="icon" href="icons/olchi-dark-32.png"><link rel="stylesheet" href="shell.css"><script src="session.js"></script><script src="fixtures.js"></script><script src="shell.js" defer></script></head>
+<body>
+<main id="intro">
+  <span class="brand">OlchiLab / OlchiPanel</span>
+  <div class="intro-copy"><p class="eyebrow">AI와 함께하는 작업을 한곳에서</p><h1>무엇을 하고 있고,<br>다음엔 무엇을 해야 할까요?</h1>
+  <p class="lead">OlchiPanel은 Codex·Claude 같은 AI 에이전트의<br>계획, 진행 상황, 메모와 다음 할 일을 함께 보는 작업판입니다.</p>
+  <section class="intro-example" aria-label="이번 체험에서 해볼 일">
+    <h2>이번 체험: 웹사이트 방문·매출 분석</h2>
+    <p>준비된 하나의 프로젝트를 둘러보며 실제 사용 흐름을 확인합니다.</p>
+    <ol class="intro-steps"><li><strong>플랜에서 진행 확인</strong><span>할 일 카드를 옮겨 보세요.</span></li><li><strong>자료를 분석하고 기록</strong><span>그래프를 살펴보고 노트를 남겨요.</span></li><li><strong>다른 AI와 이어가기</strong><span>이전 맥락과 같은 자료를 확인해요.</span></li></ol>
+  </section>
+  <button id="start" class="primary">안내 따라 체험하기 <span aria-hidden="true">→</span></button>
+  <p class="caption">7단계 안내 · 설치나 로그인 없이 체험<br>가상 세션·자료를 사용하며 실제 AI는 호출하지 않습니다. 변경은 이번 체험에서만 유지되며, 새로 열면 처음부터 시작합니다.</p></div>
+  <button id="intro-guide" class="text-button">사용 방법 · GitHub</button>
+</main>
+<section id="experience" hidden aria-label="OlchiPanel 샘플 체험">
+  <header class="demo-header"><button id="home" class="text-button" aria-label="체험 소개로 돌아가기">← 체험 소개</button><span class="sample-label">샘플 체험</span><span class="header-note">Codex · Claude 가상 세션 · 새로 열면 처음부터 시작</span><button id="guide" class="text-button">이번 단계 안내</button>
+    <nav id="guideResume" hidden aria-label="접힌 사용 안내">
+      <button id="reopen-guide"><span id="resume-count"></span> 안내 다시 보기</button>
+      <button id="resume-next" class="primary">다음 안내 →</button>
+    </nav>
+  </header>
+  <iframe id="app" title="OlchiPanel 앱 샘플" allow="clipboard-write"></iframe>
+  <footer class="demo-footer"><div class="scene-copy" aria-live="polite"><span id="counter"></span><strong id="scene-title"></strong><p id="scene-description"></p></div><nav aria-label="체험 단계"><button id="restart" class="text-button">처음부터</button><button id="previous">이전</button><button id="next" class="primary">다음 단계 →</button></nav></footer>
+</section>
+<div id="tourHighlight" hidden aria-hidden="true"></div>
+<aside id="stepGuide" role="dialog" aria-modal="false" aria-labelledby="stepGuideTitle" aria-describedby="stepGuideBody" hidden>
+  <span id="stepGuideCount" class="guide-eyebrow"></span>
+  <h2 id="stepGuideTitle"></h2><p id="stepGuideBody"></p>
+  <p id="stepGuideResult" class="guide-result"></p>
+  <div class="step-guide-actions"><button id="practice">직접 해보기</button><button id="guide-next" class="primary">확인 · 다음 단계 →</button></div><button id="skip-guides" class="text-button">안내 없이 둘러보기</button>
+</aside>
+<dialog id="usage" aria-labelledby="usage-title"><div class="dialog-heading"><h2 id="usage-title">내 작업에서 사용하려면</h2><button id="close-guide" aria-label="사용 방법 닫기">×</button></div>
+  <p>OlchiPanel은 AI 에이전트와 연결해 목표·진행·판단할 일·인계할 맥락을 확인하는 작업 상황판입니다.</p>
+  <p>Codex와 Claude는 가상 연결 세션입니다. 플랜 카드를 옮기고 노트를 직접 작성해 보세요. 입력은 이번 체험에서만 유지됩니다. 새로고침하거나 ‘처음부터’를 누르면 초기 상태로 돌아갑니다.</p>
+  <ol><li>GitHub의 설치 안내에서 자신의 환경과 에이전트에 맞는 방법을 확인합니다.</li><li>설치와 연결 후 에이전트에게 “이 프로젝트에서 OlchiPanel을 사용해 작업을 추적해 줘”라고 요청합니다.</li><li>다음 세션에서는 이전 패널의 맥락을 이어받도록 요청하고, 필요한 공통 노트를 다시 읽습니다.</li></ol>
+  <p class="version-note">이 체험은 현재 개발 중인 Studio 앱판을 기반으로 합니다. 공개 GitHub/npm 0.8.2의 화면·기능은 이 체험과 차이가 있습니다.</p>
+  <a class="primary" href="https://github.com/olchilab/olchipanel#readme" target="_blank" rel="noopener noreferrer">GitHub에서 사용 방법 보기 ↗</a>
+  <button id="explore" class="text-button">체험으로 돌아가기</button>
+</dialog>
+</body></html>

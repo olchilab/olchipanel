@@ -41,6 +41,21 @@ function New-ResizedIcon([System.Drawing.Bitmap]$SourceBitmap, [int]$Size) {
   return $target
 }
 
+function New-LightInkIcon([System.Drawing.Bitmap]$SourceBitmap, [int]$Size) {
+  $target = New-ResizedIcon $SourceBitmap $Size
+  for ($y = 0; $y -lt $Size; $y++) {
+    for ($x = 0; $x -lt $Size; $x++) {
+      $pixel = $target.GetPixel($x, $y)
+      if ($pixel.A -gt 0) {
+        # Preserve the exact source geometry and antialiased alpha; only the
+        # ink colour changes for dark browser chrome.
+        $target.SetPixel($x, $y, [System.Drawing.Color]::FromArgb($pixel.A, 255, 255, 255))
+      }
+    }
+  }
+  return $target
+}
+
 # The source is flat navy artwork anti-aliased against a pale background.
 # Recover the original navy ink as RGBA instead of inverting it: the distance
 # from the known background to each pixel becomes alpha, while the ink color
@@ -116,11 +131,12 @@ foreach ($size in $sizes) {
 }
 
 foreach ($size in @(16, 32, 48)) {
-  [System.IO.File]::Copy(
-    (Join-Path $iconRoot "olchi-$size.png"),
-    (Join-Path $iconRoot "olchi-dark-$size.png"),
-    $true
-  )
+  $darkIcon = New-LightInkIcon $master $size
+  try {
+    $darkIcon.Save((Join-Path $iconRoot "olchi-dark-$size.png"), [System.Drawing.Imaging.ImageFormat]::Png)
+  } finally {
+    $darkIcon.Dispose()
+  }
 }
 
 $icoSizes = @(16, 24, 32, 48, 64, 128, 256)
@@ -154,7 +170,38 @@ try {
 } finally {
   $writer.Dispose()
   $stream.Dispose()
+}
+
+$darkIcoSizes = @(16, 32, 48)
+$darkPayloads = @()
+foreach ($size in $darkIcoSizes) {
+  $darkPayloads += ,([System.IO.File]::ReadAllBytes((Join-Path $iconRoot "olchi-dark-$size.png")))
+}
+$darkIcoPath = Join-Path $iconRoot 'olchi-favicon-dark-v1.ico'
+$darkStream = [System.IO.File]::Open($darkIcoPath, [System.IO.FileMode]::Create, [System.IO.FileAccess]::Write)
+$darkWriter = New-Object System.IO.BinaryWriter $darkStream
+try {
+  $darkWriter.Write([UInt16]0)
+  $darkWriter.Write([UInt16]1)
+  $darkWriter.Write([UInt16]$darkIcoSizes.Count)
+  $offset = 6 + (16 * $darkIcoSizes.Count)
+  for ($i = 0; $i -lt $darkIcoSizes.Count; $i++) {
+    $size = $darkIcoSizes[$i]
+    $darkWriter.Write([byte]$size)
+    $darkWriter.Write([byte]$size)
+    $darkWriter.Write([byte]0)
+    $darkWriter.Write([byte]0)
+    $darkWriter.Write([UInt16]1)
+    $darkWriter.Write([UInt16]32)
+    $darkWriter.Write([UInt32]$darkPayloads[$i].Length)
+    $darkWriter.Write([UInt32]$offset)
+    $offset += $darkPayloads[$i].Length
+  }
+  foreach ($payload in $darkPayloads) { $darkWriter.Write($payload) }
+} finally {
+  $darkWriter.Dispose()
+  $darkStream.Dispose()
   $master.Dispose()
 }
 
-Write-Output "Generated transparent dark-navy Olchi taskbar icons from $sourcePath"
+Write-Output "Generated source-faithful navy app icons and white dark-chrome favicons from $sourcePath"

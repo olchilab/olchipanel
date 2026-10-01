@@ -1,0 +1,9 @@
+{
+  "project": "OlchiScope",
+  "sourceFiles": {
+    "App.jsx": "4848700bae682defeca828198d4c16372720957d89dce7ddb15a465eeaadeac3",
+    "viewport.js": "3d825d25271e5f8dc7d6866b683460106560f57b1a575a31430e2ba838e2c3cf",
+    "styles.css": "12ca0a23039e406bf719c568e0e13a58cb469b4eb9f2c983960f8c50c6085d39"
+  },
+  "adaptation": "Extract Graph and pinch viewport; accept numeric x/value, bounds and formatters; daily business fixtures; use Studio theme."
+}
