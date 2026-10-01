@@ -1,0 +1,29 @@
+html[data-design="editorial"],html[data-design="editorial"][data-theme="dark"]{
+ color-scheme:light;--brand:#98472f;--brand-ink:#883d2a;--brand-soft:#f3e8df;--brand-bd:#c8a493;
+ --paper:#f8f4ec;--rail-bg:#f0ebe1;--card:#fffcf6;--hover:#ebe4d9;
+ --ink:#302b25;--ink-2:#544d43;--muted:#7e7164;--line:#d9d0c1;
+ --done:#59775e;--wait:#8b7963;--urgent:#b65534;--note:#807348;
+ --graph-bg:#f8f4ec;--graph-ink:#302b25;--graph-muted:#786d60;--graph-line:#aa9d8c;--graph-line-soft:#dbd1c2;
+}
+html[data-design="editorial"] .theme-brand strong{font:500 29px/1.2 Georgia,serif;letter-spacing:-1px;}
+html[data-design="editorial"] .rail{width:224px;padding:26px 20px;}
+html[data-design="editorial"] .workspace{margin-left:224px;padding:30px 36px 24px;}
+html[data-design="editorial"] body.rail-closed .rail{width:66px;padding:18px 10px;}
+html[data-design="editorial"] body.rail-closed .workspace{margin-left:66px;}
+html[data-design="editorial"] .goal-header{margin:0 0 24px;gap:20px;}
+html[data-design="editorial"] .goalbar{font-family:Batang,"Noto Serif KR",Georgia,serif;font-size:32px;font-weight:600;letter-spacing:-.8px;line-height:1.25;}
+html[data-design="editorial"] .pane{background:transparent;border:0;border-radius:0;padding:0;}
+html[data-design="editorial"] .view-tabs{gap:18px;border-bottom:1px solid var(--line);padding-bottom:4px;}
+html[data-design="editorial"] .view-tab{padding:9px 10px;font-size:14px;}
+html[data-design="editorial"] .rail-view-tab{min-height:40px;}
+html[data-design="editorial"] .journey-graph{border:0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);border-radius:0;}
+html[data-design="editorial"] .graph-toolbar{background:transparent;border-bottom:0;}
+html[data-design="editorial"] .journey-progress{padding:0 0 18px;font-size:12px;}
+html[data-design="editorial"] .change-row{padding:18px 0;}
+html[data-design="editorial"] .change-sum{font-size:15px;line-height:1.75;}
+html[data-design="editorial"] .top-btn{border-color:transparent;padding-left:4px;padding-right:4px;}
+html[data-design="editorial"] .memo-editor,html[data-design="editorial"] .memo-side{background:var(--paper);}
+html[data-design="editorial"] .memo-content{background:var(--card);}
+html[data-design="editorial"][data-surface="plan"] #board{gap:14px;padding:12px 0;}
+html[data-design="editorial"][data-surface="plan"] .col{border:0;border-top:2px solid var(--line);background:var(--card);}
+html[data-design="editorial"][data-surface="plan"] .col h3{font-size:11px;letter-spacing:.6px;}

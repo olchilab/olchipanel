@@ -108,16 +108,6 @@
     background:var(--done); margin-left:8px; vertical-align:middle;}
   .rail-more{font-size:11px; color:var(--muted); text-align:center; padding:14px 6px 6px;}
   .rail-view-nav{flex:none; margin-top:10px; padding-top:10px; border-top:1px solid var(--line);}
-  .session-entry{flex:none;min-width:0;}
-  #sessionNav{margin:3px 0 10px 18px;padding:0;border:0;overflow:hidden;}
-  #sessionNav[hidden]{display:none;}
-  #tSessionViews{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);}
-  .session-chevron{width:12px;height:12px;flex:none;color:var(--muted);transition:transform .16s ease;}
-  .panel-tab[aria-expanded="true"] .session-chevron{transform:rotate(90deg);}
-  .rail-common-nav #tCommonViews{display:none;}
-  body.rail-closed #sessionNav{margin-left:0;}
-  body.rail-closed .session-chevron{display:none;}
-  @media(prefers-reduced-motion:reduce){.session-chevron{transition:none;}}
   .rail-nav-label{margin:0 10px 5px; color:var(--muted); font-size:9.5px; font-weight:750;
     letter-spacing:.11em; text-transform:uppercase;}
   .rail-view-tabs{display:flex; flex-direction:column; gap:2px;}
@@ -209,7 +199,6 @@
     font:600 13px/1.3 inherit;cursor:pointer;}
   .top-view-tab:hover{color:var(--ink);}
   .top-view-tab.on{border-bottom-color:var(--brand);color:var(--ink);font-weight:700;}
-  [data-shortcut-focus="true"]:focus-visible{outline:none!important;}
   .top-view-tab:focus-visible{outline:2px solid var(--brand);outline-offset:2px;}
   body.plan-active .workspace{max-width:none;min-height:100vh;display:flex;flex-direction:column;}
   body.note-active .goalbar,body.note-active .stamp{display:none;}
@@ -319,23 +308,14 @@
   .graph-scale{min-width:46px; text-align:center; color:var(--muted); font:600 11px/1 var(--mono);}
   .graph-spacer{flex:1;}
   .graph-hint{font-size:11px; color:var(--muted); white-space:nowrap;}
-  .graph-current{margin-left:8px; min-width:0; overflow:hidden; text-overflow:ellipsis;
-    color:var(--brand-ink); font-size:12px; font-weight:700; white-space:nowrap;}
-  .graph-current.empty{color:var(--muted); font-weight:500;}
-  .graph-current.historical{color:var(--graph-muted);}
-  .graph-btn:disabled{opacity:.45; cursor:default;}
   .graph-viewport{height:470px; min-height:320px; position:relative; overflow:hidden;
     touch-action:none; cursor:grab; background:var(--graph-bg);}
   .graph-viewport.panning{cursor:grabbing;}
   .graph-viewport svg{display:block; width:100%; height:100%; overflow:visible; user-select:none;}
-  .graph-edge{fill:none; stroke:var(--graph-line); stroke-width:1.5; stroke-linejoin:round; stroke-linecap:round; vector-effect:non-scaling-stroke;}
+  .graph-edge{fill:none; stroke:var(--graph-line); stroke-width:1.5; vector-effect:non-scaling-stroke;}
   .graph-arrow{fill:var(--graph-line);}
-  .graph-arrow.now{fill:var(--brand);}
-  .graph-edge.flow.done{stroke:var(--done);}
   .graph-edge.branch{stroke:var(--graph-line);}
-  .graph-edge.now{stroke:var(--brand);}
-  .graph-edge.now.historical{stroke:var(--graph-line);}
-  .graph-edge.side,.graph-edge.pause{stroke-dasharray:6 6;}
+  .graph-edge.side{stroke-dasharray:6 6; opacity:.72;}
   .graph-node{cursor:move; outline:none;}
   .graph-node-hit{fill:var(--graph-bg); stroke:var(--graph-line); stroke-width:1; rx:3;
     vector-effect:non-scaling-stroke; transition:fill .12s,stroke .12s;}
@@ -343,18 +323,6 @@
   .graph-node:focus-visible .graph-node-hit{fill:color-mix(in srgb,var(--brand) 5%,transparent); stroke:var(--brand); stroke-width:1.5;}
   .graph-node-label{fill:var(--graph-ink); font:650 14px/1.2 var(--sans); pointer-events:none;}
   .graph-node-meta{fill:var(--graph-muted); font:650 9.5px/1 var(--sans); letter-spacing:.025em; pointer-events:none;}
-  .graph-stage-dot{fill:var(--graph-bg); stroke:var(--graph-line); stroke-width:1.5; pointer-events:none;}
-  .graph-stage-number{fill:var(--graph-muted); font:700 10px/1 var(--mono); pointer-events:none;}
-  .graph-node.done .graph-stage-dot{stroke:var(--done);}
-  .graph-node.now .graph-stage-dot{fill:var(--brand); stroke:var(--brand);}
-  .graph-node.now .graph-stage-number{fill:var(--graph-bg);}
-  .graph-node.now.historical .graph-node-hit{fill:var(--graph-bg); stroke:var(--graph-line);}
-  .graph-node.now.historical .graph-node-label{fill:var(--graph-ink);}
-  .graph-node.now.historical .graph-node-meta{fill:var(--graph-muted);}
-  .graph-node.now.historical .graph-stage-dot{fill:var(--graph-bg); stroke:var(--graph-line);}
-  .graph-node.now.historical .graph-stage-number{fill:var(--graph-muted);}
-  .graph-node.on-path.workflow-main:not(.now):not(.historical) .graph-stage-dot{stroke:var(--brand);}
-  .graph-node.detail .graph-node-hit{stroke-dasharray:5 4;}
   .graph-node-track{stroke:var(--graph-line); stroke-width:1.5; vector-effect:non-scaling-stroke;}
   .graph-node-anchor{fill:var(--graph-bg); stroke:var(--graph-line); stroke-width:1.5; vector-effect:non-scaling-stroke;}
   .graph-node.now .graph-node-label,.graph-node.now .graph-node-meta{fill:var(--brand-ink);}
@@ -474,11 +442,11 @@
   .memo-doc-tab-scroll{display:flex;align-items:stretch;flex:1 1 auto;min-width:0;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;}
   .memo-doc-tab{display:flex;align-items:stretch;flex:0 0 auto;max-width:220px;border-right:1px solid var(--line);position:relative;}
   .memo-doc-tab::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:transparent;}
-  .memo-doc-tab.on::after{height:3px;background:var(--brand-ink);}
+  .memo-doc-tab.on::after{background:var(--brand);}
   .memo-doc-tab-open,.memo-doc-tab-close,.memo-doc-tab-add{border:0;background:transparent;color:var(--muted);cursor:pointer;}
   .memo-doc-tab-open{min-width:72px;max-width:180px;padding:8px 7px 7px 12px;overflow:hidden;text-overflow:ellipsis;
     white-space:nowrap;text-align:left;font:600 12px/1.3 inherit;}
-  .memo-doc-tab.on .memo-doc-tab-open{color:var(--ink);}
+  .memo-doc-tab.on .memo-doc-tab-open{color:var(--ink);font-weight:700;}
   .memo-doc-tab-close{width:30px;padding:0 7px 1px;font:500 15px/1 inherit;}
   .memo-doc-tab-add{flex:0 0 38px;border-left:1px solid var(--line);font:500 18px/1 inherit;}
   .memo-doc-tab-open:hover,.memo-doc-tab-close:hover,.memo-doc-tab-add:hover{background:var(--hover);color:var(--ink);}
@@ -486,10 +454,13 @@
   .memo-doc-empty[hidden]{display:none;}
   .memo-doc-empty{display:grid;place-items:center;flex:1;min-height:270px;padding:28px;color:var(--muted);font-size:13px;text-align:center;}
   .memo-editor.memo-no-document > :not(.memo-doc-tabs):not(.memo-doc-empty){display:none;}
-  .memo-title{width:180px;min-width:72px;max-width:180px;border:0;background:transparent;
-    color:var(--ink);padding:8px 7px 7px 12px;outline:0;text-overflow:ellipsis;}
-  .memo-doc-tab-open,.memo-title{font-family:inherit;font-size:13px;font-weight:500;line-height:1.3;}
-  .memo-title[hidden]{display:none;}
+  .memo-breadcrumb{display:flex;align-items:center;gap:4px;min-height:36px;flex-shrink:0;padding:5px 15px;
+    border-bottom:1px solid var(--line);color:var(--muted);font-size:11.5px;overflow-x:auto;overflow-y:hidden;white-space:nowrap;}
+  .memo-crumb{border:0;background:transparent;color:inherit;padding:2px 1px;font:600 11.5px/1.3 inherit;cursor:pointer;}
+  .memo-crumb:hover,.memo-crumb:focus-visible{color:var(--ink);outline:0;text-decoration:underline;text-underline-offset:3px;}
+  .memo-crumb-sep{opacity:.55;}
+  .memo-title{width:100%; border:0; border-bottom:1px solid var(--line); background:transparent;
+    color:var(--ink); padding:15px 16px 12px; font:680 18px/1.35 inherit; outline:0;}
   .memo-title:focus-visible,.memo-content:focus-visible{box-shadow:inset 0 0 0 2px var(--brand);}
   .memo-toolbar{display:flex; align-items:center; flex-wrap:nowrap; gap:6px; min-height:43px; padding:6px 10px;
     border-bottom:1px solid var(--line); background:var(--paper);}
@@ -509,23 +480,12 @@
   .memo-content h1{font-size:1.65em; line-height:1.3; margin:.45em 0 .22em;}
   .memo-content h2{font-size:1.35em; line-height:1.35; margin:.42em 0 .2em;}
   .memo-content h3{font-size:1.15em; line-height:1.4; margin:.36em 0 .18em;}
-  .memo-content ul,.memo-content ol{padding-left:2em; margin:.3em 0;}
-  .memo-content ul{list-style-type:disc;}
-  .memo-content ol{list-style-type:decimal;}
-  .memo-content li{padding-left:.3em; font-size:inherit;}
-  .memo-content li::before{content:none;}
+  .memo-content ul,.memo-content ol{padding-left:1.55em; margin:.3em 0;}
   .memo-content blockquote{border-left:3px solid var(--brand-bd); padding:.2em 0 .2em .8em;
     margin:.45em 0; color:var(--ink-2);}
   .memo-content pre{font:13px/1.55 var(--mono); background:var(--paper); border:1px solid var(--line);
     border-radius:6px; padding:9px 11px; white-space:pre-wrap; margin:.45em 0;}
   .memo-content a{color:var(--brand-ink); text-decoration-thickness:1px; text-underline-offset:2px;}
-  .memo-link-dialog{width:min(420px,calc(100vw - 32px));margin:auto;padding:20px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);}
-  .memo-link-dialog::backdrop{background:rgba(0,0,0,.35);}
-  .memo-link-dialog form{display:grid;gap:12px;}
-  .memo-link-dialog input{width:100%;padding:8px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font:inherit;}
-  .memo-link-dialog .actions{display:flex;justify-content:flex-end;gap:8px;}
-  .memo-link-dialog button{padding:7px 12px;cursor:pointer;}
-  .memo-link-error{color:var(--urgent);font-size:13px;}
   .memo-page-link{display:inline-flex; align-items:center; gap:7px; max-width:100%; padding:2px 1px;
     border-bottom:1px solid var(--line); color:var(--ink); font-weight:650; line-height:1.45;
     cursor:pointer; vertical-align:baseline;}
@@ -542,12 +502,10 @@
   .memo-block-drag{cursor:grab;letter-spacing:-2px;}
   .memo-block-drag:active{cursor:grabbing;}
   .memo-content > .memo-block-dragging{opacity:.45;}
-  .memo-check{display:inline-grid; position:relative; place-items:center; width:18px; height:18px; margin-right:6px;
+  .memo-check{display:inline-grid; place-items:center; width:18px; height:18px; margin-right:6px;
     border:1px solid var(--brand-bd); border-radius:4px; color:transparent; vertical-align:-3px; cursor:pointer;}
   .memo-check[data-checked="true"]{background:var(--brand); border-color:var(--brand); color:#fff;}
-  .memo-check::after{content:'✓'; position:absolute; inset:0; display:grid; place-items:center;
-    font-size:12px; line-height:1; visibility:hidden;}
-  .memo-check[data-checked="true"]::after{visibility:visible;}
+  .memo-check[data-checked="true"]::after{content:'✓'; font-size:12px; line-height:1;}
   .memo-slash[hidden]{display:none;}
   .memo-slash{position:absolute; z-index:20; left:14px; top:141px; width:210px; max-height:250px; overflow:auto;
     border:1px solid var(--line); border-radius:8px; padding:6px; background:var(--card); box-shadow:var(--shadow);}
@@ -726,37 +684,28 @@
     .rail-scrim{backdrop-filter:none !important;}
   }
 
-/* Current journey and record readability */
-.journey-progress{padding:0 0 12px;color:var(--ink-2);font-size:12px;line-height:1.5;}
-#situation.graph-active.on{display:flex;flex-direction:column;overflow:hidden;}
-#situation.graph-active>.view-tabs,#situation.graph-active>.journey-progress{flex:none;}
-#situation.graph-active #map.on{display:flex;flex-direction:column;flex:1;min-height:0;}
-#situation.graph-active #graphJourney:not([hidden]){display:flex;flex-direction:column;flex:1;min-height:0;}
-#situation.graph-active .graph-toolbar{flex:none;flex-wrap:wrap;}
-#situation.graph-active #graphViewport{flex:1;height:auto;min-height:0;}
+/* E2 comparison annotations and readability */
+.e2-progress{padding:0 0 12px;color:var(--ink-2);font-size:12px;line-height:1.5;}
 .memo-side-head{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px;}
+.memo-side-head .e2-mark{margin:0;}
 .memo-side-head b{white-space:nowrap;}
 .memo-side-head .memo-new{grid-column:1/-1;justify-self:end;}
-.journey-history{display:inline-block;margin-left:10px;font-size:11px;color:var(--muted);}
+.e2-history{display:inline-block;margin-left:10px;font-size:11px;color:var(--muted);}
+.e2-mark{display:inline-block;color:var(--brand-ink);font:700 13px/1.3 var(--sans);margin-right:7px;}
+.e2-guide{position:fixed;right:12px;bottom:5px;z-index:100;font:12px/1.5 var(--sans);color:var(--ink);}
+.e2-guide summary{cursor:pointer;background:var(--paper);padding:3px 10px;border:1px solid var(--line);}
+.e2-guide ol{background:var(--card);padding:12px 18px 12px 32px;border:1px solid var(--line);margin:0;max-width:360px;}
 .change-row{display:grid;grid-template-columns:42px minmax(0,1fr);gap:10px;padding:10px 0;border-bottom:1px solid var(--line);margin:0;}
 .change-content{min-width:0;}.change-sum{font-size:14px;line-height:1.6;color:var(--ink);}
 .change-path{font:11px/1.5 var(--mono);color:var(--muted);margin-top:5px;overflow-wrap:anywhere;}
-.need-item[role="button"]{cursor:pointer;}
-.need-item[role="button"]:hover{border-color:var(--brand-bd);background:var(--hover);}
-.need-item[role="button"]:focus-visible{outline:2px solid var(--brand);outline-offset:2px;}
-.need-open{margin-left:auto;color:var(--muted);font-size:18px;}
-#requestText{white-space:pre-wrap;overflow-wrap:anywhere;}
 @container (max-width:600px){.change-row{grid-template-columns:38px minmax(0,1fr);}.change-sum{grid-column:auto;}}
 
-.app-view-tab[data-shortcut]::after,.view-tab[data-shortcut]::after{content:attr(data-shortcut);display:inline-grid;place-items:center;flex:none;width:20px;height:21px;margin-left:auto;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;background:color-mix(in srgb,var(--paper) 65%,transparent);color:var(--muted);font:500 11px/1 var(--mono);text-transform:uppercase;box-sizing:border-box}
-.view-tab[data-shortcut]::after{margin-left:9px;width:19px;height:20px}
-.view-tab[data-shortcut]{display:inline-flex;align-items:center}
-.app-view-tab[data-shortcut] .badge{margin-left:8px}
-body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
 </style>
 </head>
 <body>
-
+<details class="e2-guide"><summary>E2 · ①–⑥ 변경 안내</summary><ol>
+<li>그래프: 화면 크기와 다시 열기에 맞춤</li><li>노트: 편집 영역 높이 확보</li><li>상황: 현재 진행과 완료 당시 메모 구분</li><li>기록: 최신순·변경 요약 우선</li><li>선택: 채움 대신 얇은 표식</li><li>빈 플랜: 빈 선택 숨김·대상 없는 동작 비활성</li>
+</ol></details>
 
 <div class="help-overlay" id="helpOverlay" role="dialog" aria-modal="true" aria-label="Help">
   <div class="help-box" id="helpBox"></div>
@@ -800,12 +749,12 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
       <div id="railTabs"></div>
       <div class="rail-more" id="railMore"></div>
     </div>
-    <div class="rail-view-nav" id="sessionNav" hidden>
+    <div class="rail-view-nav">
       <div class="rail-nav-label" id="tSessionViews"></div>
       <div class="rail-view-tabs" role="tablist" aria-orientation="vertical" aria-labelledby="tSessionViews">
         <button class="rail-view-tab app-view-tab" id="tabSituation" role="tab" data-pane="situation" aria-controls="situation"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg><span id="tTabSituation"></span><span class="badge" id="bSituation"></span></button>
         <button class="rail-view-tab app-view-tab" id="tabPlan" role="tab" data-pane="plan" aria-controls="plan"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="6" height="16" rx="1"/><rect x="10" y="4" width="6" height="10" rx="1"/><rect x="17" y="4" width="4" height="7" rx="1"/></svg><span id="tTabPlan"></span></button>
-        <button class="rail-view-tab app-view-tab" id="tabScope" role="tab" data-pane="scope" aria-controls="scope"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3v17h17M7 15l4-5 4 3 5-7"/></svg><span>자료 분석</span></button><button class="rail-view-tab app-view-tab" id="tabNeeds" role="tab" data-pane="needs" aria-controls="needs"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span id="tTabNeeds"></span><span class="badge" id="bNeeds"></span></button>
+        <button class="rail-view-tab app-view-tab" id="tabNeeds" role="tab" data-pane="needs" aria-controls="needs"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span id="tTabNeeds"></span><span class="badge" id="bNeeds"></span></button>
         <button class="rail-view-tab app-view-tab" id="tabRecords" role="tab" data-pane="records" aria-controls="records"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H4a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-8L9 4z"/></svg><span id="tTabRecords"></span><span class="badge" id="bRecords"></span></button>
       </div>
     </div>
@@ -819,7 +768,7 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
 </nav>
 <button class="rail-scrim" id="railScrim" type="button" aria-label="Close session drawer" tabindex="-1"></button>
 
-<main class="workspace"><section class="pane" id="scope" role="tabpanel" aria-labelledby="tabScope" hidden><iframe id="scopeFrame" title="OlchiScope 자료 분석"></iframe></section>
+<main class="workspace">
   <div class="goal-header"><h1 class="goalbar" id="goalbar"></h1>
   <div class="stamp" id="substamp"></div></div>
   <div id="toast" role="status"></div>
@@ -868,7 +817,7 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
       <button class="view-tab" id="mapGraphBtn" role="tab" data-view="graph" aria-controls="map"><span id="tMapGraph"></span></button>
       <button class="view-tab" id="viewTabStack" role="tab" data-view="stack" aria-controls="stack"><span id="tTabStack"></span> <span class="badge" id="bStack"></span></button>
     </div>
-    <div id="journeyProgress" class="journey-progress"></div>
+    <div id="e2Progress" class="e2-progress"></div>
     <div class="view-panel" id="map" role="tabpanel" aria-labelledby="mapTreeBtn" hidden>
       <div class="journey-mode" id="treeJourney">
         <div class="tree" id="vtree"></div>
@@ -880,17 +829,12 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
           <button class="graph-btn" id="graphZoomIn" type="button">+</button>
           <button class="graph-btn" id="graphFit" type="button"><span id="tGraphFit"></span></button>
           <button class="graph-btn" id="graphReset" type="button"><span id="tGraphReset"></span></button>
-          <button class="graph-btn" id="graphFocus" type="button"><span id="tGraphFocus"></span></button>
-          <span class="graph-current empty" id="graphCurrent"></span>
           <span class="graph-spacer"></span>
           <span class="graph-hint" id="tGraphHint"></span>
         </div>
         <div class="graph-viewport" id="graphViewport" tabindex="0">
           <svg id="graphSvg" role="group">
-            <defs>
-              <marker id="graphArrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path class="graph-arrow" d="M 0 0 L 10 5 L 0 10 z"></path></marker>
-              <marker id="graphArrowNow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path class="graph-arrow now" d="M 0 0 L 10 5 L 0 10 z"></path></marker>
-            </defs>
+            <defs><marker id="graphArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path class="graph-arrow" d="M 0 0 L 10 5 L 0 10 z"></path></marker></defs>
             <g id="graphWorld"><g id="graphEdges"></g><g id="graphNodes"></g></g>
           </svg>
           <div class="graph-empty" id="graphEmpty" hidden></div>
@@ -932,10 +876,12 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
     <div class="memo-layout">
       <section class="memo-editor" aria-label="Note editor">
         <div class="memo-doc-tabs" id="memoDocTabs" role="tablist">
-          <div class="memo-doc-tab-scroll" id="memoDocTabScroll"><input id="memoTitleInput" class="memo-title" type="text" maxlength="120" autocomplete="off" aria-label="노트 제목" hidden></div>
+          <div class="memo-doc-tab-scroll" id="memoDocTabScroll"></div>
           <button class="memo-doc-tab-add" id="memoDocTabAdd" type="button">+</button>
         </div>
         <div class="memo-doc-empty" id="memoDocEmpty" hidden></div>
+        <nav class="memo-breadcrumb" id="memoBreadcrumb" aria-label="Page path"></nav>
+        <input id="memoTitleInput" class="memo-title" type="text" maxlength="120" autocomplete="off">
         <div class="memo-toolbar" role="toolbar" aria-label="Note formatting">
           <span class="memo-tool-group">
             <select class="memo-size memo-block" id="memoBlock" aria-label="Block style">
@@ -993,13 +939,13 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
       sessions: 'SESSIONS',
       tabSituation: 'Situation', tabRecords: 'Records',
       tabMap: 'Map', tabStack: 'Stack', tabChanges: 'Changes', tabDec: 'Decisions',
-      tabNeeds: 'Needs you', tabDeadends: 'Dead ends', tabMemo: 'Shared notes', tabPlan: 'Plan',
+      tabNeeds: 'Needs you', tabDeadends: 'Dead ends', tabMemo: 'Note', tabPlan: 'Plan',
       sessionViews: 'SESSION', commonViews: 'COMMON', situationViews: 'Situation views', recordViews: 'Record views',
       legendMap: '✓ done · ▶ now · ↩ next · ⑂ fork (active) · dim ⑂ side-quest (parked) · ▾ fold',
-      mapTree: 'Tree', mapGraph: 'Workflow', mapModeLabel: 'Work views',
-      graphFit: 'Fit', graphReset: 'Arrange', graphFocus: 'Go to position', graphHint: 'Main flow → · extra work ↓ · drag to move · wheel to zoom',
-      graphZoomIn: 'Zoom in', graphZoomOut: 'Zoom out', graphViewport: 'Interactive work workflow',
-      graphEmpty: 'The agent will draw the work steps here.',
+      mapTree: 'Tree', mapGraph: 'Graph', mapModeLabel: 'Journey display',
+      graphFit: 'Fit', graphReset: 'Arrange', graphHint: 'Drag canvas · move nodes · wheel to zoom',
+      graphZoomIn: 'Zoom in', graphZoomOut: 'Zoom out', graphViewport: 'Interactive journey graph',
+      graphEmpty: 'The agent will draw connected steps here.',
       sideQuest: 'side',
       legendStack: 'When the human changes topic, interrupted work lands here with its resume point (top = resume first).',
       legendChanges: 'Everything the agent touched — files, commands, commits — so you never re-read the transcript to find out.',
@@ -1090,13 +1036,13 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
       sessions: '세션',
       tabSituation: '상황', tabRecords: '기록',
       tabMap: '지도', tabStack: '스택', tabChanges: '변경', tabDec: '결정',
-      tabNeeds: '요청', tabDeadends: '막힌 길', tabMemo: '공통 노트', tabPlan: '플랜',
+      tabNeeds: '요청', tabDeadends: '막힌 길', tabMemo: '노트', tabPlan: '플랜',
       sessionViews: '현재 세션', commonViews: '공통', situationViews: '상황 보기', recordViews: '기록 보기',
       legendMap: '✓ 완료 · ▶ 지금 여기 · ↩ 다음 · ⑂ 분기(진행) · 흐린 ⑂ 샛길(보류) · ▾ 접기',
-      mapTree: '트리', mapGraph: '워크플로우', mapModeLabel: '작업 보기',
-      graphFit: '맞춤', graphReset: '정렬', graphFocus: '위치로', graphHint: '주 흐름 → · 추가 작업 ↓ · 빈 곳 이동 · 노드 이동 · 휠 확대',
-      graphZoomIn: '확대', graphZoomOut: '축소', graphViewport: '대화형 작업 워크플로우',
-      graphEmpty: '에이전트가 작업 단계를 여기에 그립니다.',
+      mapTree: '트리', mapGraph: '그래프', mapModeLabel: '여정 표시 방식',
+      graphFit: '맞춤', graphReset: '정렬', graphHint: '빈 곳 이동 · 노드 위치 조정 · 휠 확대',
+      graphZoomIn: '확대', graphZoomOut: '축소', graphViewport: '대화형 여정 그래프',
+      graphEmpty: '에이전트가 연결된 단계를 여기에 그립니다.',
       sideQuest: '샛길',
       legendStack: '주제가 바뀌면 하던 일과 재개점이 여기에 쌓입니다.',
       legendChanges: '에이전트가 변경한 파일·명령·커밋 기록입니다.',
@@ -1191,9 +1137,6 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
   var sessions = [];
   var total = 0;
   var current = null;
-  var lastSessionPane = 'situation';
-  var sessionNav = document.getElementById('sessionNav');
-  var navSession = null;
   var openState = {}; // nodeId -> open? (preserved across live refreshes)
   var mapMode = 'tree';
   try { mapMode = localStorage.getItem('olchipanel.map.mode') || 'tree'; } catch(e){}
@@ -1363,12 +1306,8 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
       return;
     }
     row.appendChild(checkChip(T('nodeCheck') + ' ' + doctorReport.node.version, doctorReport.node.supported));
-    if (doctorReport.bundledRuntime) {
-      row.appendChild(checkChip(lang==='ko'?'앱 내 MCP 엔진':'Installed MCP runtime', true));
-    } else {
-      row.appendChild(checkChip(T('npmCheck'), doctorReport.npm.available));
-      row.appendChild(checkChip(T('npxCheck'), doctorReport.npx.available));
-    }
+    row.appendChild(checkChip(T('npmCheck'), doctorReport.npm.available));
+    row.appendChild(checkChip(T('npxCheck'), doctorReport.npx.available));
     row.appendChild(checkChip(T('viewerCheck'), doctorReport.viewer.live, true));
     row.appendChild(checkChip(T('browserCheck'), doctorReport.browser.available, true));
     meta.textContent = doctorReport.platform + ' ' + doctorReport.arch + ' · port ' +
@@ -1462,13 +1401,11 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
     document.getElementById('tMapGraph').textContent = T('mapGraph');
     document.getElementById('tGraphFit').textContent = T('graphFit');
     document.getElementById('tGraphReset').textContent = T('graphReset');
-    document.getElementById('tGraphFocus').textContent = T('graphFocus');
     document.getElementById('tGraphHint').textContent = T('graphHint');
     document.getElementById('graphZoomIn').setAttribute('aria-label', T('graphZoomIn'));
     document.getElementById('graphZoomOut').setAttribute('aria-label', T('graphZoomOut'));
     document.getElementById('graphFit').setAttribute('aria-label', T('graphFit'));
     document.getElementById('graphReset').setAttribute('aria-label', T('graphReset'));
-    document.getElementById('graphFocus').setAttribute('aria-label', T('graphFocus'));
     document.getElementById('graphViewport').setAttribute('aria-label', T('graphViewport'));
     document.getElementById('graphSvg').setAttribute('aria-label', T('graphViewport'));
     document.getElementById('graphEmpty').textContent = T('graphEmpty');
@@ -1485,7 +1422,7 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
     document.getElementById('memoDocEmpty').textContent = T('memoOpenHint');
     document.getElementById('memoTitleInput').placeholder = T('memoTitlePh');
     document.getElementById('memoContent').dataset.placeholder = T('memoPh') + '  /';
-    document.getElementById('memoTitleInput').setAttribute('aria-label', lang === 'ko' ? '노트 제목' : 'Note title');
+    document.getElementById('memoBreadcrumb').setAttribute('aria-label', lang === 'ko' ? '페이지 경로' : 'Page path');
     document.getElementById('memoSearch').placeholder = T('memoSearchPh');
     document.getElementById('memoSearch').setAttribute('aria-label', T('memoSearchPh'));
     document.getElementById('memoBlockText').textContent = T('memoBlockText');
@@ -1517,7 +1454,7 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
     document.getElementById('exportBtn').setAttribute('aria-label', T('exportBtn'));
     document.getElementById('langBtn').textContent = lang === 'ko' ? 'EN' : '한';
     renderActivation();
-    if(memoDoc){renderMemoTabs();renderMemoList();}
+    if(memoDoc){renderMemoTabs();renderMemoBreadcrumb();renderMemoList();}
   }
   document.getElementById('langBtn').addEventListener('click', function(){
     lang = lang === 'ko' ? 'en' : 'ko';
@@ -1541,7 +1478,7 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
       + '<pre>이 작업을 OlchiPanel로 추적해.</pre>'
       + '<h3>탭</h3>'
       + '<table>'
-      + '<tr><td>상황</td><td>트리·워크플로우(기록된 단계 순서와 현재 위치)·스택(밀쳐둔 일)</td></tr>'
+      + '<tr><td>상황</td><td>지도(작업 여정·해결 순서)와 스택(밀쳐둔 일·재개점)</td></tr>'
       + '<tr><td>플랜</td><td>상태와 우선순위로 관리하는 전체 폭 작업 보드</td></tr>'
       + '<tr><td>요청</td><td>에이전트가 당신에게 기다리는 것 — 받은편지함. 빨강=급함</td></tr>'
       + '<tr><td>기록</td><td>변경·결정·막힌 길을 한곳에서 전환해 확인</td></tr>'
@@ -1564,7 +1501,7 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
       + '<tr><td>get_panel</td><td>현재 패널 상태·뷰어 주소 읽기</td></tr>'
       + '</table>'
       + '<h3>끄기 — 정직한 안내</h3>'
-      + '<p><b>Windows 앱</b>에서 창을 닫으면 알림 영역으로 숨겨집니다. 숨겨진 OlchiPanel 아이콘을 더블클릭하면 다시 열립니다. 완전히 끄려면 아이콘을 우클릭해 <b>종료</b>를 선택하세요. 별도로 실행한 브라우저 뷰어는 <code>npx olchipanel stop</code>으로 종료합니다.</p>'
+      + '<p>이 창을 닫으면 <b>화면만</b> 닫힙니다 — 보드는 백그라운드에서 계속 돕니다(그래서 새로고침해도 살아있는 겁니다). 완전히 끄려면: <code>npx olchipanel stop</code>. 에이전트가 띄운 보조 프로세스는 그 에이전트를 종료하면 함께 꺼집니다. 최후 수단: 작업관리자에서 6711 포트를 쓰는 node.exe 종료.</p>'
       + '<h3>터미널 명령</h3>'
       + '<table>'
       + '<tr><td>npx olchipanel open</td><td>패널 창 열기 (떠 있으면 재사용, 죽었으면 새로)</td></tr>'
@@ -1587,7 +1524,7 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
       + '<pre>Track this task in OlchiPanel.</pre>'
       + '<h3>Tabs</h3>'
       + '<table>'
-      + '<tr><td>Situation</td><td>Tree, Workflow (recorded step order and current position), and Stack (interrupted work)</td></tr>'
+      + '<tr><td>Situation</td><td>Map (journey and solve order) plus Stack (interrupted work and resume points)</td></tr>'
       + '<tr><td>Plan</td><td>a full-width work board organized by status and priority</td></tr>'
       + '<tr><td>Needs you</td><td>your inbox from the agent. red = urgent</td></tr>'
       + '<tr><td>Records</td><td>switch between changes, decisions, and dead ends in one place</td></tr>'
@@ -1610,7 +1547,7 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
       + '<tr><td>get_panel</td><td>read back panel state + viewer URL</td></tr>'
       + '</table>'
       + '<h3>Quitting — the honest version</h3>'
-      + '<p>In the <b>Windows app</b>, closing the window hides it in the notification area. Double-click the hidden OlchiPanel icon to reopen it. To quit, right-click the icon and choose <b>종료</b>. For a separately launched browser viewer, use <code>npx olchipanel stop</code>.</p>'
+      + '<p>Closing this window only closes the <b>screen</b> — the board keeps serving in the background, which is what makes it survive reloads. To fully stop it: <code>npx olchipanel stop</code>. Helper processes owned by agents end when you close those agents. Last resort: Task Manager → the node.exe serving port 6711.</p>'
       + '<h3>Terminal commands</h3>'
       + '<table>'
       + '<tr><td>npx olchipanel open</td><td>open the panel window (reuses a live viewer, restarts a dead one)</td></tr>'
@@ -1664,6 +1601,7 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
   var memoEditor = document.querySelector('.memo-editor');
   var memoDocTabScroll = document.getElementById('memoDocTabScroll');
   var memoDocEmpty = document.getElementById('memoDocEmpty');
+  var memoBreadcrumb = document.getElementById('memoBreadcrumb');
   var memoList = document.getElementById('memoList');
   var memoSearch = document.getElementById('memoSearch');
   var memoSlash = document.getElementById('memoSlash');
@@ -1697,7 +1635,7 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
             ['class','data-note-id','contenteditable','role','tabindex'].indexOf(name) >= 0) allowed = true;
         if (!allowed) n.removeAttribute(a.name);
       });
-      if (tag === 'A' && n.hasAttribute('href')) { n.target = '_blank'; n.rel = 'noreferrer'; n.title = 'Ctrl+클릭으로 링크 열기'; }
+      if (tag === 'A' && n.hasAttribute('href')) { n.target = '_blank'; n.rel = 'noreferrer'; }
       if (tag === 'SPAN' && !n.classList.contains('memo-check') && !n.classList.contains('memo-page-link')) {
         n.replaceWith.apply(n, Array.from(n.childNodes));
       }
@@ -1742,12 +1680,6 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
   }
   function renderMemoTabs(){
     if(!memoDocTabScroll)return;
-    // Keep the live input in place during typing and IME composition.
-    if(document.activeElement===memoTitleInput&&memoTitleInput.dataset.noteId===memoDoc.selected){
-      var current=memoCurrent(),close=memoTitleInput.parentElement.querySelector('.memo-doc-tab-close');
-      if(close)close.setAttribute('aria-label',T('memoCloseTab')+': '+(current.title||T('memoUntitled')));
-      memoSaveTabs();return;
-    }
     memoTabs=memoTabs.filter(function(id,index,all){return memoById(id)&&all.indexOf(id)===index;});
     memoDocTabScroll.innerHTML='';
     memoTabs.forEach(function(id,index){
@@ -1768,15 +1700,9 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
       var close=el('button','memo-doc-tab-close','×');close.type='button';close.title=T('memoCloseTab');
       close.setAttribute('aria-label',T('memoCloseTab')+': '+(note.title||T('memoUntitled')));
       close.addEventListener('click',function(e){e.stopPropagation();memoCloseTab(id);});
-      if(active){
-        memoTitleInput.hidden=false;memoTitleInput.dataset.noteId=id;
-        memoTitleInput.value=note.title;memoTitleInput.placeholder=T('memoUntitled');
-        item.appendChild(memoTitleInput);
-      }else item.appendChild(open);
-      item.appendChild(close);memoDocTabScroll.appendChild(item);
+      item.appendChild(open);item.appendChild(close);memoDocTabScroll.appendChild(item);
       if(active)requestAnimationFrame(function(){item.scrollIntoView({block:'nearest',inline:'nearest'});});
     });
-    if(!memoDocTabScroll.contains(memoTitleInput)){memoTitleInput.hidden=true;memoDocTabScroll.appendChild(memoTitleInput);}
     memoSaveTabs();
   }
   function memoCloseTab(id){
@@ -1784,7 +1710,7 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
     memoTabs.splice(index,1);
     if(memoDoc.selected===id)memoDoc.selected=memoTabs[Math.min(index,memoTabs.length-1)]||null;
     memoSaveTabs();memoSyncEditor();renderMemoList();
-    if(memoCurrent())memoTitleInput.focus();else document.getElementById('memoDocTabAdd').focus();
+    var active=memoDocTabScroll.querySelector('[aria-selected="true"]');if(active)active.focus();
   }
   function memoPageLinkElement(note){
     var link=el('span','memo-page-link',note.title||T('memoUntitled'));
@@ -1832,13 +1758,26 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
     var maxTop=Math.max(0,block.closest('.memo-editor').clientHeight-memoBlockControls.offsetHeight-4);
     memoBlockControls.style.top=Math.max(0,Math.min(maxTop,blockBox.top-editorBox.top))+'px';
   }
+  function renderMemoBreadcrumb(){
+    memoBreadcrumb.innerHTML='';
+    var path=[],note=memoCurrent(),seen=new Set();
+    while(note&&!seen.has(note.id)){seen.add(note.id);path.unshift(note);note=note.parentId?memoById(note.parentId):null;}
+    var root=el('button','memo-crumb',T('memoRoot'));root.type='button';
+    root.addEventListener('click',function(){var first=memoChildren(null)[0];if(first)selectMemo(first.id);});
+    memoBreadcrumb.appendChild(root);
+    path.forEach(function(item){
+      memoBreadcrumb.appendChild(el('span','memo-crumb-sep','/'));
+      var crumb=el('button','memo-crumb',item.title||T('memoUntitled'));crumb.type='button';
+      crumb.addEventListener('click',function(){selectMemo(item.id);});memoBreadcrumb.appendChild(crumb);
+    });
+  }
   function memoSyncEditor(){
     var note = memoCurrent();
     memoEditor.classList.toggle('memo-no-document',!note);memoDocEmpty.hidden=!!note;
     memoTitleInput.disabled=!note;memoContent.contentEditable=note?'true':'false';
     memoTitleInput.value = note ? note.title : '';
     memoContent.innerHTML = note ? memoClean(note.html) : '';
-    memoEnsureBlocks(); memoHydratePageLinks(memoContent); memoBlockControls.hidden=true; memoActiveBlockEl=null;
+    memoEnsureBlocks(); memoHydratePageLinks(memoContent); memoBlockControls.hidden=true; memoActiveBlockEl=null; renderMemoBreadcrumb();
     memoSlash.hidden = true;
     renderMemoTabs();
   }
@@ -1959,7 +1898,7 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
     note.html = memoClean(memoContent.innerHTML);
     note.updated = new Date().toISOString();
     if(previousTitle!==note.title)memoRefreshPageLinkLabels(note.id);
-    renderMemoTabs(); renderMemoList(); memoQueueSave();
+    renderMemoTabs(); renderMemoBreadcrumb(); renderMemoList(); memoQueueSave();
   }
   function memoQueueSave(){
     clearTimeout(memoTimer); memoSt.textContent = '…';
@@ -2017,12 +1956,7 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
     if(!memoById(memoDoc.selected))memoDoc.selected=memoTabs[0]||memoDoc.notes[0].id;
     memoOpenTab(memoDoc.selected);memoRefreshPageLinkLabels(id);memoSyncEditor();renderMemoList();memoQueueSave();
   }
-  memoTitleInput.addEventListener('input',function(){
-    var note=memoCurrent();if(!note)return;
-    note.title=memoTitleInput.value.slice(0,120);note.updated=new Date().toISOString();
-    memoRefreshPageLinkLabels(note.id);renderMemoTabs();renderMemoList();memoQueueSave();
-  });
-  memoTitleInput.addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.isComposing){e.preventDefault();memoContent.focus();}});
+  memoTitleInput.addEventListener('input', memoUpdateFromEditor);
   memoSearch.addEventListener('input', renderMemoList);
   memoContent.addEventListener('input', function(){
     memoUpdateFromEditor(); memoSlash.hidden=!memoSlashTriggered();
@@ -2035,8 +1969,6 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
     var block=memoTopBlock(e.target);if(block)memoPositionBlockControls(block);
     var pageLink=e.target.closest&&e.target.closest('.memo-page-link');
     if(pageLink){e.preventDefault();selectMemo(pageLink.dataset.noteId);return;}
-    var link=e.target.closest&&e.target.closest('a[href]');
-    if(link&&(e.ctrlKey||e.metaKey)){e.preventDefault();window.open(link.href,'_blank','noopener,noreferrer');return;}
     var check=e.target.closest&&e.target.closest('.memo-check'); if(!check) return;
     var checked=check.dataset.checked==='true'; check.dataset.checked=checked?'false':'true';
     check.setAttribute('aria-checked',checked?'false':'true'); memoUpdateFromEditor();
@@ -2084,33 +2016,11 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
     memoFormat('insertHTML','<span class="memo-check" data-checked="false" contenteditable="false" role="checkbox" tabindex="0" aria-checked="false"></span>&nbsp;');
   }
   function memoAddLink(){
-    var sel=window.getSelection(),range=sel&&sel.rangeCount?sel.getRangeAt(0).cloneRange():null;
-    if(range&&!memoContent.contains(range.commonAncestorContainer))range=null;
-    var dialog=document.createElement('dialog');dialog.className='memo-link-dialog';
-    dialog.setAttribute('aria-label',T('memoLink'));
-    dialog.innerHTML='<form><label for="memoLinkUrl">'+T('memoLinkPrompt')+'</label><input id="memoLinkUrl" type="text" inputmode="url" placeholder="https://example.com" autocomplete="off" required><div class="memo-link-error" role="alert" hidden></div><div class="actions"><button type="button">취소</button><button type="submit">적용</button></div></form>';
-    document.body.appendChild(dialog);
-    var input=dialog.querySelector('input'),error=dialog.querySelector('[role="alert"]');
-    input.addEventListener('input',function(){error.hidden=true;});
-    var anchor=range&&range.startContainer,element=anchor&&(anchor.nodeType===3?anchor.parentElement:anchor);
-    var existing=element&&element.closest&&element.closest('a[href]');
-    input.value=existing?existing.getAttribute('href'):'';
-    function restore(){memoContent.focus();var s=window.getSelection();s.removeAllRanges();if(range)s.addRange(range);else memoPlaceCaret(memoContent);}
-    dialog.addEventListener('close',function(){restore();dialog.remove();});
-    dialog.querySelector('button[type="button"]').onclick=function(){dialog.close();};
-    dialog.querySelector('form').onsubmit=function(e){
-      e.preventDefault();var value=input.value.trim();
-      if(!/^[a-z][a-z0-9+.-]*:/i.test(value))value='https://'+value;
-      try{var url=new URL(value);if(!['http:','https:','mailto:'].includes(url.protocol)||(/https?:/.test(url.protocol)&&!url.hostname))throw new Error();value=url.href;}
-      catch(err){error.hidden=false;error.textContent='웹 주소 또는 mailto: 주소를 입력하세요.';input.focus();return;}
-      dialog.close();restore();
-      if(existing){existing.href=value;memoUpdateFromEditor();}
-      else if(range&&!range.collapsed)memoFormat('createLink',value);
-      else memoFormat('insertHTML','<a href="'+memoEscape(value)+'">'+memoEscape(value)+'</a>');
-      // Preserve the final caret when the dialog closes.
-      var current=window.getSelection();range=current&&current.rangeCount?current.getRangeAt(0).cloneRange():range;
-    };
-    dialog.showModal();input.focus();
+    var value=window.prompt(T('memoLinkPrompt'),'https://'); if(!value) return;
+    value=value.trim(); if(!/^(https?:\/\/|mailto:)/i.test(value)){ memoSt.textContent='!'; return; }
+    var sel=window.getSelection();
+    if(sel&&sel.rangeCount&&!sel.isCollapsed) memoFormat('createLink',value);
+    else memoFormat('insertHTML','<a href="'+memoEscape(value)+'">'+memoEscape(value)+'</a>');
   }
   function memoCommands(){
     return [
@@ -2215,8 +2125,6 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
       var icon = document.getElementById(id);
       if (icon) icon.setAttribute('href', faviconHref);
     });
-    var scopeFrame=document.getElementById('scopeFrame');
-    if(scopeFrame&&scopeFrame.contentWindow)scopeFrame.contentWindow.postMessage({type:'olchipanel-theme',theme:t},location.origin);
     var planFrame = document.getElementById('planFrame');
     if (planFrame && planFrame.contentWindow) {
       planFrame.contentWindow.postMessage({ type: 'olchipanel-theme', theme: t }, window.location.origin);
@@ -2339,12 +2247,6 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
   function buildRail(){
     _rankCache = null;
     var root = document.getElementById('railTabs');
-    var area=root.closest('.rail-session-area'),scrollTop=area.scrollTop;
-    var focused=document.activeElement,restoreTab=sessionNav.contains(focused)?focused:null;
-    var shortcutFocus=restoreTab&&restoreTab.dataset.shortcutFocus;
-    var focusedSession=focused&&focused.classList.contains('panel-tab')?focused.dataset.sessionId:null;
-    var changedSession=navSession!==current;
-    sessionNav.remove();sessionNav.hidden=true;
     root.innerHTML = '';
     // group by vendor; inside each group: manual order first, then newest-first
     var order = ['claude', 'codex', 'cursor', 'gemini', 'other'];
@@ -2359,10 +2261,6 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
     var multi = Object.keys(groups).length > 1;
     function renderRow(s, v){
         var b = el('button', 'panel-tab v-' + v + (current === s.id ? ' active' : ''));
-        b.dataset.sessionId=s.id;
-        b.id='session-row-'+encodeURIComponent(s.id);
-        b.setAttribute('aria-expanded',String(current===s.id));
-        if(current===s.id)b.setAttribute('aria-controls','sessionNav');
         var face = el('span', 'face' + (s.alive ? '' : ' dead'), sessionFace(s));
         if (s.alive) face.appendChild(el('span', 'alive'));
         b.appendChild(face);
@@ -2373,17 +2271,10 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
         sub.appendChild(document.createTextNode(' ' + (s.cwd || '').split(/[\\\/]/).slice(-1).join('') + ' · ' + ago(s.started)));
         txt.appendChild(sub);
         b.appendChild(txt);
-        var chevron=document.createElementNS('http://www.w3.org/2000/svg','svg');
-        chevron.setAttribute('class','session-chevron');chevron.setAttribute('viewBox','0 0 16 16');chevron.setAttribute('aria-hidden','true');
-        chevron.innerHTML='<path d="m6 3 5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.5"/>';b.appendChild(chevron);
         b.title = sessionLabel(s) + ' — ' + s.agent + ' · ' + (s.started || '').slice(0, 16).replace('T', ' ') + '  (더블클릭 = 이름 바꾸기 · Alt+↑↓ = 순서 이동)';
         b.addEventListener('click', function(){
           current = s.id; try{localStorage.setItem('olchipanel.sel', s.id);}catch(e){}
-          render();
-          var active=document.querySelector('.app-view-tab.on');
-          if(!active||active.dataset.pane==='memo')showTab(lastSessionPane);
-          var selected=Array.from(document.querySelectorAll('.panel-tab')).find(function(row){return row.dataset.sessionId===s.id;});
-          if(selected)selected.focus({preventScroll:true});
+          if (window.innerWidth <= 760) setRailClosed(true); render();
         });
         // double-click a session to rename it (human affordance; persists via /api/rename)
         b.addEventListener('dblclick', function(ev){
@@ -2432,12 +2323,7 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
           });
           wrap.appendChild(x);
         }
-        var entry=el('div','session-entry');entry.dataset.sessionId=s.id;entry.appendChild(wrap);root.appendChild(entry);
-        if(current===s.id){
-          sessionNav.hidden=false;sessionNav.dataset.sessionId=s.id;
-          sessionNav.querySelector('[role="tablist"]').setAttribute('aria-labelledby',b.id);
-          entry.appendChild(sessionNav);
-        }
+        root.appendChild(wrap);
     }
     order.forEach(function(v){
       if (!groups[v]) return;
@@ -2465,23 +2351,6 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
     document.getElementById('railMore').textContent =
       total > sessions.length ? T('olderOnDisk')(total - sessions.length) : '';
     if (!sessions.length) root.appendChild(el('div', 'cap', T('noSessions')));
-    if(!sessionNav.isConnected)document.getElementById('railDrawer').insertBefore(sessionNav,document.querySelector('.rail-common-nav'));
-    navSession=current;
-    if(changedSession&&!sessionNav.hidden&&sessionNav.animate&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
-      sessionNav.getAnimations().forEach(function(a){a.cancel();});
-      var expandedSession=current;
-      sessionNav.animate([{height:'0px',opacity:0},{height:sessionNav.scrollHeight+'px',opacity:1}],{duration:180,easing:'ease-out'}).finished.then(function(){
-        if(current===expandedSession&&!sessionNav.hidden)sessionNav.parentElement.scrollIntoView({block:'nearest'});
-      }).catch(function(){});
-    }
-    area.scrollTop=scrollTop;
-    if(restoreTab&&restoreTab.isConnected&&!sessionNav.hidden){
-      if(shortcutFocus)restoreTab.dataset.shortcutFocus=shortcutFocus;
-      restoreTab.focus({preventScroll:true});
-    }else if(focusedSession){
-      var restoreRow=Array.from(root.querySelectorAll('.panel-tab')).find(function(row){return row.dataset.sessionId===focusedSession;});
-      if(restoreRow)restoreRow.focus({preventScroll:true});
-    }
   }
 
   // ---- rail collapse toggle (collapsed = one-char faces) ----
@@ -2529,16 +2398,17 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
   }
   function setMapMode(mode){
     mapMode = mode === 'graph' ? 'graph' : 'tree';
-    document.getElementById('situation').classList.toggle('graph-active',mapMode==='graph');
     var graphOn = mapMode === 'graph';
     document.getElementById('treeJourney').hidden = graphOn;
     document.getElementById('graphJourney').hidden = !graphOn;
     try { localStorage.setItem('olchipanel.map.mode', mapMode); } catch(e){}
-    if (graphOn) requestAnimationFrame(initialGraphView);
+    if (graphOn) requestAnimationFrame(function(){
+      fitGraph();
+    });
   }
 
   function graphLayoutMode(){ return window.innerWidth <= 520 ? 'compact' : 'wide'; }
-  function graphLayoutKey(){ return current ? 'olchipanel.graph.layout.v8.' + graphLayoutMode() + '.' + current : ''; }
+  function graphLayoutKey(){ return current ? 'olchipanel.graph.layout.v4.' + graphLayoutMode() + '.' + current : ''; }
   function readGraphLayout(){
     var key = graphLayoutKey();
     if (!key) return {};
@@ -2555,145 +2425,93 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
   var graphMeasureContext = graphMeasureCanvas.getContext && graphMeasureCanvas.getContext('2d');
   function graphTextWidth(value, meta){
     if (!graphMeasureContext) return Array.from(String(value || '')).length * (meta ? 7 : 13);
-    graphMeasureContext.font = meta ? '600 11px system-ui, sans-serif' : '650 15px system-ui, sans-serif';
+    graphMeasureContext.font = meta ? '700 9px system-ui, sans-serif' : '650 13px system-ui, sans-serif';
     return graphMeasureContext.measureText(String(value || '')).width;
   }
   function graphLabelLines(value, maxWidth, maxLines){
-    var characters = Array.from(String(value || '').trim());
-    var width = maxWidth || 220, limit = maxLines || 3;
-    function wrap(lineWidth){
-      var remaining = characters.slice(), lines = [], clipped = false;
-      while (remaining.length && lines.length < limit) {
-        var line = '', lastSpace = -1, take = 0;
-        for (var i=0;i<remaining.length;i++) {
-          var candidate = line + remaining[i];
-          if (graphTextWidth(candidate, false) > lineWidth && line) break;
-          line = candidate; take = i + 1;
-          if (/\s/.test(remaining[i])) lastSpace = i;
-        }
-        if (take < remaining.length && lastSpace > 0) { take = lastSpace + 1; line = remaining.slice(0, take).join(''); }
-        line = line.trim(); remaining = remaining.slice(Math.max(1, take));
-        while (remaining.length && /\s/.test(remaining[0])) remaining.shift();
-        if (lines.length === limit - 1 && remaining.length) {
-          clipped = true;
-          while (line.length && graphTextWidth(line + '…', false) > lineWidth) line = Array.from(line).slice(0, -1).join('');
-          line += '…'; remaining = [];
-        }
-        lines.push(line || ' ');
+    var remaining = Array.from(String(value || '').trim());
+    var lines = [], width = maxWidth || 220, limit = maxLines || 3;
+    while (remaining.length && lines.length < limit) {
+      var line = '', lastSpace = -1, take = 0;
+      for (var i=0;i<remaining.length;i++) {
+        var candidate = line + remaining[i];
+        if (graphTextWidth(candidate, false) > width && line) break;
+        line = candidate; take = i + 1;
+        if (/\s/.test(remaining[i])) lastSpace = i;
       }
-      return { lines: lines.length ? lines : [' '], clipped: clipped };
+      if (take < remaining.length && lastSpace > 0) { take = lastSpace + 1; line = remaining.slice(0, take).join(''); }
+      line = line.trim(); remaining = remaining.slice(Math.max(1, take));
+      while (remaining.length && /\s/.test(remaining[0])) remaining.shift();
+      if (lines.length === limit - 1 && remaining.length) {
+        while (line.length && graphTextWidth(line + '…', false) > width) line = Array.from(line).slice(0, -1).join('');
+        line += '…'; remaining = [];
+      }
+      lines.push(line || ' ');
     }
-    var full = wrap(width);
-    if (full.clipped || full.lines.length < 2) return full.lines;
-    // Keep the same line count while sharing text across the available rows.
-    // This avoids a nearly empty final row after a long first row.
-    var low = 0, high = width;
-    for (var attempt=0;attempt<12;attempt++) {
-      var middle = (low + high) / 2, trial = wrap(middle);
-      if (!trial.clipped && trial.lines.length <= full.lines.length) high = middle;
-      else low = middle;
-    }
-    return wrap(high + 1).lines;
+    return lines.length ? lines : [' '];
   }
   function graphNodeGeometry(data, compact, depth){
     var viewportWidth = Math.max(260, window.innerWidth - 64);
     var compactWidth = Math.max(236, Math.min(340, viewportWidth - depth * 18));
-    var lines = graphLabelLines(data.label, compact ? compactWidth - 68 : 272, 3);
+    var lines = graphLabelLines(data.label, compact ? compactWidth - 44 : 344, 3);
     var widest = Math.max.apply(null, lines.map(function(line){ return graphTextWidth(line, false); }));
     widest = Math.max(widest, graphTextWidth(graphStatusText(data), true));
-    var height = Math.max(66, 46 + lines.length * 20);
-    var width = compact ? compactWidth : Math.max(240, Math.min(340, Math.ceil(widest + 68)));
+    var height = Math.max(63, 46 + lines.length * 17);
+    var minimumWidth = data.status && data.status !== 'container' ? 340 : 236;
+    var width = compact ? compactWidth : Math.max(minimumWidth, Math.min(430, Math.ceil(widest + 48)));
     return { lines: lines, width: width,
-      height: height, portY: 0 };
+      height: height, portY: height / 2 - 14 };
   }
   function autoLayout(root){
-    var nodes = [], edges = [], gapX = 48, gapY = 24;
+    var nodes = [], edges = [], columns = [], gapX = 110, gapY = 12;
     var compact = graphLayoutMode() === 'compact';
-    function build(data, depth, parent){
+    function build(data, depth){
       var geometry = graphNodeGeometry(data, compact, depth);
-      var record = { id: String(data.id), data: data, depth: depth, parent: parent, x: 0, y: 0, el: null,
+      var record = { id: String(data.id), data: data, depth: depth, x: 0, y: 0, el: null,
         width: geometry.width, height: geometry.height, portY: geometry.portY,
-        lines: geometry.lines, children: [], lane: 0, stage: null };
-      nodes.push(record);
-      record.children = (data.children || []).map(function(child){ return build(child, depth + 1, record); });
+        lines: geometry.lines, children: [], span: 0 };
+      nodes.push(record); columns[depth] = Math.max(columns[depth] || 0, record.width);
+      record.children = (data.children || []).map(function(child){
+        var childRecord = build(child, depth + 1);
+        edges.push({ source: record, target: childRecord, data: childRecord.data, el: null });
+        return childRecord;
+      });
+      var childrenSpan = record.children.reduce(function(sum, child, index){
+        return sum + child.span + (index ? gapY : 0);
+      }, 0);
+      record.span = Math.max(record.height, childrenSpan || record.height);
       return record;
     }
-    var rootRecord = build(root, 0, null);
-    // Root children are the recorded work order. Explicit branches, parked ideas,
-    // pauses, and nested details retain their parent link in a separate lane.
-    var flow = [rootRecord].concat(rootRecord.children.filter(function(record){
-      var data = record.data;
-      return !data.branch && data.weight !== 'side' && data.status !== 'pause';
-    }));
-    var flowSet = new Set(flow), columns = flow.map(function(record){
-      return { stage: record, width: record.width, side: [] };
-    });
-    flow.forEach(function(record, index){ record.stage = index; });
-    nodes.filter(function(record){ return !flowSet.has(record); }).forEach(function(record){
-      var anchor = record.parent;
-      while (anchor && !flowSet.has(anchor)) anchor = anchor.parent;
-      var column = columns[anchor.stage];
-      record.lane = anchor.stage;
-      column.width = Math.max(column.width, record.width);
-      column.side.push(record);
-    });
-    var cursorX = 52;
-    var mainRowHeight = Math.max.apply(null, flow.map(function(record){ return record.height; }));
-    var mainCenterY = 72 + mainRowHeight / 2;
-    var mainBottom = 72 + mainRowHeight;
-    columns.forEach(function(column){
-      var record = column.stage;
-      record.x = cursorX + column.width / 2;
-      record.y = mainCenterY;
-      cursorX += column.width + gapX;
-    });
-    columns.forEach(function(column){
-      var cursorY = mainBottom + 48;
-      column.side.forEach(function(record){
-        var parentBottom = record.parent.y + record.parent.height / 2;
-        var top = Math.max(cursorY, parentBottom + 32);
-        record.x = column.stage.x;
-        record.y = top + record.height / 2;
-        cursorY = top + record.height + gapY;
+    var rootRecord = build(root, 0), centers = [], cursorX = 0;
+    if (compact) {
+      var cursorY = 24;
+      nodes.forEach(function(record){
+        record.x = 16 + record.depth * 18 + record.width / 2;
+        record.y = cursorY + record.height / 2;
+        cursorY += record.height + gapY;
       });
+      return { nodes: nodes, edges: edges, compact: true };
+    }
+    columns.forEach(function(width, depth){
+      cursorX += width / 2; centers[depth] = cursorX; cursorX += width / 2 + gapX;
     });
-    flow.slice(1).forEach(function(record, index){
-      edges.push({ source: flow[index], target: record, data: record.data, kind: 'flow', el: null });
-    });
-    nodes.filter(function(record){ return !flowSet.has(record); }).forEach(function(record){
-      edges.push({ source: record.parent, target: record, data: record.data, kind: 'detail', el: null });
-    });
-    var active = nodes.find(function(record){ return record.data.status === 'now'; }) || null;
-    var anchor = active;
-    while (anchor && !flowSet.has(anchor)) anchor = anchor.parent;
-    for (var ancestor = active; ancestor; ancestor = ancestor.parent) ancestor.onPath = true;
-    return { nodes: nodes, edges: edges, flow: flow, current: active,
-      currentStage: anchor ? anchor.stage : null, compact: compact };
-  }
-  function graphSessionIsLive(){
-    var selected = sessions.find(function(session){ return session.id === current; });
-    return !!(selected && selected.alive && !isStale(selected));
+    function place(record, top){
+      record.x = centers[record.depth]; record.y = top + record.span / 2;
+      if (!record.children.length) return;
+      var total = record.children.reduce(function(sum, child, index){ return sum + child.span + (index ? gapY : 0); }, 0);
+      var childTop = top + (record.span - total) / 2;
+      record.children.forEach(function(child){ place(child, childTop); childTop += child.span + gapY; });
+    }
+    place(rootRecord, 24);
+    return { nodes: nodes, edges: edges, compact: false };
   }
   function graphStatusText(data){
     var labels = lang === 'ko'
-      ? { now: graphSessionIsLive() ? '● 현재 위치' : '● 마지막 위치', next: '▷ 다음', done: '✓ 완료', pause: 'Ⅱ 보류', container: '전체 흐름' }
-      : { now: graphSessionIsLive() ? '● CURRENT' : '● LAST POSITION', next: '▷ NEXT', done: '✓ DONE', pause: 'Ⅱ PAUSED', container: 'WORKFLOW' };
+      ? { now: '▶ 지금', next: '↩ 다음', done: '✓ 완료', pause: 'Ⅱ 보류', container: '여정' }
+      : { now: '▶ NOW', next: '↩ NEXT', done: '✓ DONE', pause: 'Ⅱ PAUSED', container: 'JOURNEY' };
     var text = labels[data.status] || labels.container;
     if (data.branch) text += data.weight === 'side' ? (lang === 'ko' ? ' · 샛길' : ' · SIDE') : (lang === 'ko' ? ' · 분기' : ' · FORK');
     return text;
-  }
-  function graphPositionText(model){
-    if (!model.current) return lang === 'ko' ? '현재 단계 미지정' : 'No current step';
-    var prefix = graphSessionIsLive()
-      ? (lang === 'ko' ? '현재 위치 · ' : 'Current · ')
-      : (lang === 'ko' ? '마지막 위치 · ' : 'Last position · ');
-    var sideFromRoot = model.current.stage === null && model.currentStage === 0;
-    var position = sideFromRoot ? (lang === 'ko' ? '추가 작업' : 'extra work')
-      : model.currentStage === 0 ? (lang === 'ko' ? '시작' : 'start')
-      : model.currentStage + ' / ' + Math.max(0, model.flow.length - 1);
-    var detail = model.current.stage === null && !sideFromRoot
-      ? (lang === 'ko' ? ' · 세부 단계' : ' · detail') : '';
-    return prefix + position + detail;
   }
   function graphNodeClass(data){
     return 'graph-node ' + (data.status || 'container') + (data.branch ? ' branch' : '') + (data.weight === 'side' ? ' side' : '');
@@ -2701,81 +2519,28 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
   function setGraphNodePosition(record){
     if (record.el) record.el.setAttribute('transform', 'translate(' + record.x + ' ' + record.y + ')');
   }
-  // Main work enters from the left. Extra work leaves the parent bottom and
-  // enters the child top. Later siblings use a gutter to avoid earlier cards.
-  // Manual moves retain boundary-aware fallback routing.
-  function graphEdgePath(source, target, compact, kind){
-    var sy = source.y + source.portY, ty = target.y + target.portY;
-    var dx = target.x - source.x, dy = ty - sy, points;
-    if (kind === 'flow') {
-      var flowDirection = dx >= 0 ? 1 : -1;
-      var flowStart = source.x + flowDirection * source.width / 2;
-      var flowEnd = target.x - flowDirection * target.width / 2;
-      var middleX = (flowStart + flowEnd) / 2;
-      points = [[flowStart, sy], [middleX, sy], [middleX, ty], [flowEnd, ty]];
-    } else if (kind === 'detail' && target.y - target.height / 2 >= source.y + source.height / 2 + 24) {
-      var sourceBottom = source.y + source.height / 2;
-      var targetTop = target.y - target.height / 2;
-      var extraChildren = (source.children || []).filter(function(child){ return child.stage === null; });
-      if (!extraChildren.length || extraChildren[0] === target) {
-        var middleY = (sourceBottom + targetTop) / 2;
-        points = [[source.x, sourceBottom], [source.x, middleY],
-          [target.x, middleY], [target.x, targetTop]];
-      } else {
-        var busX = Math.min(source.x - source.width / 2, target.x - target.width / 2)
-          - 26 - Math.min(3, source.depth || 0) * 10;
-        points = [[source.x, sourceBottom], [source.x, sourceBottom + 18],
-          [busX, sourceBottom + 18], [busX, targetTop - 18],
-          [target.x, targetTop - 18], [target.x, targetTop]];
-      }
-    } else if (compact) {
-      var left = Math.min(source.x - source.width / 2, target.x - target.width / 2) - 18;
-      points = [[source.x - source.width / 2, sy], [left, sy], [left, ty], [target.x - target.width / 2, ty]];
-    } else if (Math.abs(dx) >= (source.width + target.width) / 2 + 24) {
-      var direction = dx >= 0 ? 1 : -1;
-      var sx = source.x + direction * source.width / 2;
-      var tx = target.x - direction * target.width / 2;
-      var spine = sx + (tx - sx) / 2;
-      points = [[sx, sy], [spine, sy], [spine, ty], [tx, ty]];
-    } else {
-      var directionY = dy >= 0 ? 1 : -1;
-      var fromY = source.y + directionY * source.height / 2;
-      var toY = target.y - directionY * target.height / 2;
-      var middleY = (fromY + toY) / 2;
-      points = [[source.x, fromY], [source.x, middleY], [target.x, middleY], [target.x, toY]];
-    }
-    points = points.filter(function(p, i){ return !i || p[0] !== points[i-1][0] || p[1] !== points[i-1][1]; });
-    points = points.filter(function(p, i){
-      if (!i || i === points.length - 1) return true;
-      var before = points[i-1], after = points[i+1];
-      var ax = p[0]-before[0], ay = p[1]-before[1];
-      var bx = after[0]-p[0], by = after[1]-p[1];
-      return ax*by !== ay*bx || ax*bx + ay*by < 0;
-    });
-    var path = 'M ' + points[0].join(' ');
-    for (var i = 1; i < points.length - 1; i++) {
-      var before = points[i-1], corner = points[i], after = points[i+1];
-      var inLength = Math.hypot(corner[0]-before[0], corner[1]-before[1]);
-      var outLength = Math.hypot(after[0]-corner[0], after[1]-corner[1]);
-      var radius = Math.min(12, inLength / 2, outLength / 2);
-      var enter = corner.map(function(v,j){ return v + (before[j]-v) * radius / inLength; });
-      var leave = corner.map(function(v,j){ return v + (after[j]-v) * radius / outLength; });
-      path += ' L ' + enter.join(' ') + ' Q ' + corner.join(' ') + ' ' + leave.join(' ');
-    }
-    return path + ' L ' + points[points.length-1].join(' ');
-  }
   function updateGraphEdges(){
     if (!graphModel) return;
     graphModel.edges.forEach(function(edge){
-      edge.el.setAttribute('d', graphEdgePath(edge.source, edge.target, graphModel.compact, edge.kind));
+      var sy = edge.source.y + edge.source.portY, ty = edge.target.y + edge.target.portY;
+      if (graphModel.compact) {
+        var compactSx = edge.source.x - edge.source.width / 2 + 14;
+        var compactTx = edge.target.x - edge.target.width / 2 + 14;
+        edge.el.setAttribute('d', 'M ' + compactSx + ' ' + sy + ' V ' + ty + ' H ' + compactTx);
+      } else {
+        var sx = edge.source.x + edge.source.width / 2;
+        var tx = edge.target.x - edge.target.width / 2;
+        var spineX = sx + Math.max(38, (tx - sx) * .46);
+        edge.el.setAttribute('d', 'M ' + sx + ' ' + sy + ' H ' + spineX + ' V ' + ty + ' H ' + tx);
+      }
     });
   }
   function graphBounds(){
     if (!graphModel || !graphModel.nodes.length) return null;
     return {
-      left: Math.min.apply(null, graphModel.nodes.map(function(n){ return n.x - n.width / 2 - 48; })) - 12,
+      left: Math.min.apply(null, graphModel.nodes.map(function(n){ return n.x - n.width / 2; })) - 12,
       right: Math.max.apply(null, graphModel.nodes.map(function(n){ return n.x + n.width / 2; })) + 12,
-      top: Math.min.apply(null, graphModel.nodes.map(function(n){ return n.y - n.height / 2 - (n.stage === null ? 0 : 36); })) - 12,
+      top: Math.min.apply(null, graphModel.nodes.map(function(n){ return n.y - n.height / 2; })) - 12,
       bottom: Math.max.apply(null, graphModel.nodes.map(function(n){ return n.y + n.height / 2; })) + 12
     };
   }
@@ -2788,26 +2553,12 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
     var bounds = graphBounds(), viewport = document.getElementById('graphViewport');
     if (!bounds || !viewport.clientWidth || !viewport.clientHeight) return;
     var width = Math.max(1, bounds.right - bounds.left), height = Math.max(1, bounds.bottom - bounds.top);
-    graphCamera.scale = Math.max(.01, Math.min(1.25,
+    graphCamera.scale = Math.max(.28, Math.min(1.25,
       (viewport.clientWidth - 48) / width, (viewport.clientHeight - 48) / height));
     graphCamera.x = viewport.clientWidth / 2 - ((bounds.left + bounds.right) / 2) * graphCamera.scale;
-    graphCamera.y = Math.min(70, Math.max(24, viewport.clientHeight - 24 - height * graphCamera.scale))
-      - bounds.top * graphCamera.scale;
+    graphCamera.y = viewport.clientHeight / 2 - ((bounds.top + bounds.bottom) / 2) * graphCamera.scale;
     graphNeedsFit = false;
     applyGraphTransform();
-  }
-  function focusGraphCurrent(){
-    var record = graphModel && graphModel.current, viewport = document.getElementById('graphViewport');
-    if (!record || !viewport.clientWidth || !viewport.clientHeight) return;
-    graphCamera.scale = Math.min(1, Math.max(.65, (viewport.clientWidth - 80) / (record.width + 100)));
-    graphCamera.x = viewport.clientWidth * .38 - record.x * graphCamera.scale;
-    graphCamera.y = viewport.clientHeight * (record.stage === null ? .55 : .25) - record.y * graphCamera.scale;
-    graphNeedsFit = false;
-    applyGraphTransform();
-  }
-  function initialGraphView(){
-    fitGraph();
-    if (graphModel && graphModel.current && graphCamera.scale < .72) focusGraphCurrent();
   }
   function zoomGraph(factor, cx, cy){
     var viewport = document.getElementById('graphViewport');
@@ -2827,55 +2578,36 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
     var empty = document.getElementById('graphEmpty');
     if (!root) {
       graphModel = null; empty.hidden = false; graphSession = current; graphNeedsFit = true;
-      document.getElementById('graphCurrent').textContent = lang === 'ko' ? '현재 단계 미지정' : 'No current step';
-      document.getElementById('graphCurrent').classList.add('empty');
-      document.getElementById('graphCurrent').classList.remove('historical');
-      document.getElementById('graphFocus').disabled = true;
       return;
     }
     empty.hidden = true;
     var model = autoLayout(root), saved = readGraphLayout(), changedSession = graphSession !== current;
-    var currentLabel = graphPositionText(model);
-    var currentText = document.getElementById('graphCurrent');
-    if (currentText.textContent !== currentLabel) currentText.textContent = currentLabel;
-    currentText.classList.toggle('empty', !model.current);
-    currentText.classList.toggle('historical', !!model.current && !graphSessionIsLive());
-    document.getElementById('graphFocus').disabled = !model.current;
     model.nodes.forEach(function(record){
       if (saved[record.id] && Number.isFinite(saved[record.id].x) && Number.isFinite(saved[record.id].y)) {
         record.x = saved[record.id].x; record.y = saved[record.id].y;
       }
     });
     model.edges.forEach(function(edge){
-      var path = svgEl('path', { 'class': 'graph-edge ' + edge.kind + ' ' + (edge.data.status || 'container') + (edge.data.branch ? ' branch' : '') + (edge.data.weight === 'side' ? ' side' : '') + (edge.data.status === 'now' && !graphSessionIsLive() ? ' historical' : ''),
-        'marker-end': 'url(#' + (edge.data.status === 'now' ? 'graphArrowNow' : 'graphArrow') + ')', 'aria-hidden': 'true' });
+      var path = svgEl('path', { 'class': 'graph-edge' + (edge.data.branch ? ' branch' : '') + (edge.data.weight === 'side' ? ' side' : ''),
+        'aria-hidden': 'true' });
       edge.el = path; edgesRoot.appendChild(path);
     });
     model.nodes.forEach(function(record){
       var data = record.data;
-      var statusText = record.stage === null && !data.branch && data.status !== 'pause'
-        ? (lang === 'ko' ? '세부 · ' : 'DETAIL · ') + graphStatusText(data) : graphStatusText(data);
-      var group = svgEl('g', { 'class': graphNodeClass(data) + (record.stage === null ? ' detail' : ' workflow-main') + (record.onPath ? ' on-path' : '') + (record.onPath && !graphSessionIsLive() ? ' historical' : ''), tabindex: '0', role: 'button',
-        'aria-label': statusText + ' · ' + String(data.label || '') });
-      var titleX = -record.width / 2 + (record.stage === null ? 20 : 50);
-      var metaX = -record.width / 2 + 20;
+      var group = svgEl('g', { 'class': graphNodeClass(data), tabindex: '0', role: 'button',
+        'aria-label': graphStatusText(data) + ' · ' + String(data.label || '') });
+      var left = -record.width / 2 + 14, right = record.width / 2 - 14;
       group.appendChild(svgEl('rect', { x: String(-record.width / 2), y: String(-record.height / 2),
-        width: String(record.width), height: String(record.height), rx: '6', 'class': 'graph-node-hit' }));
-      if (record.stage !== null) {
-        var markerX = -record.width / 2 + 26, markerY = -record.height / 2 + 25;
-        group.appendChild(svgEl('circle', { cx: String(markerX), cy: String(markerY), r: '11', 'class': 'graph-stage-dot', 'aria-hidden': 'true' }));
-        group.appendChild(svgEl('text', { x: String(markerX), y: String(markerY + 3.5), 'text-anchor': 'middle',
-          'class': 'graph-stage-number', 'aria-hidden': 'true' }, String(record.stage)));
-      }
-      var label = svgEl('text', { x: String(titleX), 'text-anchor': 'start', 'class': 'graph-node-label', 'aria-hidden': 'true' });
+        width: String(record.width), height: String(record.height), rx: '3', 'class': 'graph-node-hit' }));
+      var label = svgEl('text', { x: String(left + 6), 'text-anchor': 'start', 'class': 'graph-node-label', 'aria-hidden': 'true' });
       var lines = record.lines;
       var firstLineY = -record.height / 2 + 25;
       lines.forEach(function(line, index){
-        label.appendChild(svgEl('tspan', { x: String(titleX), y: String(firstLineY + index * 20) }, line));
+        label.appendChild(svgEl('tspan', { x: String(left + 6), y: String(firstLineY + index * 18) }, line));
       });
       group.appendChild(label);
-      group.appendChild(svgEl('text', { x: String(metaX), y: String(record.height / 2 - 14), 'text-anchor': 'start',
-        'class': 'graph-node-meta', 'aria-hidden': 'true' }, statusText));
+      group.appendChild(svgEl('text', { x: String(left + 6), y: String(record.portY), 'text-anchor': 'start',
+        'class': 'graph-node-meta', 'aria-hidden': 'true' }, graphStatusText(data)));
       group.addEventListener('pointerdown', function(e){
         e.preventDefault(); e.stopPropagation();
         graphDrag = { type: 'node', pointerId: e.pointerId, record: record,
@@ -2898,14 +2630,13 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
     graphModel = model; graphSession = current;
     updateGraphEdges();
     if (changedSession) graphNeedsFit = true;
-    if (mapMode === 'graph' && graphNeedsFit) requestAnimationFrame(initialGraphView);
+    if (mapMode === 'graph' && graphNeedsFit) requestAnimationFrame(fitGraph);
     else applyGraphTransform();
   }
 
   document.getElementById('graphZoomIn').addEventListener('click', function(){ zoomGraph(1.2); });
   document.getElementById('graphZoomOut').addEventListener('click', function(){ zoomGraph(1 / 1.2); });
   document.getElementById('graphFit').addEventListener('click', fitGraph);
-  document.getElementById('graphFocus').addEventListener('click', focusGraphCurrent);
   document.getElementById('graphReset').addEventListener('click', function(){
     var key = graphLayoutKey(); try { if (key) localStorage.removeItem(key); } catch(e){}
     graphSession = null; graphNeedsFit = true;
@@ -2964,7 +2695,7 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
       graphSession = null; graphNeedsFit = true;
       var selected = sessions.find(function(s){ return s.id === current; });
       renderJourneyGraph(selected && selected.map && selected.map.tree);
-    } else requestAnimationFrame(initialGraphView);
+    } else requestAnimationFrame(fitGraph);
   });
 
   // ---------- render ----------
@@ -3037,10 +2768,7 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
     document.getElementById('goalbar').textContent = D.goal || T('noGoal');
     var activeSteps=[],nextSteps=[];
     (function walk(n){if(!n)return;if(n.status==='now')activeSteps.push(n.label);if(n.status==='next')nextSteps.push(n.label);(n.children||[]).forEach(walk);})(D.map&&D.map.tree);
-    document.getElementById('journeyProgress').textContent=(activeSteps.length
-      ? (D.alive && !isStale(D) ? '진행 중 · ' : '마지막 기록 · ') + activeSteps.join(' · ')
-      : nextSteps.length ? '다음 · ' + nextSteps.join(' · ')
-      : '현재 진행 중인 단계 없음 · 아래는 기록된 여정입니다.');
+    document.getElementById('e2Progress').textContent='③ '+(activeSteps.length?'진행 중 · '+activeSteps.join(' · '):nextSteps.length?'다음 · '+nextSteps.join(' · '):'현재 진행 중인 단계 없음 · 아래는 기록된 여정입니다.');
     var st = document.getElementById('substamp');
     st.innerHTML = '';
 
@@ -3073,7 +2801,7 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
       if (n.branch && n.weight === 'side') s.appendChild(el('span', 'branch-kind', T('sideQuest')));
       if (n.note && n.status!=='done') s.appendChild(el('span', 'note', '↳ ' + n.note));
       if(n.note && n.status==='done'){
-        var history=el('details','journey-history');history.appendChild(el('summary','','완료 당시 메모'));
+        var history=el('details','e2-history');history.appendChild(el('summary','','완료 당시 메모'));
         history.appendChild(el('span','note',n.note));s.appendChild(history);
       }
       d.appendChild(s);
@@ -3152,7 +2880,7 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
     });
     if (!(D.decisions || []).length) dl2.appendChild(emptyState('decEmptyT', 'decEmpty'));
 
-    // needs you — opening an item never resolves or hides it.
+    // needs you — your inbox from the agent; hot items demand action now
     var nl = document.getElementById('needslist');
     (D.pending || []).forEach(function(p){
       var row = el('div', 'item need-item' + (p.hot ? ' hot' : ''));
@@ -3160,12 +2888,7 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
       head.appendChild(el('span', 'glyph ' + (p.hot ? 'g-urgent' : 'g-brand'), p.hot ? '!' : '?'));
       head.appendChild(el('span', 'item-title', p.text || ''));
       if (p.hot) head.appendChild(el('span', 'item-tag tag-urgent', T('actionNow')));
-      head.appendChild(el('span','need-open','↗'));
       row.appendChild(head);
-      row.tabIndex=0;row.setAttribute('role','button');row.setAttribute('aria-haspopup','dialog');
-      row.setAttribute('aria-label',(lang==='ko'?'요청 상세: ':'Request details: ')+(p.text||''));
-      row.addEventListener('click',function(){openRequestDetails(p,D,row);});
-      row.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();openRequestDetails(p,D,row);}});
       nl.appendChild(row);
     });
     if (!(D.pending || []).length) nl.appendChild(emptyState('needsEmptyT', 'needsEmpty'));
@@ -3183,29 +2906,6 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
       de.appendChild(row);
     });
     if (!(D.deadends || []).length) de.appendChild(emptyState('deadendsEmptyT', 'deadendsEmpty'));
-  }
-
-  function openRequestDetails(request,session,trigger){
-    var ko=lang==='ko',dialog=el('dialog','resume-dialog');dialog.id='requestDialog';
-    dialog.setAttribute('aria-labelledby','requestTitle');
-    var head=el('div','resume-dialog-head'),title=el('h2','',ko?'요청 상세':'Request details');title.id='requestTitle';
-    var close=el('button','resume-dialog-close','×');close.type='button';close.setAttribute('aria-label',ko?'닫기':'Close');
-    head.append(title,close);dialog.appendChild(head);
-    var body=el('div','resume-dialog-body'),text=el('p','resume-dialog-copy',request.text||'');text.id='requestText';body.appendChild(text);
-    var details=el('dl','resume-summary');
-    function entry(label,value){details.appendChild(el('dt','',label));details.appendChild(el('dd','',value||'—'));}
-    entry(ko?'에이전트':'Agent',String(session.agent||'').toUpperCase());
-    entry(ko?'작업 목표':'Goal',session.goal);
-    var currentSteps=[],nextSteps=[];(function walk(node){if(!node)return;if(node.status==='now')currentSteps.push(node.label);if(node.status==='next')nextSteps.push(node.label);(node.children||[]).forEach(walk);})(session.map&&session.map.tree);
-    entry(currentSteps.length?(ko?'현재 작업':'Current work'):(ko?'다음 작업':'Next work'),currentSteps.join(' · ')||nextSteps.join(' · ')||(session.map&&session.map.back));
-    entry(ko?'상태':'Status',request.hot?(ko?'판단 대기':'Decision needed'):(ko?'확인 대기':'Awaiting review'));
-    body.appendChild(details);
-    var help=el('p','cap',ko?'답변은 연결한 에이전트 대화에서 전달해 주세요. 요청을 열어도 해결 처리되지 않습니다.':'Reply in the connected agent conversation. Opening this request does not resolve it.');help.style.marginTop='16px';body.appendChild(help);
-    var actions=el('div','resume-dialog-actions'),copy=el('button','resume-dialog-action',ko?'요청 복사':'Copy request'),cancel=el('button','resume-dialog-action secondary',ko?'닫기':'Close');
-    copy.type=cancel.type='button';copy.onclick=function(){copyText((session.goal?session.goal+'\n\n':'')+(request.text||''),ko?'요청을 복사했습니다':'Request copied');};
-    close.onclick=cancel.onclick=function(){dialog.close();};actions.append(copy,cancel);body.appendChild(actions);dialog.appendChild(body);
-    dialog.addEventListener('close',function(){dialog.remove();if(trigger&&trigger.isConnected)trigger.focus();});
-    document.body.appendChild(dialog);dialog.showModal();close.focus();
   }
 
   // friendlier empty states: a title line + the muted hint
@@ -3242,12 +2942,13 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
     var f = document.getElementById('planFrame');
     var doc = f && f.contentDocument;
     if (!doc || !doc.body) return;
-    var pane = f.parentElement;
-    var style = getComputedStyle(pane);
-    var availableHeight = Math.max(0, pane.clientHeight - (parseFloat(style.paddingTop) || 0) - (parseFloat(style.paddingBottom) || 0));
+    var viewportHeight = window.visualViewport ? window.visualViewport.height : document.documentElement.clientHeight;
+    var workspace = f.closest('.workspace');
+    var bottomPadding = workspace ? parseFloat(getComputedStyle(workspace).paddingBottom) || 0 : 0;
+    var availableHeight = Math.max(0, viewportHeight - f.getBoundingClientRect().top - bottomPadding);
     // Dense cards scroll inside the embedded board. Growing the iframe to the
     // full card stack makes the shell itself scroll and hides the status field.
-    var height = Math.floor(availableHeight);
+    var height = Math.floor(Math.max(availableHeight, 320));
     if (height > 0) f.style.height = height + 'px';
   }
   function watchPlanFrame(){
@@ -3309,9 +3010,6 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
     });
   });
   function showTab(name){
-    if(name!=='memo')lastSessionPane=name;
-    document.body.classList.toggle('scope-active',name==='scope');
-    if(name==='scope'){var scopeFrame=document.getElementById('scopeFrame');if(!scopeFrame.src)scopeFrame.src='/scope/index.html';}
     document.body.classList.toggle('plan-active', name === 'plan');
     document.body.classList.toggle('note-active', name === 'memo');
     syncPlanRail(name);
@@ -3363,81 +3061,7 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
     });
   });
 
-  // Section keys are global; Q/W/E only select views in the visible section.
-  var sectionShortcuts={'1':'tabSituation','2':'tabPlan','3':'tabScope','4':'tabNeeds','5':'tabRecords','`':'tabMemo'};
-  var viewShortcuts={situation:{q:'mapTreeBtn',w:'mapGraphBtn',e:'viewTabStack'},records:{q:'viewTabChanges',w:'viewTabDec',e:'viewTabDeadends'}};
-  Object.keys(sectionShortcuts).forEach(function(key){
-    var tab=document.getElementById(sectionShortcuts[key]);tab.dataset.shortcut=key;tab.setAttribute('aria-keyshortcuts',key);
-  });
-  Object.values(viewShortcuts).forEach(function(mapping){Object.keys(mapping).forEach(function(key){
-    var tab=document.getElementById(mapping[key]);tab.dataset.shortcut=key;tab.setAttribute('aria-keyshortcuts',key);
-  });});
-  function shortcutTarget(key){
-    key=String(key).toLowerCase();
-    if(sectionShortcuts[key])return key==='`'||current?document.getElementById(sectionShortcuts[key]):null;
-    var active=document.querySelector('.app-view-tab.on');var mapping=active&&viewShortcuts[active.dataset.pane];
-    var tab=mapping&&document.getElementById(mapping[key]);return tab&&tab.closest('.pane:not([hidden])')?tab:null;
-  }
-  function sectionKey(e){return e.code==='Backquote'?'`':e.key;}
-  function canUseSectionShortcut(e,doc){
-    if(e.defaultPrevented||e.isComposing||e.repeat||e.ctrlKey||e.metaKey||e.altKey||e.shiftKey||!shortcutTarget(sectionKey(e)))return false;
-    var target=e.target;
-    if(target&&(target.isContentEditable||target.closest('input,textarea,select,[contenteditable]:not([contenteditable="false"]),[role="textbox"]')))return false;
-    return !doc.querySelector('dialog[open],.help-overlay.on')&&!document.querySelector('dialog[open],.help-overlay.on');
-  }
-  function navigateSectionShortcut(key){
-    var tab=shortcutTarget(key);if(!tab||document.querySelector('dialog[open],.help-overlay.on'))return;
-    tab.dataset.shortcutFocus='true';tab.click();tab.focus({preventScroll:true});
-    if(window.parent!==window)window.parent.postMessage({type:'olchipanel-view-shortcut-used'},location.origin);
-  }
-  document.addEventListener('keydown',function(e){
-    if(['Tab','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'].includes(e.key))document.querySelectorAll('[data-shortcut-focus]').forEach(function(tab){delete tab.dataset.shortcutFocus;});
-    if(!canUseSectionShortcut(e,document))return;
-    e.preventDefault();e.stopPropagation();navigateSectionShortcut(sectionKey(e));
-  },true);
-  document.addEventListener('focusout',function(e){if(e.target?.dataset)delete e.target.dataset.shortcutFocus;});
-  document.addEventListener('pointerdown',function(){document.querySelectorAll('[data-shortcut-focus]').forEach(function(tab){delete tab.dataset.shortcutFocus;});},true);
-  ['planFrame','scopeFrame'].forEach(function(id){
-    var frame=document.getElementById(id);if(!frame)return;
-    frame.addEventListener('load',function(){
-      try{frame.contentWindow.addEventListener('keydown',function(e){
-        if(!canUseSectionShortcut(e,frame.contentDocument))return;
-        e.preventDefault();e.stopImmediatePropagation();navigateSectionShortcut(sectionKey(e));
-      },true);}catch(_){}
-    });
-  });
-  window.addEventListener('message',function(e){
-    if(e.origin!==location.origin||window.parent===window||e.source!==window.parent||e.data?.type!=='olchipanel-view-shortcut')return;
-    if(shortcutTarget(e.data.key))navigateSectionShortcut(e.data.key);
-  });
-
   // ---------- data flow: fetch + SSE ----------
-  var analysisCaptureBusy=false;
-  window.addEventListener('message',async function(e){
-    var frame=document.getElementById('scopeFrame');
-    if(e.origin!==location.origin||e.source!==frame.contentWindow||e.data?.type!=='olchipanel-analysis-result'||analysisCaptureBusy)return;
-    var s=sessions.find(function(x){return x.id===current;});
-    var result=e.data.result;if(!result||!['visitors','revenue'].includes(result.metric))return;
-    var dialog=document.createElement('dialog');dialog.className='resume-dialog';dialog.id='analysisCapture';
-    dialog.setAttribute('aria-label','분석 결과 저장');
-    dialog.innerHTML='<div class="resume-dialog-head"><h2>분석 결과 저장</h2></div><div class="resume-dialog-body"><p class="analysis-destination"></p><p>가상 자료의 결과를 공통 노트에 추가하고, 변화 원인을 검토할 플랜 카드를 만듭니다.</p><p class="analysis-save-error" role="status"></p><div class="resume-dialog-actions"><button type="button" class="analysis-cancel">취소</button><button type="button" class="analysis-save">노트·플랜에 저장</button></div></div>';
-    dialog.querySelector('.analysis-destination').textContent=s?'대상 세션: '+(s.name||s.workspace||s.cwd||s.agent):'저장할 작업 세션을 먼저 연결해 주세요.';
-    dialog.querySelector('.analysis-save').disabled=!s;
-    dialog.querySelector('.analysis-cancel').onclick=function(){if(!analysisCaptureBusy)dialog.close();};
-    dialog.addEventListener('cancel',function(event){if(analysisCaptureBusy)event.preventDefault();});
-    dialog.addEventListener('close',function(){dialog.remove();frame.focus();});
-    dialog.querySelector('.analysis-save').onclick=async function(){
-      if(analysisCaptureBusy)return;analysisCaptureBusy=true;this.disabled=true;
-      try{
-        if(memoTimer)await memoSaveNow(memoLoadedFor);
-        var response=await fetch('/api/analysis/capture',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session:s.id,planId:s.plan_id||'',metric:result.metric,start:result.start,end:result.end})});
-        var saved=await response.json();if(!response.ok||!saved.ok)throw Error(saved.error||'save_failed');
-        memoDoc=saved.memo;memoLoadedFor=COMMON_NOTE_SCOPE;selectMemo(saved.noteId);showTab('memo');refresh();dialog.close();
-      }catch(error){dialog.querySelector('.analysis-save-error').textContent=error.message==='bad_notebook_full'?'노트가 100개입니다. 정리한 뒤 다시 저장해 주세요.':'저장을 완료하지 못했습니다. 연결과 대상 플랜을 확인한 뒤 다시 시도해 주세요.';}
-      finally{analysisCaptureBusy=false;this.disabled=false;}
-    };
-    document.body.appendChild(dialog);dialog.showModal();
-  });
   function refresh(){
     fetch('/api/state').then(function(r){ return r.json(); }).then(function(j){
       sessions = j.sessions || [];
@@ -3511,7 +3135,7 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
   window.addEventListener('pagehide', function(){
     if (windowHeartbeat) clearInterval(windowHeartbeat);
     if (memoTimer) memoSaveNow(memoLoadedFor);
-    postWindow('/api/window/release', true).catch(function(){});
+    // E2 is an explicitly requested comparison window; it owns no primary lease.
   });
 
   applyChrome();
@@ -3535,14 +3159,17 @@ body.rail-closed .app-view-tab[data-shortcut]::after{display:none}
   }
   showView('situation', ['tree','graph','map','stack'].indexOf(situationView) >= 0 ? situationView : 'tree');
   showView('records', ['changes','dec','deadends'].indexOf(recordsView) >= 0 ? recordsView : 'changes');
-  showTab(['situation','plan','needs','records','memo','scope'].indexOf(savedTab) >= 0 ? savedTab : 'situation');
+  showTab(['situation','plan','needs','records','memo'].indexOf(savedTab) >= 0 ? savedTab : 'situation');
 
-
-  var graphViewportSize='';
-  new ResizeObserver(function(entries){var r=entries[0].contentRect,key=r.width+':'+r.height;if(r.width>0&&r.height>0&&key!==graphViewportSize){graphViewportSize=key;requestAnimationFrame(initialGraphView);}}).observe(document.getElementById('graphViewport'));
+  [['.graph-toolbar','①','그래프 자동 맞춤'],['.memo-side-head','②','노트 편집 공간'],['[data-view-group="records"]','④','최신 기록·요약 우선'],['[data-view-group="situation"]','⑤','선택 표시 통일']].forEach(function(row){
+    var host=document.querySelector(row[0]);if(host){var mark=el('span','e2-mark',row[1]);mark.title=row[2];host.prepend(mark);}
+  });
+  var e2LastWidth=0;
+  new ResizeObserver(function(entries){var width=entries[0].contentRect.width;if(width>0&&width!==e2LastWidth){e2LastWidth=width;requestAnimationFrame(fitGraph);}}).observe(document.getElementById('graphViewport'));
 
   refresh();
-  beginWindow();
+  // Keep E's single-window lease intact; E2 reads the same API without claiming it.
+  setInterval(refresh, 5000);
 })();
 </script>
 </body>

@@ -56,11 +56,8 @@ button:hover{border-color:var(--sel)}
 .col.collapsed .col-tools{flex-direction:column-reverse}
 .dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:6px;vertical-align:middle}
 .d-in_progress{background:var(--exec)} .d-done{background:var(--teal)} .d-backlog{background:var(--mut)} .d-todo{background:var(--navy)} .d-canceled{background:var(--line)}
-.card{background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:9px 10px;margin-bottom:8px;cursor:pointer}
-.drag-handle{display:inline-flex;align-items:center;justify-content:center;flex:none;width:22px;height:22px;padding:0;border:0;background:transparent;color:var(--mut);cursor:grab;touch-action:none}
-.drag-handle:active{cursor:grabbing}
-.drag-handle:hover,.drag-handle:focus-visible{background:color-mix(in srgb,var(--fg) 9%,transparent);color:var(--fg)}
-.drag-handle svg{width:12px;height:18px;pointer-events:none}
+.card{background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:9px 10px;margin-bottom:8px;cursor:grab}
+.card:active{cursor:grabbing}
 .card.dragging{opacity:.46;box-shadow:none}
 .card:hover{border-color:var(--sel);box-shadow:0 1px 4px rgba(23,119,122,.12)}
 .card.sel{border-color:var(--sel);box-shadow:0 0 0 2px rgba(23,119,122,.35)}
@@ -73,18 +70,18 @@ button:hover{border-color:var(--sel)}
 .addbox{width:100%}
 .addbox input{width:100%;font:inherit;border:1px solid var(--sel);border-radius:6px;padding:5px 7px;background:var(--bg)}
 .card .row1{display:flex;align-items:flex-start;gap:7px}
-.card .t{white-space:pre-wrap;font-weight:500;flex:1;line-height:22px}
+.card .t{white-space:pre-wrap;font-weight:500;flex:1}
 .card .note{margin:5px 16px 0;color:var(--mut);font-size:11.5px;line-height:1.45;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
-.pri{flex:0 0 auto;margin-top:7px;width:8px;height:8px;border-radius:50%;box-sizing:border-box}
+.pri{flex:0 0 auto;margin-top:3px;width:9px;height:9px;border-radius:50%}
 .p0{background:transparent;border:1.5px solid var(--line)} .p1{background:var(--mut)} .p2{background:var(--navy)} .p3{background:var(--teal)} .p4{background:var(--warn)}
 .sess{display:inline-flex;align-items:center;gap:4px;margin-top:6px;font-size:11px;color:var(--teal);background:rgba(23,119,122,.10);border-radius:6px;padding:1px 7px}
 .add{width:100%;border-style:dashed;color:var(--mut);margin-top:2px;font-size:13px}
 .add:hover{color:var(--teal)}
 /* P3 — everything clickable for non-developers (keyboard stays for power users) */
 .card .row1{position:relative}
-.menu-btn{flex:0 0 auto;border:0;background:none;color:var(--mut);height:22px;font-size:16px;line-height:1;padding:0 2px;border-radius:5px;opacity:0;cursor:pointer}
+.menu-btn{flex:0 0 auto;border:0;background:none;color:var(--mut);font-size:16px;line-height:1;padding:0 2px;border-radius:5px;opacity:0;cursor:pointer}
 .card:hover .menu-btn,.card.sel .menu-btn{opacity:1}
-.menu-btn:hover,.menu-btn:focus-visible{background:color-mix(in srgb,var(--fg) 9%,transparent);color:var(--fg);opacity:1}
+.menu-btn:hover{background:var(--line);color:var(--fg)}
 .menu{position:fixed;z-index:40;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(27,53,86,.18);padding:6px;min-width:180px;max-height:calc(100vh - 16px);overflow:auto}
 .menu .grp{font-size:11px;color:var(--mut);padding:4px 6px 2px}
 .menu .opt{display:flex;align-items:center;gap:7px;width:100%;text-align:left;border:0;background:none;padding:6px 8px;border-radius:6px;font-size:13px}
@@ -95,7 +92,7 @@ button:hover{border-color:var(--sel)}
 .menu .prio:hover{border-color:var(--sel)}
 .menu .del{color:var(--warn)}
 .lbls{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
-.lbl{font-size:12px;font-weight:650;line-height:1.3;border-radius:4px;padding:3px 7px;color:#fff}
+.lbl{font-size:10.5px;border-radius:5px;padding:1px 6px;color:#fff}
 .menu .lblopt{display:inline-flex;align-items:center;gap:5px}
 .menu .lblopt .sw{width:11px;height:11px;border-radius:3px;display:inline-block}
 #err{color:var(--warn);padding:8px 18px 0;font-size:13px;min-height:0}
@@ -111,32 +108,26 @@ body.embed #board{min-height:0;overflow:auto;overscroll-behavior:contain}
 .composer{width:min(520px,calc(100vw - 32px));max-height:min(720px,calc(100vh - 32px));padding:0;border:1px solid var(--line);border-radius:16px;background:var(--panel);color:var(--fg);box-shadow:0 24px 72px rgba(5,18,31,.34);overflow:hidden}
 .composer::backdrop{background:rgba(5,18,31,.58);backdrop-filter:blur(2px)}
 .composer form{display:flex;flex-direction:column;max-height:min(720px,calc(100vh - 32px))}
-.composer-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:16px 20px 12px;border-bottom:1px solid var(--line);flex:none}
+.composer-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:20px 22px 14px;border-bottom:1px solid var(--line)}
 .composer-head h2{margin:0;font-size:19px;letter-spacing:-.02em}
 .composer-head p{margin:3px 0 0;color:var(--mut);font-size:12.5px}
 .icon-btn{width:34px;height:34px;padding:0;border:0;background:transparent;font-size:22px;line-height:1;color:var(--mut)}
 .icon-btn:hover{background:var(--bg);color:var(--fg)}
-.composer-body{display:grid;gap:12px;padding:14px 20px;overflow:auto;min-height:0;align-content:start}
+.composer-body{display:grid;gap:15px;padding:18px 22px;overflow:auto}
 .field{display:grid;gap:6px;min-width:0}
 .field>span,.composer fieldset legend{font-size:12px;font-weight:700;color:var(--mut)}
 .field input,.field textarea,.field select{width:100%;background:var(--bg)}
-.field input:focus,.field select:focus,.textarea-shell:focus-within{outline:2px solid color-mix(in srgb,var(--sel) 38%,transparent);border-color:var(--sel)}
-.field .textarea-shell{display:block;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--bg)}
-.field textarea{display:block;height:100px;min-height:80px;max-height:220px;border:0;border-radius:0;outline:0;font-weight:400}
+.field input:focus,.field textarea:focus,.field select:focus{outline:2px solid color-mix(in srgb,var(--sel) 38%,transparent);border-color:var(--sel)}
+.field textarea{min-height:112px;max-height:240px}
 .field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .composer fieldset{margin:0;padding:0;border:0;min-width:0}
 .composer-labels{display:flex;flex-wrap:wrap;gap:7px;margin-top:7px}
-.composer-label{position:relative;display:inline-flex;align-items:center;gap:6px;padding:6px 9px;border:1px solid color-mix(in srgb,var(--label-color) 48%,var(--line));border-radius:6px;background:color-mix(in srgb,var(--label-color) 10%,var(--bg));cursor:pointer;font-size:12px;font-weight:600}
-.composer-label::after{content:'✓';width:12px;opacity:0;font-size:12px}
-.composer-label:has(input:checked){border-color:var(--label-color);background:var(--label-color);color:#fff}
-.composer-label:has(input:checked)::after{opacity:1}
-.composer-label:has(input:focus-visible){outline:2px solid var(--sel);outline-offset:3px}
-.composer-label:has(input:checked) .sw{background:#fff!important}
+.composer-label{position:relative;display:inline-flex;align-items:center;gap:6px;padding:6px 9px;border:1px solid var(--line);border-radius:999px;background:var(--bg);cursor:pointer;font-size:12px}
+.composer-label:has(input:checked){border-color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
 .composer-label input{position:absolute;opacity:0;pointer-events:none}
-.composer-label .sw{width:12px;height:12px;border-radius:3px;flex:none}
-.composer-error{color:var(--warn);font-size:12px}
-.composer-error:empty{display:none}
-.composer-actions{display:flex;justify-content:flex-end;gap:8px;padding:12px 20px;border-top:1px solid var(--line);flex:none}
+.composer-label .sw{width:9px;height:9px;border-radius:3px}
+.composer-error{min-height:20px;color:var(--warn);font-size:12px}
+.composer-actions{display:flex;justify-content:flex-end;gap:8px;padding:14px 22px 18px;border-top:1px solid var(--line)}
 .composer-actions button{min-width:76px}
 body.composer-open{overflow:hidden}
 .transfer-dialog{width:min(460px,calc(100vw - 32px));padding:0;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--fg);box-shadow:0 22px 60px rgba(5,18,31,.32)}
@@ -175,8 +166,8 @@ body.composer-open{overflow:hidden}
   .composer-head{padding:16px 16px 12px}
   .composer-body{padding:15px 16px}
   .composer-actions{padding:12px 16px 16px}
+  .field-row{grid-template-columns:1fr}
 }
-@media(max-width:480px){.field-row{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}
 }
@@ -184,7 +175,7 @@ body.composer-open{overflow:hidden}
 <header>
   <span class="mark" aria-hidden="true"></span>
   <b>OlchiPanel Plans</b>
-  <select id="planSel" aria-label="플랜 선택"></select>
+  <span title="빈 플랜 도구 정리" style="color:var(--teal);font-weight:700">⑥</span><select id="planSel" aria-label="플랜 선택"></select>
   <button id="newPlan">+ 새 플랜</button>
   <span class="mut" id="meta"></span>
   <div class="plan-transfer" aria-label="플랜 이동">
@@ -217,7 +208,7 @@ body.composer-open{overflow:hidden}
     </div>
     <div class="composer-body">
       <label class="field"><span>제목</span><input id="cardTitle" maxlength="200" autocomplete="off" required placeholder="무엇을 해야 하나요?"></label>
-      <label class="field"><span>설명 <small>(선택)</small></span><span class="textarea-shell"><textarea id="cardNote" maxlength="4000" placeholder="완료 기준이나 필요한 맥락을 적으세요."></textarea></span></label>
+      <label class="field"><span>설명 <small>(선택)</small></span><textarea id="cardNote" maxlength="4000" placeholder="완료 기준이나 필요한 맥락을 적으세요."></textarea></label>
       <div class="field-row">
         <label class="field"><span>상태</span><select id="cardStatus"></select></label>
         <label class="field"><span>우선순위</span><select id="cardPriority">
@@ -234,13 +225,13 @@ body.composer-open{overflow:hidden}
 const STATES=['backlog','todo','in_progress','done','canceled'];
 const LABEL={backlog:'Backlog',todo:'To do',in_progress:'In progress',done:'Done',canceled:'Canceled'};
 const PRILABEL={0:'우선순위 없음',1:'낮음',2:'보통',3:'높음',4:'긴급'};
-// Distinct semantic hues, with white text contrast on selected/card labels.
+// preset labels only (non-devs don't manage taxonomies) — brand-derived colors
 const LABELS=[
-  {id:'urgent',name:'급함',color:'#B93836'},
-  {id:'important',name:'중요',color:'#2455B2'},
-  {id:'idea',name:'아이디어',color:'#7943A9'},
-  {id:'review',name:'검토',color:'#087D70'},
-  {id:'hold',name:'대기',color:'#8F650F'},
+  {id:'urgent',name:'급함',color:'#E98A2B'},
+  {id:'important',name:'중요',color:'#1B3556'},
+  {id:'idea',name:'아이디어',color:'#6f8f2a'},
+  {id:'review',name:'검토',color:'#17777A'},
+  {id:'hold',name:'대기',color:'#6b7a75'},
 ];
 const LBL=Object.fromEntries(LABELS.map(l=>[l.id,l]));
 let plan=null, menuEl=null, dragId=null, suppressClickUntil=0;
@@ -333,27 +324,23 @@ function render(revealSelection){
     collapse.onclick=(e)=>{e.stopPropagation();toggleColumn(st);};tools.appendChild(count);tools.appendChild(collapse);head.appendChild(title);head.appendChild(tools);col.appendChild(head);
     if(collapsed){board.appendChild(col);continue;}
     for(const it of items){
-      const c=document.createElement('div'); c.className='card'+(it.id===selId?' sel':''); c.dataset.id=it.id; c.draggable=false; c.tabIndex=0; c.setAttribute('role','group'); c.setAttribute('aria-label',it.title+' 상세 보기');
-      c.title='클릭하여 상세 보기 · 점 손잡이를 끌어 상태 이동';
+      const c=document.createElement('div'); c.className='card'+(it.id===selId?' sel':''); c.dataset.id=it.id; c.draggable=true;
+      c.title='드래그 = 상태 이동 · 클릭 = 다음 상태 · 더블클릭 = 제목 편집 · ⋯ = 메뉴';
       const r1=document.createElement('div'); r1.className='row1';
-      const grip=document.createElement('button');grip.type='button';grip.className='drag-handle';grip.draggable=true;
-      grip.title='끌어서 이동 · 클릭하여 상태 선택';grip.setAttribute('aria-label',it.title+' 이동 손잡이');
-      grip.innerHTML='<svg viewBox="0 0 12 18" aria-hidden="true" fill="currentColor"><circle cx="3" cy="3" r="1.5"/><circle cx="9" cy="3" r="1.5"/><circle cx="3" cy="9" r="1.5"/><circle cx="9" cy="9" r="1.5"/><circle cx="3" cy="15" r="1.5"/><circle cx="9" cy="15" r="1.5"/></svg>';
-      grip.onclick=e=>{e.stopPropagation();if(Date.now()<suppressClickUntil)return;selId=it.id;openCardComposer(it.status,it,grip);};
-      grip.ondragstart=e=>{e.stopPropagation();startCardDrag(e,it,c);};grip.ondragend=finishCardDrag;
-      const pr=document.createElement('span'); pr.className='pri p'+(it.priority||0); pr.title=PRILABEL[it.priority||0];pr.setAttribute('role','img');pr.setAttribute('aria-label',PRILABEL[it.priority||0]);
+      const pr=document.createElement('span'); pr.className='pri p'+(it.priority||0); pr.title=PRILABEL[it.priority||0];
       const t=document.createElement('span'); t.className='t'; t.textContent=it.title;
       const mb=document.createElement('button'); mb.className='menu-btn'; mb.textContent='⋯'; mb.title='메뉴 (상태·우선순위·라벨·삭제)';
       mb.onclick=(e)=>{ e.stopPropagation(); selId=it.id; openMenu(it,c); };
-      r1.appendChild(grip); r1.appendChild(pr); r1.appendChild(t); r1.appendChild(mb); c.appendChild(r1);
+      r1.appendChild(pr); r1.appendChild(t); r1.appendChild(mb); c.appendChild(r1);
+      if(it.note){const n=document.createElement('div');n.className='note';n.textContent=it.note;c.appendChild(n);}
       const labels=(it.labels||[]).filter(id=>LBL[id]);
       if(labels.length){ const lw=document.createElement('div'); lw.className='lbls';
         for(const id of labels){ const s=document.createElement('span'); s.className='lbl'; s.style.background=LBL[id].color; s.textContent=LBL[id].name; lw.appendChild(s);} c.appendChild(lw); }
-      if(it.note){const n=document.createElement('div');n.className='note';n.textContent=it.note;c.appendChild(n);}
       if(it.session){const b=document.createElement('span');b.className='sess';b.textContent='▣ '+it.session;c.appendChild(b);}
-      c.ondragstart=e=>e.preventDefault();
-      c.onclick=()=>{ if(Date.now()<suppressClickUntil)return; selId=it.id; openCardComposer(it.status,it,c); };
-      c.onkeydown=e=>{if(e.target===c&&(e.key==='Enter'||e.key===' ')){e.preventDefault();e.stopPropagation();selId=it.id;openCardComposer(it.status,it,c);}};
+      c.ondragstart=(e)=>startCardDrag(e,it,c);
+      c.ondragend=finishCardDrag;
+      c.onclick=()=>{ if(Date.now()<suppressClickUntil)return; selId=it.id; advance(it); };
+      c.ondblclick=(e)=>{ e.stopPropagation(); selId=it.id; startEdit(); };
       col.appendChild(c);
     }
     if(plan){
@@ -367,9 +354,9 @@ function render(revealSelection){
 narrowBoard.addEventListener('change',()=>render());
 function clearDropTargets(){ document.querySelectorAll('.col.drop-target').forEach(c=>c.classList.remove('drop-target')); }
 function startCardDrag(e,it,card){
-  if(editing||!e.target.closest?.('.drag-handle')){e.preventDefault();return;}
+  if(editing||(e.target.closest&&e.target.closest('button,input'))){e.preventDefault();return;}
   dragId=it.id; selId=it.id; closeMenu(); card.classList.add('dragging');
-  if(e.dataTransfer){e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',it.id);const r=card.getBoundingClientRect();e.dataTransfer.setDragImage(card,e.clientX-r.left,e.clientY-r.top);}
+  if(e.dataTransfer){e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',it.id);}
 }
 function finishCardDrag(){
   document.querySelectorAll('.card.dragging').forEach(c=>c.classList.remove('dragging'));
@@ -448,7 +435,7 @@ function openCardComposer(status,item,trigger){
   $('#cardTitle').value=item?item.title:''; $('#cardNote').value=item?(item.note||''):'';
   $('#cardStatus').value=item?item.status:status; $('#cardPriority').value=String(item?(item.priority||0):0);
   const selected=new Set(item?(item.labels||[]):[]); const labels=$('#composerLabels'); labels.innerHTML='';
-  for(const l of LABELS){const lab=document.createElement('label');lab.className='composer-label';lab.style.setProperty('--label-color',l.color);
+  for(const l of LABELS){const lab=document.createElement('label');lab.className='composer-label';
     lab.innerHTML='<input type="checkbox" value="'+l.id+'"'+(selected.has(l.id)?' checked':'')+'><span class="sw" style="background:'+l.color+'"></span>'+l.name;labels.appendChild(lab);}
   document.body.classList.add('composer-open'); $('#cardComposer').showModal();
   requestAnimationFrame(()=>{$('#cardTitle').focus();if(item)$('#cardTitle').select();});
