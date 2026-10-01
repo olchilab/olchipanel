@@ -3,3 +3,12 @@ node_modules/
 .playwright-mcp/
 *.tmp
 *.tgz
+dist-desktop/
+/.playwright-cli/
+/output/
+
+# Mark 2026-09-20: internal agent skills are local-only, not public GitHub source.
+/skills/
+/.agents/skills/
+/.claude/skills/
+/.codex/skills/
