@@ -1,0 +1,9 @@
+# Copier update 영수증. 프로젝트 고유 내용은 AGENTS.md 아래 구역에 둔다.
+_commit: v0.2.1
+_src_path: C:/OlchiProjects/olchi-project-template
+has_ui: true
+kind: app
+portability: portable
+project_name: olchipanel
+purpose: 에이전트가 목표·여정·분기·인터럽트를 직접 그리는 agent-agnostic MCP 상황판을 제공한다.
+records: standard
